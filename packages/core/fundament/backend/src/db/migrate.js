@@ -6,8 +6,23 @@ import pg from "pg";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(dirname, "../../db/migrations");
 
-const connectionString =
-  process.env.DATABASE_URL || "postgres://saas:saas@localhost:5432/saas";
+const {
+  POSTGRES_HOST,
+  POSTGRES_PORT,
+  POSTGRES_DB,
+  POSTGRES_USER,
+  POSTGRES_PASSWORD,
+  APP_DB_PASSWORD,
+} = process.env;
+
+if (!POSTGRES_USER || !POSTGRES_PASSWORD || !APP_DB_PASSWORD) {
+  console.error(
+    "Datenbank-Zugang fehlt. Bitte zuerst im Projekt-Wurzelverzeichnis: cp .env.example .env"
+  );
+  process.exit(1);
+}
+
+const connectionString = `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
 
 async function run() {
   const client = new pg.Client({ connectionString });
@@ -27,7 +42,8 @@ async function run() {
 
   for (const file of files) {
     if (applied.has(file)) continue;
-    const sql = await readFile(path.join(migrationsDir, file), "utf8");
+    let sql = await readFile(path.join(migrationsDir, file), "utf8");
+    sql = sql.replaceAll("__APP_DB_PASSWORD__", APP_DB_PASSWORD);
     console.log(`Migration: ${file}`);
     await client.query("BEGIN");
     try {

@@ -5,8 +5,9 @@ import { pool } from "../pool.js";
 // Aufräumen nach Tests läuft über den Eigentümer-Zugang, nicht über die
 // eingeschränkte "app"-Rolle -- sonst würde die eigene Mandanten-Trennung
 // das Löschen der Testdaten verhindern.
+const { POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD } = process.env;
 const ownerPool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL || "postgres://saas:saas@localhost:5432/saas",
+  connectionString: `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`,
 });
 
 export async function erstelleTestfirma(namePrefix) {

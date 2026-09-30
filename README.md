@@ -5,6 +5,7 @@ Baukasten für Branchen-Software (Projektmanagement). Alle Vorgaben stehen in `C
 ## Erststart
 
 ```bash
+cp .env.example .env                                            # einmalig: eigene Zugangsdaten
 npm install
 docker compose up -d                                          # startet PostgreSQL
 npm run db:migrate --workspace packages/core/fundament/backend # legt die Datenbank-Tabellen an
@@ -23,6 +24,14 @@ npm run db:seed --workspace packages/core/fundament/backend
 
 Legt eine Testfirma mit Login `admin@testfirma.de` / `Testpasswort-2026` an.
 Login-Routen: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+
+## Tests
+
+```bash
+npm test --workspace packages/core/fundament/backend
+```
+
+Braucht eine laufende Datenbank (`docker compose up -d` + Migration).
 
 ## Beenden
 
