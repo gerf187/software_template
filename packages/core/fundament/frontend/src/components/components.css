@@ -55,6 +55,9 @@
   padding-left: var(--space-2);
   padding-right: var(--space-2);
 }
+.btn-full {
+  width: 100%;
+}
 
 @media (max-width: 640px) {
   .btn {
