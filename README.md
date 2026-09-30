@@ -25,6 +25,24 @@ npm run db:seed --workspace packages/core/fundament/backend
 Legt eine Testfirma mit Login `admin@testfirma.de` / `Testpasswort-2026` an.
 Login-Routen: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
 
+## Werkstatt (Björns Testumgebung)
+
+```bash
+npm run db:seed:werkstatt --workspace packages/core/fundament/backend
+npm run dev
+```
+
+Setzt die Werkstatt-Demo-Daten immer frisch zurück (auch mehrfach ausführbar):
+zwei Demo-Firmen, 5 Test-Konten, Passwort überall `Werkstatt-Test-2026`.
+
+| E-Mail | Rolle | Firma |
+|---|---|---|
+| `admin-a@werkstatt.test` | Admin | Demo Firma A |
+| `mitarbeiter-a@werkstatt.test` | Mitarbeiter | Demo Firma A |
+| `betrachter-a@werkstatt.test` | Betrachter | Demo Firma A |
+| `admin-b@werkstatt.test` | Admin | Demo Firma B |
+| `superadmin@werkstatt.test` | Superadmin | keine |
+
 ## Tests
 
 ```bash

@@ -6,6 +6,7 @@
     "dev": "node --env-file=../../../../.env --watch src/index.js",
     "db:migrate": "node --env-file=../../../../.env src/db/migrate.js",
     "db:seed": "node --env-file=../../../../.env src/db/seed.js",
+    "db:seed:werkstatt": "node --env-file=../../../../.env src/db/seed-werkstatt.js",
     "test": "node --env-file=../../../../.env --test src/**/__tests__/*.test.js"
   },
   "dependencies": {
