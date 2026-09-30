@@ -6,8 +6,9 @@ Baukasten für Branchen-Software (Projektmanagement). Alle Vorgaben stehen in `C
 
 ```bash
 npm install
-docker compose up -d   # startet PostgreSQL
-npm run dev             # startet Backend (Port 3001) und Frontend (Port 5173)
+docker compose up -d                                          # startet PostgreSQL
+npm run db:migrate --workspace packages/core/fundament/backend # legt die Datenbank-Tabellen an
+npm run dev                                                    # startet Backend (Port 3001) und Frontend (Port 5173)
 ```
 
 Danach:
