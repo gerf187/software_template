@@ -1,0 +1,11 @@
+{
+  "name": "saas-grundgeruest",
+  "private": true,
+  "workspaces": [
+    "packages/core/fundament/frontend",
+    "packages/core/fundament/backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace packages/core/fundament/backend & npm run dev --workspace packages/core/fundament/frontend & wait"
+  }
+}
