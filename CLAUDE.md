@@ -285,8 +285,9 @@ die komplette Software.
 - Zwei Demo-Firmen mit Demo-Daten (Kontakte, Projekte, Notizen, Aufgaben),
   erzeugt über ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
 - Die zweite Demo-Firma dient dazu, die Mandanten-Trennung selbst durchzuklicken.
-- Je ein Benutzer pro Rolle (Admin, Mitarbeiter, Betrachter) in jeder Demo-Firma,
-  dazu ein Superadmin ohne Firma (5. Test-Nutzer).
+- 5 Test-Nutzer: in Demo-Firma A je einer für Admin, Mitarbeiter, Betrachter;
+  in Demo-Firma B ein Nutzer (für den Trennungstest); dazu ein Superadmin ohne
+  Firma.
 - Rollen-Umschalter nur in dieser App: mit einem Klick als andere Rolle ansehen
   (echter Login im Hintergrund, kein Trick). Die Server-Route dafür existiert nur,
   wenn die App die Werkstatt ist **und** es kein Produktivbetrieb ist – sonst wird
