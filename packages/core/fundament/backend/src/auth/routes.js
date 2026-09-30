@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { pool } from "../db/pool.js";
 import { verifyPassword } from "./password.js";
-import { neuesToken, tokenHash } from "./session.js";
-import { setzeSessionCookie, loescheSessionCookie, leseSessionToken } from "./cookies.js";
+import { tokenHash } from "./session.js";
+import { loescheSessionCookie, leseSessionToken } from "./cookies.js";
 import { authenticate } from "./middleware.js";
+import { sitzungErstellen } from "./anmelden.js";
 
 const router = Router();
 
@@ -54,15 +55,7 @@ router.post("/login", async (req, res) => {
 
   await protokolliereVersuch(email, true, req.ip);
 
-  const token = neuesToken();
-  await pool.query(
-    `INSERT INTO sessions (id, user_id, firma_id, expires_at, ip_adresse, user_agent)
-     VALUES ($1, $2, $3, now() + interval '7 days', $4, $5)`,
-    [tokenHash(token), benutzer.id, benutzer.firma_id, req.ip, req.headers["user-agent"] || null]
-  );
-
-  setzeSessionCookie(res, token);
-  res.json({ id: benutzer.id, name: benutzer.name, rolle: benutzer.rolle, firmaId: benutzer.firma_id });
+  res.json(await sitzungErstellen(benutzer, req, res));
 });
 
 router.post("/logout", async (req, res) => {

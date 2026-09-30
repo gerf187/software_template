@@ -1,6 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { app } from "../../app.js";
+import { createApp } from "../../app.js";
 import { pool } from "../../db/pool.js";
 import { withFirma } from "../../db/withFirma.js";
 import { hashPassword } from "../password.js";
@@ -28,7 +28,7 @@ const emailSperrtest = `sperre-${firma}@example.test`;
 await erstelleBenutzer(emailInaktiv, false);
 await erstelleBenutzer(emailSperrtest, true);
 
-const server = app.listen(0);
+const server = createApp().listen(0);
 const basis = `http://localhost:${server.address().port}`;
 
 after(async () => {

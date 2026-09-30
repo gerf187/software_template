@@ -43,6 +43,10 @@ zwei Demo-Firmen, 5 Test-Konten, Passwort überall `Werkstatt-Test-2026`.
 | `admin-b@werkstatt.test` | Admin | Demo Firma B |
 | `superadmin@werkstatt.test` | Superadmin | keine |
 
+Oben auf jeder Seite: gelber „Testumgebung"-Balken mit einem Rollen-Umschalter
+(mit einem Klick als anderer Test-Nutzer anmelden). Der Umschalter existiert
+nur in der Werkstatt und nie im Produktivbetrieb.
+
 ## Tests
 
 ```bash

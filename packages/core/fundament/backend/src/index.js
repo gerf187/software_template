@@ -1,6 +1,7 @@
-import { app } from "./app.js";
+import { createApp } from "./app.js";
 
 const port = process.env.PORT || 3001;
+const app = createApp();
 
 app.listen(port, () => {
   console.log(`Backend läuft auf http://localhost:${port}`);

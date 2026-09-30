@@ -4,6 +4,7 @@
 import { pool } from "./pool.js";
 import { withFirma } from "./withFirma.js";
 import { hashPassword } from "../auth/password.js";
+import { WERKSTATT_PASSWORT } from "../werkstatt/nutzer.js";
 import pg from "pg";
 
 const {
@@ -17,12 +18,12 @@ const ownerPool = new pg.Pool({
   connectionString: `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`,
 });
 
-const PASSWORT = "Werkstatt-Test-2026";
+const PASSWORT = WERKSTATT_PASSWORT;
 const SLUG_A = "werkstatt-demo-a";
 const SLUG_B = "werkstatt-demo-b";
 const SUPERADMIN_EMAIL = "superadmin@werkstatt.test";
 
-async function zuruecksetzen() {
+export async function werkstattDatenZuruecksetzen() {
   const { rows } = await pool.query("SELECT id FROM firmen WHERE slug = ANY($1)", [
     [SLUG_A, SLUG_B],
   ]);
@@ -49,7 +50,7 @@ async function zuruecksetzen() {
   await ownerPool.query("DELETE FROM users WHERE email = $1", [SUPERADMIN_EMAIL]);
 }
 
-async function anlegen() {
+export async function werkstattDatenAnlegen() {
   const hash = await hashPassword(PASSWORT);
 
   const firmaA = (
@@ -108,8 +109,8 @@ async function anlegen() {
 }
 
 async function run() {
-  await zuruecksetzen();
-  await anlegen();
+  await werkstattDatenZuruecksetzen();
+  await werkstattDatenAnlegen();
   console.log(`Werkstatt-Demo-Daten stehen. Passwort für alle Test-Konten: ${PASSWORT}`);
   console.log("  admin-a@werkstatt.test        -- Admin, Demo Firma A");
   console.log("  mitarbeiter-a@werkstatt.test  -- Mitarbeiter, Demo Firma A");
@@ -120,7 +121,11 @@ async function run() {
   await pool.end();
 }
 
-run().catch((err) => {
-  console.error("Werkstatt-Seed fehlgeschlagen:", err.message);
-  process.exit(1);
-});
+// Nur automatisch ausführen, wenn die Datei direkt gestartet wird (npm
+// run db:seed:werkstatt) -- nicht, wenn Tests nur die Funktionen importieren.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  run().catch((err) => {
+    console.error("Werkstatt-Seed fehlgeschlagen:", err.message);
+    process.exit(1);
+  });
+}
