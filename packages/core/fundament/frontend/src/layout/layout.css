@@ -1,0 +1,136 @@
+.app-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.app-main {
+  padding: var(--space-8) var(--space-10);
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--line);
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  overflow-y: auto;
+}
+
+.sidebar-brand-name {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.sidebar-brand-subtitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex: 1;
+}
+
+.sidebar-group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-mute);
+  font-weight: 500;
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13.5px;
+  padding: 9px var(--space-3);
+  border-radius: 6px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.sidebar-item-icon {
+  opacity: 0.75;
+}
+.sidebar-item:hover {
+  background: var(--bg-sidebar-hover);
+  color: var(--ink);
+}
+.sidebar-item-active {
+  background: var(--bg-sidebar-active);
+  color: #fff;
+  font-weight: 500;
+}
+.sidebar-item-active .sidebar-item-icon {
+  opacity: 1;
+}
+
+.sidebar-user {
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+.sidebar-user-role {
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  margin-bottom: var(--space-2);
+}
+
+.sidebar-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-layout {
+    display: block;
+  }
+  .sidebar-toggle {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: 100%;
+    min-height: 44px;
+    background: var(--bg-card);
+    border: none;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-align: left;
+    padding: 0 var(--space-4);
+  }
+  .sidebar {
+    position: fixed;
+    inset: 0;
+    top: 44px;
+    z-index: 10;
+    height: auto;
+    transform: translateX(-100%);
+    transition: transform 0.15s ease;
+    width: 100%;
+  }
+  .sidebar-open {
+    transform: translateX(0);
+  }
+  .app-main {
+    padding: var(--space-5);
+  }
+}
