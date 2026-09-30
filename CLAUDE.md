@@ -92,6 +92,9 @@ saas-grundgeruest/
     sachverstaendige/
       app.config.js
       modules/
+    werkstatt/              ← Björns Test-App, keine Kunden-App (Abschnitt 12)
+      app.config.js
+      modules/
 ```
 
 ---
@@ -269,6 +272,22 @@ nach extern, Update-Anleitung mit Backup vorher, einfache Überwachung.
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
 
 **Phase 5 – Sachverständige starten**
+
+**Werkstatt (läuft neben allen Phasen, ab jetzt)**
+`apps/werkstatt` ist keine Kunden-App, sondern Björns eigene Testumgebung für
+die komplette Software.
+- Bietet alle bisher gebauten Bausteine an (`app.config.js`).
+- Zwei Demo-Firmen mit Demo-Daten (Kontakte, Projekte, Notizen, Aufgaben),
+  erzeugt über ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
+- Die zweite Demo-Firma dient dazu, die Mandanten-Trennung selbst durchzuklicken.
+- Je ein Benutzer pro Rolle (Superadmin, Admin, Mitarbeiter, Betrachter).
+- Rollen-Umschalter nur in dieser App: mit einem Klick als andere Rolle ansehen.
+- Gelber Balken oben „Testumgebung", immer sichtbar.
+- Niemals echte Kundendaten.
+- Wächst mit: Jeder neue Baustein ist zuerst hier testbar, bevor er in eine
+  Branchen-App kommt.
+- Jeder Baustein bekommt zusätzlich automatische Tests. Durchklicken allein
+  reicht nicht.
 
 ---
 
