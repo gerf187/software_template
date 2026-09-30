@@ -137,6 +137,11 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
 | **Mitarbeiter** | Firma | Daten sehen und bearbeiten, nicht löschen, keine Benutzer/Einstellungen |
 | **Betrachter** | Firma | Nur lesen – muss im Code tatsächlich durchgesetzt werden |
 
+- **Superadmin hat keine Firma:** `firma_id` ist bei Benutzern nur beim Superadmin
+  leer, bei allen anderen Rollen Pflicht (Datenbank-Regel erzwingt das). Dadurch
+  liefert die Mandanten-Trennung dem Superadmin nie Fachdaten (Kontakte, Notizen,
+  Aufgaben) – er arbeitet nur mit Plattform-Tabellen (`firmen`, `firma_module`).
+
 - **Rechte-Matrix statt fest verdrahteter Rollen:** Pro Rolle und Bereich festgelegt:
   sehen / bearbeiten / löschen. Jeder Baustein meldet seine Bereiche selbst an.
   Im Code wird nie `rolle === 'Admin'` geprüft, sondern immer das Recht,
@@ -280,8 +285,12 @@ die komplette Software.
 - Zwei Demo-Firmen mit Demo-Daten (Kontakte, Projekte, Notizen, Aufgaben),
   erzeugt über ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
 - Die zweite Demo-Firma dient dazu, die Mandanten-Trennung selbst durchzuklicken.
-- Je ein Benutzer pro Rolle (Superadmin, Admin, Mitarbeiter, Betrachter).
-- Rollen-Umschalter nur in dieser App: mit einem Klick als andere Rolle ansehen.
+- Je ein Benutzer pro Rolle (Admin, Mitarbeiter, Betrachter) in jeder Demo-Firma,
+  dazu ein Superadmin ohne Firma (5. Test-Nutzer).
+- Rollen-Umschalter nur in dieser App: mit einem Klick als andere Rolle ansehen
+  (echter Login im Hintergrund, kein Trick). Die Server-Route dafür existiert nur,
+  wenn die App die Werkstatt ist **und** es kein Produktivbetrieb ist – sonst wird
+  sie gar nicht erst registriert.
 - Gelber Balken oben „Testumgebung", immer sichtbar.
 - Niemals echte Kundendaten.
 - Wächst mit: Jeder neue Baustein ist zuerst hier testbar, bevor er in eine
