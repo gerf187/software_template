@@ -29,6 +29,30 @@ export async function loescheTestfirma(firmaId) {
   await ownerPool.query("DELETE FROM firmen WHERE id = $1", [firmaId]);
 }
 
+// Ein Superadmin hat keine Firma (firma_id NULL). Die normale "app"-Rolle
+// dürfte so eine Zeile gar nicht anlegen -- die Mandanten-Trennung würde das
+// als Regelverstoß ablehnen (WITH CHECK). Das ist gewollt: Superadmin-Konten
+// entstehen nie über den normalen Betrieb, sondern nur über diesen
+// privilegierten Weg (genau wie später eine echte Superadmin-Verwaltung
+// das machen müsste).
+export async function erstelleTestSuperadmin(email, passwortHash) {
+  const { rows } = await ownerPool.query(
+    `INSERT INTO users (firma_id, email, passwort_hash, name, rolle)
+     VALUES (NULL, $1, $2, 'Superadmin', 'Superadmin') RETURNING id`,
+    [email, passwortHash]
+  );
+  return rows[0].id;
+}
+
+export async function loescheTestSuperadmin(email) {
+  await ownerPool.query(
+    "DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE email = $1)",
+    [email]
+  );
+  await ownerPool.query("DELETE FROM login_versuche WHERE lower(email) = lower($1)", [email]);
+  await ownerPool.query("DELETE FROM users WHERE email = $1", [email]);
+}
+
 export async function schliesseTestVerbindungen() {
   await ownerPool.end();
 }

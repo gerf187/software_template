@@ -21,13 +21,21 @@ export async function authenticate(req, res) {
     return null;
   }
 
-  const user = await withFirma(session.firma_id, async (client) => {
-    const result = await client.query(
-      "SELECT id, name, rolle, aktiv FROM users WHERE id = $1",
-      [session.user_id]
-    );
-    return result.rows[0];
-  });
+  // Superadmin hat keine Firma -- für ihn kann withFirma() nicht greifen,
+  // die Sitzungsprüfung läuft über eine eng begrenzte Ausnahme (wie beim
+  // Login), nicht über die normale Mandanten-Trennung.
+  const user =
+    session.firma_id === null
+      ? await pool
+          .query("SELECT * FROM superadmin_lookup($1)", [session.user_id])
+          .then((r) => r.rows[0])
+      : await withFirma(session.firma_id, async (client) => {
+          const result = await client.query(
+            "SELECT id, name, rolle, aktiv FROM users WHERE id = $1",
+            [session.user_id]
+          );
+          return result.rows[0];
+        });
 
   if (!user || !user.aktiv) {
     loescheSessionCookie(res);
