@@ -6,6 +6,8 @@ import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { useAuth } from "./auth/AuthContext.jsx";
 import { IconHome, IconSettings } from "./icons/index.js";
+import TestBanner from "./layout/TestBanner.jsx";
+import appConfig from "~app-config";
 
 const groups = [
   {
@@ -27,16 +29,19 @@ function AppLayout({ children }) {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar
-        brand="SaaS-Grundgerüst"
-        subtitle="Fundament"
-        groups={groups}
-        user={user ? { name: user.name, role: user.rolle } : null}
-        onLogout={abmelden}
-      />
-      <main className="app-main">{children}</main>
-    </div>
+    <>
+      {appConfig.testumgebung && <TestBanner />}
+      <div className="app-layout">
+        <Sidebar
+          brand={appConfig.produktname}
+          subtitle="Fundament"
+          groups={groups}
+          user={user ? { name: user.name, role: user.rolle } : null}
+          onLogout={abmelden}
+        />
+        <main className="app-main">{children}</main>
+      </div>
+    </>
   );
 }
 
