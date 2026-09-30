@@ -109,7 +109,7 @@ Bild: Mehrfamilienhaus. Eine Installation, jede Firma ist eine Wohnung mit eigen
 5. Zweite Sicherheitsschicht: PostgreSQL **Row Level Security** auf allen Fachtabellen.
 6. **Pflicht-Test:** Nutzer von Firma A darf Daten von Firma B weder sehen, ändern
    noch löschen – auch nicht über direkte API-Aufrufe mit fremder ID.
-7. E-Mail-Adressen sind pro Firma eindeutig.
+7. E-Mail-Adressen sind installationsweit eindeutig.
 
 ### Änderungsprotokoll (von Anfang an)
 
