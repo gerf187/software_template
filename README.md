@@ -15,6 +15,15 @@ Danach:
 - Frontend: http://localhost:5173
 - Backend-Check: http://localhost:3001/api/health
 
+## Zum Ausprobieren des Logins
+
+```bash
+npm run db:seed --workspace packages/core/fundament/backend
+```
+
+Legt eine Testfirma mit Login `admin@testfirma.de` / `Testpasswort-2026` an.
+Login-Routen: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+
 ## Beenden
 
 ```bash
