@@ -7,8 +7,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 // (vite.config.js), Standard: Werkstatt (Abschnitt 12).
 const appName = process.env.APP_NAME || "werkstatt";
 
-const configPath = path.resolve(dirname, `../../../../../apps/${appName}/app.config.js`);
+const appsRoot = path.resolve(dirname, "../../../../../apps");
+
+const configPath = path.join(appsRoot, appName, "app.config.js");
 const { default: appConfig } = await import(pathToFileURL(configPath).href);
 
 export default appConfig;
-export { appName };
+export { appName, appsRoot };

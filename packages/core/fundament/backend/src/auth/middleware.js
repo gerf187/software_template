@@ -3,6 +3,7 @@ import { withFirma } from "../db/withFirma.js";
 import { leseSessionToken, loescheSessionCookie } from "./cookies.js";
 import { tokenHash } from "./session.js";
 import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
+import { holeAktiveModule } from "../module/firmaModule.js";
 
 // Prüft die Sitzung aus dem Cookie, verlängert sie gleitend (7 Tage) und
 // liefert den zugehörigen, noch aktiven Benutzer -- oder null.
@@ -32,7 +33,7 @@ export async function authenticate(req, res) {
           .then((r) => r.rows[0])
       : await withFirma(session.firma_id, async (client) => {
           const result = await client.query(
-            "SELECT id, name, rolle, aktiv FROM users WHERE id = $1",
+            "SELECT id, name, rolle, aktiv, muss_passwort_aendern FROM users WHERE id = $1",
             [session.user_id]
           );
           return result.rows[0];
@@ -49,7 +50,16 @@ export async function authenticate(req, res) {
   );
 
   const rechte = await holeRechteFuerRolle(session.firma_id, user.rolle);
-  return { id: user.id, name: user.name, rolle: user.rolle, firmaId: session.firma_id, rechte };
+  const module = await holeAktiveModule(session.firma_id);
+  return {
+    id: user.id,
+    name: user.name,
+    rolle: user.rolle,
+    firmaId: session.firma_id,
+    rechte,
+    module,
+    mussPasswortAendern: !!user.muss_passwort_aendern,
+  };
 }
 
 export async function requireAuth(req, res, next) {
@@ -58,5 +68,14 @@ export async function requireAuth(req, res, next) {
     return res.status(401).json({ error: "Nicht angemeldet." });
   }
   req.user = user;
+  next();
+}
+
+// Superadmin ist eine Platform-Rolle, keine Fach-Berechtigung -- deshalb hier
+// direkt geprüft statt über darf() (Abschnitt 7).
+export function requireSuperadmin(req, res, next) {
+  if (req.user?.rolle !== "Superadmin") {
+    return res.status(403).json({ error: "Keine Berechtigung." });
+  }
   next();
 }
