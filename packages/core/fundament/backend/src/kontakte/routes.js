@@ -8,7 +8,6 @@ const router = Router();
 const KONTAKT_SPALTEN = `
   id, anrede, vorname, nachname, organisation, email, telefon, mobil,
   wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort,
-  objektadresse_strasse, objektadresse_plz, objektadresse_ort,
   empfohlen_von_kontakt_id, empfohlen_von_text, erstellt_am
 `;
 
@@ -24,9 +23,6 @@ function kontaktFelder(body) {
     wohnadresse_strasse: body.wohnadresseStrasse || null,
     wohnadresse_plz: body.wohnadressePlz || null,
     wohnadresse_ort: body.wohnadresseOrt || null,
-    objektadresse_strasse: body.objektadresseStrasse || null,
-    objektadresse_plz: body.objektadressePlz || null,
-    objektadresse_ort: body.objektadresseOrt || null,
     empfohlen_von_kontakt_id: body.empfohlenVonKontaktId || null,
     empfohlen_von_text: body.empfohlenVonKontaktId ? null : body.empfohlenVonText || null,
   };
@@ -81,9 +77,8 @@ router.post("/", erfordertRecht("kontakte", "bearbeiten"), async (req, res) => {
             `INSERT INTO contacts (
                firma_id, anrede, vorname, nachname, organisation, email, telefon, mobil,
                wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort,
-               objektadresse_strasse, objektadresse_plz, objektadresse_ort,
                empfohlen_von_kontakt_id, empfohlen_von_text
-             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
              RETURNING ${KONTAKT_SPALTEN}`,
             [
               req.user.firmaId,
@@ -97,9 +92,6 @@ router.post("/", erfordertRecht("kontakte", "bearbeiten"), async (req, res) => {
               felder.wohnadresse_strasse,
               felder.wohnadresse_plz,
               felder.wohnadresse_ort,
-              felder.objektadresse_strasse,
-              felder.objektadresse_plz,
-              felder.objektadresse_ort,
               felder.empfohlen_von_kontakt_id,
               felder.empfohlen_von_text,
             ]
@@ -129,8 +121,7 @@ router.put("/:id", erfordertRecht("kontakte", "bearbeiten"), async (req, res) =>
                anrede = $2, vorname = $3, nachname = $4, organisation = $5, email = $6,
                telefon = $7, mobil = $8,
                wohnadresse_strasse = $9, wohnadresse_plz = $10, wohnadresse_ort = $11,
-               objektadresse_strasse = $12, objektadresse_plz = $13, objektadresse_ort = $14,
-               empfohlen_von_kontakt_id = $15, empfohlen_von_text = $16
+               empfohlen_von_kontakt_id = $12, empfohlen_von_text = $13
              WHERE id = $1 AND deleted_at IS NULL
              RETURNING ${KONTAKT_SPALTEN}`,
             [
@@ -145,9 +136,6 @@ router.put("/:id", erfordertRecht("kontakte", "bearbeiten"), async (req, res) =>
               felder.wohnadresse_strasse,
               felder.wohnadresse_plz,
               felder.wohnadresse_ort,
-              felder.objektadresse_strasse,
-              felder.objektadresse_plz,
-              felder.objektadresse_ort,
               felder.empfohlen_von_kontakt_id,
               felder.empfohlen_von_text,
             ]

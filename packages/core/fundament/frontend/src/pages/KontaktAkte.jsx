@@ -32,6 +32,31 @@ function anzeigename(k) {
 
 const AKTION_TEXT = { angelegt: "Angelegt", geaendert: "Geändert", geloescht: "Gelöscht" };
 
+function adresseText(kontakt) {
+  return [
+    kontakt.wohnadresse_strasse,
+    [kontakt.wohnadresse_plz, kontakt.wohnadresse_ort].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function Kopfkarte({ kontakt }) {
+  const adresse = adresseText(kontakt);
+  return (
+    <Card>
+      <div className="kontakt-kopfkarte">
+        {kontakt.organisation && (
+          <span className="kontakt-kopfkarte-organisation">{kontakt.organisation}</span>
+        )}
+        {kontakt.telefon && <a href={`tel:${kontakt.telefon}`}>{kontakt.telefon}</a>}
+        {kontakt.email && <a href={`mailto:${kontakt.email}`}>{kontakt.email}</a>}
+        {adresse && <span className="kontakt-kopfkarte-adresse">{adresse}</span>}
+      </div>
+    </Card>
+  );
+}
+
 function ÜbersichtTab({ kontakt }) {
   const zeilen = [
     ["Anrede", kontakt.anrede],
@@ -41,18 +66,7 @@ function ÜbersichtTab({ kontakt }) {
     ["E-Mail", kontakt.email],
     ["Telefon", kontakt.telefon],
     ["Mobil", kontakt.mobil],
-    [
-      "Wohnadresse",
-      [kontakt.wohnadresse_strasse, [kontakt.wohnadresse_plz, kontakt.wohnadresse_ort].filter(Boolean).join(" ")]
-        .filter(Boolean)
-        .join(", "),
-    ],
-    [
-      "Objektadresse",
-      [kontakt.objektadresse_strasse, [kontakt.objektadresse_plz, kontakt.objektadresse_ort].filter(Boolean).join(" ")]
-        .filter(Boolean)
-        .join(", "),
-    ],
+    ["Adresse", adresseText(kontakt)],
     ["Empfohlen von", kontakt.empfohlen_von_text || kontakt.empfohlen_von_kontakt_name],
   ].filter(([, wert]) => wert);
 
@@ -250,7 +264,11 @@ export default function KontaktAkte() {
     <div>
       <RecordView
         title={anzeigename(kontakt)}
-        meta={kontakt.organisation}
+        subheader={
+          <div className="record-view-subheader">
+            <Kopfkarte kontakt={kontakt} />
+          </div>
+        }
         actions={
           <>
             {darfBearbeiten && (
@@ -283,7 +301,12 @@ export default function KontaktAkte() {
         {tab === "verlauf" && <VerlaufTab kontaktId={id} />}
       </RecordView>
 
-      <Dialog open={bearbeitenOffen} title="Kontakt bearbeiten" onClose={() => setBearbeitenOffen(false)}>
+      <Dialog
+        open={bearbeitenOffen}
+        title="Kontakt bearbeiten"
+        onClose={() => setBearbeitenOffen(false)}
+        wide
+      >
         <KontaktFormular
           kontakt={kontakt}
           andereKontakte={andereKontakte}

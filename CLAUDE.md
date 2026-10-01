@@ -227,7 +227,9 @@ Jede Komponente einmal auf einer internen Musterseite `/muster` zeigen
 **Kontakte (Fundament):**
 - Kontakt ist der **Startpunkt**. Angebote hängen später am Kontakt,
   ein Projekt entsteht erst bei Auftrag.
-- Wohnadresse und Objektadresse getrennt.
+- Eine Adresse am Kontakt (Straße und Hausnummer, PLZ, Ort). Keine Objektadresse am
+  Kontakt: Ein Kunde kann mehrere Objekte haben, die Objektadresse gehört zum
+  Projekt bzw. Auftrag (Baustein „Projekte“ / „Objekte“).
 - Feld „Empfohlen von“ (Verweis auf anderen Kontakt oder Freitext, z. B. „Google“).
 - Notizen und freie Aufgaben (Freitext + Fälligkeit) direkt am Kontakt.
 

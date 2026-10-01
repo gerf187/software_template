@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import EmptyState from "./EmptyState.jsx";
 
-export default function Table({ columns, rows, rowKey, emptyText = "Keine Einträge gefunden." }) {
+export default function Table({
+  columns,
+  rows,
+  rowKey,
+  emptyText = "Keine Einträge gefunden.",
+  onRowClick,
+}) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
 
@@ -50,7 +56,11 @@ export default function Table({ columns, rows, rowKey, emptyText = "Keine Eintr�
       </thead>
       <tbody>
         {sortedRows.map((row) => (
-          <tr key={rowKey(row)}>
+          <tr
+            key={rowKey(row)}
+            className={onRowClick ? "table-row-clickable" : ""}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
+          >
             {columns.map((col) => (
               <td key={col.key} data-label={col.label}>
                 {col.render ? col.render(row) : row[col.key]}

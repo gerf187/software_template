@@ -83,11 +83,7 @@ export default function Kontakte() {
                 key: "name",
                 label: "Name",
                 sortable: true,
-                render: (k) => (
-                  <button className="btn btn-text" onClick={() => navigate(`/kontakte/${k.id}`)}>
-                    {anzeigename(k)}
-                  </button>
-                ),
+                render: (k) => anzeigename(k),
               },
               { key: "organisation", label: "Firma / Organisation", sortable: true },
               { key: "email", label: "E-Mail" },
@@ -96,11 +92,12 @@ export default function Kontakte() {
             rows={kontakte}
             rowKey={(k) => k.id}
             emptyText="Keine Kontakte gefunden."
+            onRowClick={(k) => navigate(`/kontakte/${k.id}`)}
           />
         )}
       </Card>
 
-      <Dialog open={neuOffen} title="Neuer Kontakt" onClose={() => setNeuOffen(false)}>
+      <Dialog open={neuOffen} title="Neuer Kontakt" onClose={() => setNeuOffen(false)} wide>
         <KontaktFormular
           andereKontakte={kontakte || []}
           onSpeichern={anlegen}

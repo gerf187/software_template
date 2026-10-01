@@ -77,6 +77,19 @@ test("Admin kann einen Kontakt anlegen", async () => {
   assert.equal(kontakt.nachname, "Mustermann");
 });
 
+test("Objektadresse gibt es am Kontakt nicht mehr (wird ignoriert, nicht gespeichert)", async () => {
+  const res = await api(cookieAdminA, "POST", "/api/kontakte", {
+    nachname: "Ohne Objektadresse",
+    wohnadresseStrasse: "Teststraße 1",
+    wohnadressePlz: "12345",
+    wohnadresseOrt: "Teststadt",
+    objektadresseStrasse: "Sollte verschwinden",
+  });
+  assert.equal(res.status, 201);
+  const kontakt = await res.json();
+  assert.equal(kontakt.objektadresse_strasse, undefined);
+});
+
 test("Kontakt ohne Nachname wird abgelehnt", async () => {
   const res = await api(cookieAdminA, "POST", "/api/kontakte", { vorname: "Ohne Nachname" });
   assert.equal(res.status, 400);

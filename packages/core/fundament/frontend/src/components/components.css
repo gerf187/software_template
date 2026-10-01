@@ -106,6 +106,35 @@
   margin: 0;
 }
 
+/* Formular-Abschnitte: gruppiert mit Großbuchstaben-Label, zweispaltig */
+.form-section {
+  margin-bottom: var(--space-5);
+}
+.form-section-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-mute);
+  margin-bottom: var(--space-2);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-4);
+}
+.form-row-plz-ort {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0 var(--space-4);
+}
+@media (max-width: 640px) {
+  .form-grid,
+  .form-row-plz-ort {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Karte */
 .card {
   background: var(--bg-card);
@@ -149,6 +178,12 @@
 }
 .table tr:last-child td {
   border-bottom: none;
+}
+.table-row-clickable {
+  cursor: pointer;
+}
+.table-row-clickable:hover {
+  background: var(--line-soft);
 }
 
 @media (max-width: 640px) {
@@ -233,6 +268,11 @@
   padding: var(--space-6);
   width: 100%;
   max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.dialog-wide {
+  max-width: 560px;
 }
 .dialog-title {
   font-size: 18px;
@@ -347,6 +387,32 @@
   font-size: 13px;
   color: var(--ink-mute);
   font-variant-numeric: tabular-nums;
+}
+
+.record-view-subheader {
+  margin-bottom: var(--space-6);
+}
+
+/* Kontakt-Kopfkarte (kompakte Zusammenfassung über den Tabs) */
+.kontakt-kopfkarte {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: baseline;
+}
+.kontakt-kopfkarte-organisation {
+  font-weight: 500;
+  color: var(--ink);
+}
+.kontakt-kopfkarte a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.kontakt-kopfkarte a:hover {
+  text-decoration: underline;
+}
+.kontakt-kopfkarte-adresse {
+  color: var(--ink-soft);
 }
 
 /* Phasen-Leiste */

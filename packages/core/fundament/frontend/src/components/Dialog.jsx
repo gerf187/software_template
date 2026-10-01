@@ -1,12 +1,12 @@
 import { createPortal } from "react-dom";
 
-export default function Dialog({ open, title, children, actions, onClose }) {
+export default function Dialog({ open, title, children, actions, onClose, wide = false }) {
   if (!open) return null;
 
   return createPortal(
     <div className="dialog-backdrop" onClick={onClose}>
       <div
-        className="dialog"
+        className={wide ? "dialog dialog-wide" : "dialog"}
         role="dialog"
         aria-modal="true"
         aria-label={title}
