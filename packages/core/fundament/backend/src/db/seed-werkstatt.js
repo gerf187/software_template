@@ -30,12 +30,16 @@ export async function werkstattDatenZuruecksetzen() {
   for (const { id } of rows) {
     await ownerPool.query("DELETE FROM notes WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM tasks WHERE firma_id = $1", [id]);
+    await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [id]);
+    // Erst nach den Fachtabellen: deren Löschen trägt selbst noch ins
+    // Änderungsprotokoll ein (Trigger). Auch vor "users", weil das Protokoll
+    // per Fremdschlüssel auf den Benutzer verweist.
+    await ownerPool.query("DELETE FROM aenderungsprotokoll WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM sessions WHERE firma_id = $1", [id]);
     await ownerPool.query(
       "DELETE FROM login_versuche WHERE email IN (SELECT email FROM users WHERE firma_id = $1)",
       [id]
     );
-    await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM users WHERE firma_id = $1", [id]);
   }
   await ownerPool.query("DELETE FROM firmen WHERE slug = ANY($1)", [[SLUG_A, SLUG_B]]);
