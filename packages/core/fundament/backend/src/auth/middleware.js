@@ -2,6 +2,7 @@ import { pool } from "../db/pool.js";
 import { withFirma } from "../db/withFirma.js";
 import { leseSessionToken, loescheSessionCookie } from "./cookies.js";
 import { tokenHash } from "./session.js";
+import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
 
 // Prüft die Sitzung aus dem Cookie, verlängert sie gleitend (7 Tage) und
 // liefert den zugehörigen, noch aktiven Benutzer -- oder null.
@@ -47,7 +48,8 @@ export async function authenticate(req, res) {
     [hash]
   );
 
-  return { id: user.id, name: user.name, rolle: user.rolle, firmaId: session.firma_id };
+  const rechte = await holeRechteFuerRolle(session.firma_id, user.rolle);
+  return { id: user.id, name: user.name, rolle: user.rolle, firmaId: session.firma_id, rechte };
 }
 
 export async function requireAuth(req, res, next) {

@@ -1,6 +1,7 @@
 {
   "name": "saas-grundgeruest",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/core/fundament/frontend",
     "packages/core/fundament/backend"

@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "./db/pool.js";
 import authRoutes from "./auth/routes.js";
 import werkstattRoutes from "./werkstatt/routes.js";
+import rechteRoutes from "./rechte/routes.js";
 
 // Als Funktion statt fester Instanz, damit Tests mehrere Varianten (andere
 // App, Produktivbetrieb ja/nein) im selben Lauf vergleichen können.
@@ -13,6 +14,7 @@ export function createApp({
 
   app.use(express.json());
   app.use("/api/auth", authRoutes);
+  app.use("/api/rechte", rechteRoutes);
 
   // Der Rollen-Umschalter existiert nur in der Werkstatt und nie im
   // Produktivbetrieb -- sonst wird die Route gar nicht erst registriert,

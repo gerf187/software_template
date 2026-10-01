@@ -5,6 +5,8 @@ import { pool } from "./pool.js";
 import { withFirma } from "./withFirma.js";
 import { hashPassword } from "../auth/password.js";
 import { WERKSTATT_PASSWORT } from "../werkstatt/nutzer.js";
+import { rechteStandardAnlegen } from "../rechte/standardAnlegen.js";
+import appConfig from "../appConfig.js";
 import pg from "pg";
 
 const {
@@ -41,6 +43,7 @@ export async function werkstattDatenZuruecksetzen() {
       [id]
     );
     await ownerPool.query("DELETE FROM users WHERE firma_id = $1", [id]);
+    await ownerPool.query("DELETE FROM rechte WHERE firma_id = $1", [id]);
   }
   await ownerPool.query("DELETE FROM firmen WHERE slug = ANY($1)", [[SLUG_A, SLUG_B]]);
 
@@ -69,6 +72,7 @@ export async function werkstattDatenAnlegen() {
   ).rows[0].id;
 
   await withFirma(firmaA, async (client) => {
+    await rechteStandardAnlegen(client, firmaA, appConfig.standardRechte);
     await client.query(
       `INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES
        ($1, 'admin-a@werkstatt.test', $2, 'Admin (Firma A)', 'Admin'),
@@ -94,6 +98,7 @@ export async function werkstattDatenAnlegen() {
   });
 
   await withFirma(firmaB, async (client) => {
+    await rechteStandardAnlegen(client, firmaB, appConfig.standardRechte);
     await client.query(
       `INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES
        ($1, 'admin-b@werkstatt.test', $2, 'Admin (Firma B)', 'Admin')`,
