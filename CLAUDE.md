@@ -217,8 +217,8 @@ Leerzustand · Seitenkopf (Titel + Aktionen) · **Phasen-Leiste** · **Akte**
 (Seitenkopf + Phasen-Leiste + Tabs, Tabs aus Konfiguration) · **Fristbalken**
 (Balken füllt sich grün → rot bis zum Fristende)
 
-Jede Komponente einmal auf einer internen Musterseite `/muster` zeigen
-(nur für Superadmin sichtbar).
+Keine interne Musterseite nötig – Björn beschreibt direkt, wie eine Seite
+aussehen soll, das wird gemeinsam erarbeitet.
 
 ---
 
@@ -259,9 +259,18 @@ Reihenfolge: Design-System → Komponenten → Layout/Sidebar → Datenbank-Sche
 
 Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, Login,
 Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
-Kontakte (mit Oberfläche) und Modul-System inkl. Superadmin-Seite „Bausteine“ sind fertig.
+Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
+Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
+Detailseite) und Modul-System inkl. Superadmin-Seite „Bausteine“ sind fertig.
 Offen: Benutzerverwaltung (Seite), Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
 globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
+
+**Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
+Schritt 0 (Design-Ergänzungen: Suche ohne Button mit Verzögerung, Abschnitts-Label,
+bedingte Felder, Listen-Muster a/b, Dialog statt confirm) → Schritt 1 (Benutzerverwaltung)
+→ Schritt 2 (Einstellungen pro Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
+Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
+nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
 
 Fundament für Ablaufpläne mitdenken: Tabelle `tasks` mit firma_id, contact_id,
 project_id, zustaendig_id, faellig_am, status, step_key (gesetzt = aus Ablaufplan,
