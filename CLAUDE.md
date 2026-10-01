@@ -25,7 +25,8 @@ Diese Datei ist die **einzige** Vorgabe – es gibt kein weiteres Dokument.
 3. **Kurz und einfach antworten.** Deutsch, verständlich, ohne Fachchinesisch.
    Björn ist kein Entwickler.
 4. **Kleine Schritte, kleine Commits.** Ein Commit = eine abgeschlossene Sache,
-   aussagekräftige deutsche Commit-Nachricht.
+   aussagekräftige deutsche Commit-Nachricht. Nach jedem Commit sofort pushen.
+   Nichts bleibt nur lokal.
 5. **Keine Branchenbegriffe im Fundament oder in allgemeinen Bausteinen.** Begriffe wie
    „Antrag“, „Maßnahme“, „iSFP“, „BEG“, „Gutachten“ gehören in die jeweilige App.
 6. **Nach jedem Schritt prüfen**, dass die App startet und nichts Bestehendes kaputt ist.
