@@ -8,7 +8,7 @@ const firmaA = await erstelleTestfirma("Test A");
 const firmaB = await erstelleTestfirma("Test B");
 const kontaktB = await withFirma(firmaB, async (client) => {
   const { rows } = await client.query(
-    "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Kontakt von Firma B') RETURNING id",
+    "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Kontakt von Firma B') RETURNING id",
     [firmaB]
   );
   return rows[0].id;
@@ -36,14 +36,14 @@ test("SELECT: Firma A sieht den Kontakt von Firma B nicht", async () => {
 test("INSERT: Firma A kann keinen Kontakt für Firma B anlegen", async () => {
   await assert.rejects(
     withFirma(firmaA, (client) =>
-      client.query("INSERT INTO contacts (firma_id, name) VALUES ($1, 'unerlaubt')", [firmaB])
+      client.query("INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'unerlaubt')", [firmaB])
     )
   );
 });
 
 test("UPDATE: Firma A kann den Kontakt von Firma B nicht ändern", async () => {
   const result = await withFirma(firmaA, (client) =>
-    client.query("UPDATE contacts SET name = 'gehackt' WHERE id = $1", [kontaktB])
+    client.query("UPDATE contacts SET nachname = 'gehackt' WHERE id = $1", [kontaktB])
   );
   assert.equal(result.rowCount, 0);
 });

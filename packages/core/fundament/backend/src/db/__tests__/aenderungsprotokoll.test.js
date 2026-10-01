@@ -29,7 +29,7 @@ test("Anlegen eines Kontakts erzeugt einen Protokoll-Eintrag 'angelegt'", async 
     firmaA,
     async (client) => {
       const { rows } = await client.query(
-        "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Protokoll Kontakt') RETURNING id",
+        "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Protokoll Kontakt') RETURNING id",
         [firmaA]
       );
       return rows[0].id;
@@ -50,7 +50,7 @@ test("Anlegen eines Kontakts erzeugt einen Protokoll-Eintrag 'angelegt'", async 
   assert.equal(rows[0].aktion, "angelegt");
   assert.equal(rows[0].user_id, benutzerA);
   assert.equal(rows[0].alte_werte, null);
-  assert.equal(rows[0].neue_werte.name, "Protokoll Kontakt");
+  assert.equal(rows[0].neue_werte.nachname, "Protokoll Kontakt");
 });
 
 test("Ändern eines Kontakts erzeugt einen Protokoll-Eintrag 'geaendert'", async () => {
@@ -58,10 +58,10 @@ test("Ändern eines Kontakts erzeugt einen Protokoll-Eintrag 'geaendert'", async
     firmaA,
     async (client) => {
       const { rows } = await client.query(
-        "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Vor der Änderung') RETURNING id",
+        "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Vor der Änderung') RETURNING id",
         [firmaA]
       );
-      await client.query("UPDATE contacts SET name = 'Nach der Änderung' WHERE id = $1", [
+      await client.query("UPDATE contacts SET nachname = 'Nach der Änderung' WHERE id = $1", [
         rows[0].id,
       ]);
       return rows[0].id;
@@ -79,8 +79,8 @@ test("Ändern eines Kontakts erzeugt einen Protokoll-Eintrag 'geaendert'", async
   );
 
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].alte_werte.name, "Vor der Änderung");
-  assert.equal(rows[0].neue_werte.name, "Nach der Änderung");
+  assert.equal(rows[0].alte_werte.nachname, "Vor der Änderung");
+  assert.equal(rows[0].neue_werte.nachname, "Nach der Änderung");
 });
 
 test("Löschen (Soft-Delete) eines Kontakts erzeugt einen Protokoll-Eintrag 'geloescht'", async () => {
@@ -88,7 +88,7 @@ test("Löschen (Soft-Delete) eines Kontakts erzeugt einen Protokoll-Eintrag 'gel
     firmaA,
     async (client) => {
       const { rows } = await client.query(
-        "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Wird gelöscht') RETURNING id",
+        "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Wird gelöscht') RETURNING id",
         [firmaA]
       );
       await client.query("UPDATE contacts SET deleted_at = now() WHERE id = $1", [rows[0].id]);
@@ -114,7 +114,7 @@ test("Löschen (Soft-Delete) eines Kontakts erzeugt einen Protokoll-Eintrag 'gel
 test("Firma B sieht keine Protokoll-Einträge von Firma A", async () => {
   const kontaktId = await withFirma(firmaA, async (client) => {
     const { rows } = await client.query(
-      "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Nur für Firma A') RETURNING id",
+      "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Nur für Firma A') RETURNING id",
       [firmaA]
     );
     return rows[0].id;
@@ -134,7 +134,7 @@ test("Firma B sieht keine Protokoll-Einträge von Firma A", async () => {
 test("Protokoll-Einträge lassen sich nicht ändern", async () => {
   const protokollId = await withFirma(firmaA, async (client) => {
     const kontakt = await client.query(
-      "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Unveränderlich') RETURNING id",
+      "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Unveränderlich') RETURNING id",
       [firmaA]
     );
     const { rows } = await client.query(
@@ -156,7 +156,7 @@ test("Protokoll-Einträge lassen sich nicht ändern", async () => {
 test("Protokoll-Einträge lassen sich nicht löschen", async () => {
   const protokollId = await withFirma(firmaA, async (client) => {
     const kontakt = await client.query(
-      "INSERT INTO contacts (firma_id, name) VALUES ($1, 'Auch unlöschbar') RETURNING id",
+      "INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Auch unlöschbar') RETURNING id",
       [firmaA]
     );
     const { rows } = await client.query(

@@ -3,10 +3,12 @@ import Sidebar from "./layout/Sidebar.jsx";
 import Start from "./pages/Start.jsx";
 import MusterPage from "./pages/MusterPage.jsx";
 import Einstellungen from "./pages/Einstellungen.jsx";
+import Kontakte from "./pages/Kontakte.jsx";
+import KontaktAkte from "./pages/KontaktAkte.jsx";
 import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { useAuth } from "./auth/AuthContext.jsx";
-import { IconHome, IconSettings } from "./icons/index.js";
+import { IconHome, IconSettings, IconUsers } from "./icons/index.js";
 import TestBanner from "./layout/TestBanner.jsx";
 import appConfig from "~app-config";
 
@@ -25,6 +27,9 @@ function AppLayout({ children }) {
     { key: "start", label: "Start", to: "/", icon: IconHome },
     { key: "muster", label: "Muster", to: "/muster", icon: IconSettings },
   ];
+  if (user?.rechte?.kontakte?.sehen) {
+    items.push({ key: "kontakte", label: "Kontakte", to: "/kontakte", icon: IconUsers });
+  }
   if (user?.rechte?.einstellungen?.sehen) {
     items.push({ key: "einstellungen", label: "Einstellungen", to: "/einstellungen", icon: IconSettings });
   }
@@ -77,6 +82,26 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <Einstellungen />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/kontakte"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Kontakte />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/kontakte/:id"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <KontaktAkte />
             </AppLayout>
           </ProtectedRoute>
         }

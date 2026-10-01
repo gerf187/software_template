@@ -14,7 +14,7 @@ import {
 
 const firma = await erstelleTestfirma("Superadmin Test");
 await withFirma(firma, (client) =>
-  client.query("INSERT INTO contacts (firma_id, name) VALUES ($1, 'Geheimer Kontakt')", [firma])
+  client.query("INSERT INTO contacts (firma_id, nachname) VALUES ($1, 'Geheimer Kontakt')", [firma])
 );
 
 const email = `superadmin-${crypto.randomUUID()}@example.test`;
