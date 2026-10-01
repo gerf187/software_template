@@ -255,6 +255,12 @@ Reihenfolge: Design-System → Komponenten → Layout/Sidebar → Datenbank-Sche
 → Rechte-Matrix → Änderungsprotokoll → Benutzer → Einstellungen → Kontakte → Suche
 → **erster Baustein „Projekte“** mit Projekt-Akte (beweist, dass das Modul-System funktioniert).
 
+Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, Login,
+Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
+Kontakte (mit Oberfläche) und Modul-System inkl. Superadmin-Seite „Bausteine“ sind fertig.
+Offen: Benutzerverwaltung (Seite), Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
+globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
+
 Fundament für Ablaufpläne mitdenken: Tabelle `tasks` mit firma_id, contact_id,
 project_id, zustaendig_id, faellig_am, status, step_key (gesetzt = aus Ablaufplan,
 leer = manuell). Noch keine Engine.
