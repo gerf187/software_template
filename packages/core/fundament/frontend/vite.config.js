@@ -18,6 +18,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // lauscht auf allen Netzwerk-Adressen, nötig für Codespace-Port-Weiterleitung
     proxy: {
       "/api": "http://localhost:3001",
     },
