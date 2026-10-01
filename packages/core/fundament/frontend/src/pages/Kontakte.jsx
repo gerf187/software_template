@@ -98,11 +98,7 @@ export default function Kontakte() {
       </Card>
 
       <Dialog open={neuOffen} title="Neuer Kontakt" onClose={() => setNeuOffen(false)} wide>
-        <KontaktFormular
-          andereKontakte={kontakte || []}
-          onSpeichern={anlegen}
-          onAbbrechen={() => setNeuOffen(false)}
-        />
+        <KontaktFormular onSpeichern={anlegen} onAbbrechen={() => setNeuOffen(false)} />
       </Dialog>
     </div>
   );

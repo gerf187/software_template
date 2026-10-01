@@ -16,8 +16,6 @@ const LEER = {
   strasse: "",
   plz: "",
   ort: "",
-  empfohlenVonKontaktId: "",
-  empfohlenVonText: "",
 };
 
 function ausKontakt(kontakt) {
@@ -33,16 +31,13 @@ function ausKontakt(kontakt) {
     strasse: kontakt.wohnadresse_strasse || "",
     plz: kontakt.wohnadresse_plz || "",
     ort: kontakt.wohnadresse_ort || "",
-    empfohlenVonKontaktId: kontakt.empfohlen_von_kontakt_id || "",
-    empfohlenVonText: kontakt.empfohlen_von_text || "",
   };
 }
 
 // Formular für Anlegen und Bearbeiten (Abschnitt 11): nach Themen gruppiert
 // und zweispaltig, damit es auf dem Bildschirm kompakt bleibt (mobil einspaltig,
-// siehe .form-grid in components.css). "Empfohlen von" entweder anderer
-// Kontakt oder Freitext.
-export default function KontaktFormular({ kontakt, andereKontakte = [], onSpeichern, onAbbrechen }) {
+// siehe .form-grid in components.css).
+export default function KontaktFormular({ kontakt, onSpeichern, onAbbrechen }) {
   const [werte, setWerte] = useState(() => ausKontakt(kontakt));
   const [speichert, setSpeichert] = useState(false);
   const [fehler, setFehler] = useState(null);
@@ -68,16 +63,12 @@ export default function KontaktFormular({ kontakt, andereKontakte = [], onSpeich
         wohnadresseStrasse: werte.strasse,
         wohnadressePlz: werte.plz,
         wohnadresseOrt: werte.ort,
-        empfohlenVonKontaktId: werte.empfohlenVonKontaktId || null,
-        empfohlenVonText: werte.empfohlenVonKontaktId ? "" : werte.empfohlenVonText,
       });
     } catch (err) {
       setFehler(err.message);
       setSpeichert(false);
     }
   }
-
-  const auswahlbareKontakte = andereKontakte.filter((k) => k.id !== kontakt?.id);
 
   return (
     <form onSubmit={absenden}>
@@ -131,29 +122,6 @@ export default function KontaktFormular({ kontakt, andereKontakte = [], onSpeich
           </FormField>
           <FormField label="Ort" htmlFor="kf-ort">
             <Input id="kf-ort" {...feld("ort")} />
-          </FormField>
-        </div>
-      </div>
-
-      <div className="form-section">
-        <div className="form-section-label">Sonstiges</div>
-        <div className="form-grid">
-          <FormField label="Empfohlen von (anderer Kontakt)" htmlFor="kf-empf-kontakt">
-            <Select id="kf-empf-kontakt" {...feld("empfohlenVonKontaktId")}>
-              <option value="">— Kein Kontakt —</option>
-              {auswahlbareKontakte.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {[k.vorname, k.nachname].filter(Boolean).join(" ")}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-          <FormField label="Empfohlen von (Freitext, z. B. Google)" htmlFor="kf-empf-text">
-            <Input
-              id="kf-empf-text"
-              {...feld("empfohlenVonText")}
-              disabled={!!werte.empfohlenVonKontaktId}
-            />
           </FormField>
         </div>
       </div>

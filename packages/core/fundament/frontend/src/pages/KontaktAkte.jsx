@@ -23,7 +23,6 @@ import {
   setzeAufgabeErledigt,
   holeVerlauf,
   exportiereKontakt,
-  listeKontakte,
 } from "../kontakte/api.js";
 
 function anzeigename(k) {
@@ -230,7 +229,6 @@ export default function KontaktAkte() {
   const [tab, setTab] = useState("uebersicht");
   const [bearbeitenOffen, setBearbeitenOffen] = useState(false);
   const [loeschenOffen, setLoeschenOffen] = useState(false);
-  const [andereKontakte, setAndereKontakte] = useState([]);
 
   function laden() {
     holeKontakt(id)
@@ -239,9 +237,6 @@ export default function KontaktAkte() {
   }
 
   useEffect(laden, [id]);
-  useEffect(() => {
-    listeKontakte().then(setAndereKontakte).catch(() => {});
-  }, []);
 
   const darfBearbeiten = !!user?.rechte?.kontakte?.bearbeiten;
   const darfLoeschen = !!user?.rechte?.kontakte?.loeschen;
@@ -309,7 +304,6 @@ export default function KontaktAkte() {
       >
         <KontaktFormular
           kontakt={kontakt}
-          andereKontakte={andereKontakte}
           onSpeichern={speichern}
           onAbbrechen={() => setBearbeitenOffen(false)}
         />
