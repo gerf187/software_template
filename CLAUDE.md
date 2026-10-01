@@ -202,6 +202,23 @@ Verbesserungen gegenüber dem Original:
 - **Handytauglich von Anfang an:** Sidebar wird auf schmalen Bildschirmen zum
   Aufklapp-Menü, Tabellen werden auf dem Handy zu Karten, Bedienelemente mindestens
   44 px hoch. Jede Seite auch in 375 px Breite prüfen.
+- **Suchfelder ohne Such-Button:** laden automatisch, 250 ms nach der letzten Eingabe
+  (`useDebouncedValue`, Fundament-Hook).
+- **Abschnitts-Labels** in Formularen: Großbuchstaben, kein Rahmen, nur Abstand
+  (`.form-section-label`).
+- **Bedingte Felder:** erscheinen erst, wenn die zugehörige Checkbox aktiv ist.
+- **Löschen immer über die Dialog-Komponente**, nie über `confirm()`.
+- **Zwei Seitenmuster:**
+  - a) **Einfache Listen** (Benutzer, Firmen, Einstellungs-Listen): Liste links +
+    Formular rechts (`.list-form-split`, Grid 1.3fr / 1fr, mobil untereinander).
+    Klick auf eine Zeile füllt das Formular, die Zeile wird hervorgehoben
+    (`--accent-soft`, Tabelle-Prop `selectedRowKey`). Gleiches Formular für
+    Anlegen und Bearbeiten, nur der Titel wechselt. „Abbrechen“ nur im
+    Bearbeiten-Modus (führt zurück in den leeren Anlegen-Zustand). Bei
+    ungespeicherten Änderungen vor dem Zeilenwechsel nachfragen (Dialog).
+    Beispiel: Superadmin-Seite „Firmen“.
+  - b) **Datensätze mit Tabs** (Kontakte, später Projekte): Liste → eigene
+    Detailseite (Akte) mit Tabs. Beispiel: Kontakte.
 
 ---
 
@@ -265,10 +282,16 @@ Detailseite) und Modul-System inkl. Superadmin-Seite „Bausteine“ sind fertig
 Offen: Benutzerverwaltung (Seite), Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
 globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
 
+Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
+250-ms-Verzögerung (Kontakte), Abschnitts-Labels, Seitenmuster a (Liste + Formular,
+am Beispiel Superadmin „Firmen“ umgesetzt, Einladen/Bausteine ins Formular integriert)
+und b (schon bei Kontakten da), Löschen-über-Dialog-Regel bestätigt (nirgends `confirm()`).
+Musterseite `/muster` ist komplett entfernt (Code + Menüpunkt), Björn beschreibt
+Design direkt statt über einen Komponenten-Katalog.
+
 **Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
-Schritt 0 (Design-Ergänzungen: Suche ohne Button mit Verzögerung, Abschnitts-Label,
-bedingte Felder, Listen-Muster a/b, Dialog statt confirm) → Schritt 1 (Benutzerverwaltung)
-→ Schritt 2 (Einstellungen pro Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
+Schritt 1 (Benutzerverwaltung, nutzt Seitenmuster a) → Schritt 2 (Einstellungen pro
+Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
 Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
 nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
 

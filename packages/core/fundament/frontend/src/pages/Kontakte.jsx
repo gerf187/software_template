@@ -11,6 +11,7 @@ import Spinner from "../components/Spinner.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { listeKontakte, legeKontaktAn } from "../kontakte/api.js";
 import KontaktFormular from "../kontakte/KontaktFormular.jsx";
+import useDebouncedValue from "../hooks/useDebouncedValue.js";
 
 function anzeigename(k) {
   return [k.vorname, k.nachname].filter(Boolean).join(" ") || "(ohne Namen)";
@@ -20,25 +21,21 @@ export default function Kontakte() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [suche, setSuche] = useState("");
+  const sucheVerzoegert = useDebouncedValue(suche);
   const [kontakte, setKontakte] = useState(undefined);
   const [fehler, setFehler] = useState(null);
   const [neuOffen, setNeuOffen] = useState(false);
 
-  function laden(q = suche) {
+  function laden(q) {
     listeKontakte(q)
       .then(setKontakte)
       .catch((err) => setFehler(err.message));
   }
 
   useEffect(() => {
-    laden("");
+    laden(sucheVerzoegert);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function sucheAbsenden(e) {
-    e.preventDefault();
-    laden(suche);
-  }
+  }, [sucheVerzoegert]);
 
   async function anlegen(daten) {
     const kontakt = await legeKontaktAn(daten);
@@ -63,16 +60,13 @@ export default function Kontakte() {
       />
 
       <Card>
-        <form onSubmit={sucheAbsenden} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <div style={{ marginBottom: 16 }}>
           <Input
             placeholder="Suche nach Name, Firma, E-Mail …"
             value={suche}
             onChange={(e) => setSuche(e.target.value)}
           />
-          <Button type="submit" variant="secondary">
-            Suchen
-          </Button>
-        </form>
+        </div>
 
         {fehler && <Message type="fehler">{fehler}</Message>}
         {!fehler && kontakte === undefined && <Spinner label="Kontakte werden geladen …" />}

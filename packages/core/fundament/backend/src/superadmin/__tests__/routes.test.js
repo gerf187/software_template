@@ -96,6 +96,33 @@ test("Superadmin kann eine Firma anlegen, sperren und entsperren", async () => {
   assert.equal((await entsperren.json()).aktiv, true);
 });
 
+test("Superadmin kann Name und Kürzel einer Firma ändern, ohne den Status zu verlieren", async () => {
+  const eindeutig = crypto.randomUUID();
+  const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Alter Name ${eindeutig}`,
+    slug: `alter-slug-${eindeutig}`,
+  });
+  const neueFirma = await anlegen.json();
+  angelegteFirmen.push(neueFirma.id);
+
+  const bearbeiten = await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${neueFirma.id}`, {
+    name: `Neuer Name ${eindeutig}`,
+    slug: `neuer-slug-${eindeutig}`,
+  });
+  assert.equal(bearbeiten.status, 200);
+  const aktualisiert = await bearbeiten.json();
+  assert.equal(aktualisiert.name, `Neuer Name ${eindeutig}`);
+  assert.equal(aktualisiert.slug, `neuer-slug-${eindeutig}`);
+  assert.equal(aktualisiert.aktiv, true);
+
+  const nurSperren = await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${neueFirma.id}`, {
+    aktiv: false,
+  });
+  const nachSperren = await nurSperren.json();
+  assert.equal(nachSperren.name, `Neuer Name ${eindeutig}`);
+  assert.equal(nachSperren.aktiv, false);
+});
+
 test("Einladung legt einen Admin mit Startpasswort an, das beim ersten Login geändert werden muss", async () => {
   const eindeutig = crypto.randomUUID();
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {

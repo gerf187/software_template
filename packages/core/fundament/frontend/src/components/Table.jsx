@@ -7,6 +7,7 @@ export default function Table({
   rowKey,
   emptyText = "Keine Einträge gefunden.",
   onRowClick,
+  selectedRowKey,
 }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
@@ -58,7 +59,14 @@ export default function Table({
         {sortedRows.map((row) => (
           <tr
             key={rowKey(row)}
-            className={onRowClick ? "table-row-clickable" : ""}
+            className={[
+              onRowClick ? "table-row-clickable" : "",
+              selectedRowKey !== undefined && selectedRowKey === rowKey(row)
+                ? "table-row-selected"
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             {columns.map((col) => (

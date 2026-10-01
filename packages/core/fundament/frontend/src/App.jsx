@@ -1,13 +1,11 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Sidebar from "./layout/Sidebar.jsx";
 import Start from "./pages/Start.jsx";
-import MusterPage from "./pages/MusterPage.jsx";
 import Einstellungen from "./pages/Einstellungen.jsx";
 import Kontakte from "./pages/Kontakte.jsx";
 import KontaktAkte from "./pages/KontaktAkte.jsx";
 import PasswortAendern from "./pages/PasswortAendern.jsx";
 import SuperadminFirmen from "./pages/SuperadminFirmen.jsx";
-import SuperadminFirma from "./pages/SuperadminFirma.jsx";
 import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { useAuth } from "./auth/AuthContext.jsx";
@@ -54,10 +52,7 @@ function AppLayout({ children }) {
 
   // Menüpunkte blenden nur aus, was der Nutzer laut seinen Rechten nicht
   // sehen darf (Komfort) -- der eigentliche Schutz läuft im Backend (darf()).
-  const items = [
-    { key: "start", label: "Start", to: "/", icon: IconHome },
-    { key: "muster", label: "Muster", to: "/muster", icon: IconSettings },
-  ];
+  const items = [{ key: "start", label: "Start", to: "/", icon: IconHome }];
   if (user?.rechte?.kontakte?.sehen) {
     items.push({ key: "kontakte", label: "Kontakte", to: "/kontakte", icon: IconUsers });
   }
@@ -118,16 +113,6 @@ export default function App() {
         }
       />
       <Route
-        path="/muster"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <MusterPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/einstellungen"
         element={
           <ProtectedRoute>
@@ -163,16 +148,6 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <SuperadminFirmen />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/superadmin/firmen/:id"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SuperadminFirma />
             </AppLayout>
           </ProtectedRoute>
         }

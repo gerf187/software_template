@@ -37,13 +37,29 @@ router.post("/firmen", async (req, res) => {
   }
 });
 
+// Teilweise Änderungen (z. B. nur "aktiv" beim Sperren/Entsperren) behalten die
+// übrigen Felder bei -- deshalb zuerst die bestehende Zeile lesen und fehlende
+// Felder daraus auffüllen, statt sie unbeabsichtigt zu überschreiben.
 router.patch("/firmen/:id", async (req, res) => {
-  const { rows } = await pool.query(
-    "UPDATE firmen SET aktiv = $2 WHERE id = $1 RETURNING id, name, slug, aktiv, erstellt_am",
-    [req.params.id, !!req.body?.aktiv]
+  const { rows: bestehend } = await pool.query(
+    "SELECT name, slug, aktiv FROM firmen WHERE id = $1",
+    [req.params.id]
   );
-  if (!rows[0]) return res.status(404).json({ error: "Firma nicht gefunden." });
-  res.json(rows[0]);
+  if (!bestehend[0]) return res.status(404).json({ error: "Firma nicht gefunden." });
+
+  const name = req.body?.name ?? bestehend[0].name;
+  const slug = req.body?.slug ?? bestehend[0].slug;
+  const aktiv = req.body?.aktiv !== undefined ? !!req.body.aktiv : bestehend[0].aktiv;
+
+  try {
+    const { rows } = await pool.query(
+      "UPDATE firmen SET name = $2, slug = $3, aktiv = $4 WHERE id = $1 RETURNING id, name, slug, aktiv, erstellt_am",
+      [req.params.id, name, slug, aktiv]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(400).json({ error: "Firma konnte nicht gespeichert werden (Kürzel schon vergeben?)." });
+  }
 });
 
 function erzeugeStartpasswort() {

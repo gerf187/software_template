@@ -13,6 +13,8 @@ export const listeFirmen = () => anfrage("GET", "/api/superadmin/firmen");
 export const legeFirmaAn = (daten) => anfrage("POST", "/api/superadmin/firmen", daten);
 export const setzeFirmaAktiv = (id, aktiv) =>
   anfrage("PATCH", `/api/superadmin/firmen/${id}`, { aktiv });
+export const speichereFirma = (id, daten) =>
+  anfrage("PATCH", `/api/superadmin/firmen/${id}`, daten);
 export const ladeFirmaEinladen = (id, daten) =>
   anfrage("POST", `/api/superadmin/firmen/${id}/einladen`, daten);
 export const listeModule = (firmaId) => anfrage("GET", `/api/superadmin/firmen/${firmaId}/module`);
