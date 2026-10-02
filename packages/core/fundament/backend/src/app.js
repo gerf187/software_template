@@ -1,5 +1,9 @@
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { pool } from "./db/pool.js";
+import { csrfSchutz } from "./auth/csrf.js";
+import { fehlerBehandlung } from "./errorHandler.js";
 import authRoutes from "./auth/routes.js";
 import werkstattRoutes from "./werkstatt/routes.js";
 import rechteRoutes from "./rechte/routes.js";
@@ -25,10 +29,53 @@ export function createApp({
 } = {}) {
   const app = express();
 
+  // Genau ein Proxy davor (Caddy im Produktivbetrieb, Vite im Dev-Betrieb,
+  // Anhang A.3) -- damit X-Forwarded-For/-Proto für die echte Client-IP
+  // (Rate-Begrenzung, Login-Sperre) und "sicher"-Erkennung (CSRF) stimmen.
+  app.set("trust proxy", 1);
+
+  // Sicherheits-Header (Phase 3). CSP erlaubt nur eigene Quellen -- "data:"
+  // für Bilder (Firmen-Logo als Daten-URL, firma/routes.js), "unsafe-inline"
+  // nur für style-src (Inline-Styles in der Oberfläche; Skripte bleiben
+  // strikt auf die eigene Herkunft begrenzt). Keine externen CDNs (Abschnitt 4).
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:"],
+          fontSrc: ["'self'"],
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    })
+  );
+
+  // Begrenzung der Anfragen pro Minute (Phase 3) -- zusätzlich zur
+  // E-Mail-bezogenen Login-Sperre (Anhang A.4), schützt die ganze API vor
+  // Überlastung. /api/health ausgenommen (Healthchecks dürfen häufiger fragen).
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      max: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: (req) => req.path === "/api/health",
+      message: { error: "Zu viele Anfragen, bitte kurz warten." },
+    })
+  );
+
   // Grenze über dem Logo-Limit (firma/routes.js, ~280 KB Daten-URL), damit
   // Express selbst nicht schon vorher mit einem rohen 413 abbricht, bevor
   // die eigene, verständliche Fehlermeldung greifen kann.
   app.use(express.json({ limit: "500kb" }));
+  app.use(csrfSchutz);
   app.use("/api/auth", authRoutes);
   app.use("/api/rechte", rechteRoutes);
   app.use("/api/kontakte", kontakteRoutes);
@@ -61,6 +108,8 @@ export function createApp({
       res.status(503).json({ status: "ok", datenbank: "fehler" });
     }
   });
+
+  app.use(fehlerBehandlung);
 
   return app;
 }
