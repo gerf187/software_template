@@ -278,8 +278,9 @@ Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, L
 Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
 Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
 Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
-Detailseite) und Modul-System inkl. Superadmin-Seite „Bausteine“ sind fertig.
-Offen: Benutzerverwaltung (Seite), Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
+Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“ und Benutzerverwaltung
+(Schritt 1) sind fertig.
+Offen: Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
 globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
 
 Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
@@ -289,9 +290,14 @@ und b (schon bei Kontakten da), Löschen-über-Dialog-Regel bestätigt (nirgends
 Musterseite `/muster` ist komplett entfernt (Code + Menüpunkt), Björn beschreibt
 Design direkt statt über einen Komponenten-Katalog.
 
+Schritt 1 (Benutzerverwaltung, Abschnitt 7) ist fertig: Seite „Benutzer“ nach
+Seitenmuster a mit Reitern Aktiv/Archiv, Einladen mit Startpasswort (Zwang zum
+Ändern beim ersten Login), Rolle ändern, Archivieren über Dialog, Reaktivieren.
+Schutzregeln: ein Admin kann sich nicht selbst herabstufen/archivieren, der
+letzte aktive Admin einer Firma ist immer geschützt — beides mit Tests.
+
 **Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
-Schritt 1 (Benutzerverwaltung, nutzt Seitenmuster a) → Schritt 2 (Einstellungen pro
-Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
+Schritt 2 (Einstellungen pro Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
 Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
 nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
 
