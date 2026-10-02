@@ -4,6 +4,7 @@ import Start from "./pages/Start.jsx";
 import Einstellungen from "./pages/Einstellungen.jsx";
 import Kontakte from "./pages/Kontakte.jsx";
 import KontaktAkte from "./pages/KontaktAkte.jsx";
+import Benutzer from "./pages/Benutzer.jsx";
 import PasswortAendern from "./pages/PasswortAendern.jsx";
 import SuperadminFirmen from "./pages/SuperadminFirmen.jsx";
 import Login from "./pages/Login.jsx";
@@ -57,6 +58,9 @@ function AppLayout({ children }) {
     items.push({ key: "kontakte", label: "Kontakte", to: "/kontakte", icon: IconUsers });
   }
   items.push(...modulMenuepunkte(user));
+  if (user?.rechte?.benutzer?.sehen) {
+    items.push({ key: "benutzer", label: "Benutzer", to: "/benutzer", icon: IconUsers });
+  }
   if (user?.rechte?.einstellungen?.sehen) {
     items.push({ key: "einstellungen", label: "Einstellungen", to: "/einstellungen", icon: IconSettings });
   }
@@ -138,6 +142,16 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <KontaktAkte />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/benutzer"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Benutzer />
             </AppLayout>
           </ProtectedRoute>
         }
