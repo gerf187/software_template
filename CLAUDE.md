@@ -291,10 +291,9 @@ Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht w
 Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
 Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
 Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“, Mitarbeiterverwaltung
-(Schritt 1 + Nachbesserung) und Einstellungen pro Firma (Schritt 2: Name, Logo,
-Akzentfarbe) sind fertig.
-Offen: globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software,
-Abschnitt 12).
+(Schritt 1 + Nachbesserung), Einstellungen pro Firma (Schritt 2: Name, Logo,
+Akzentfarbe) und globale Suche (Schritt 3) sind fertig.
+Offen: Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
 
 Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
 250-ms-Verzögerung (Kontakte), Abschnitts-Labels, Seitenmuster a (Liste + Formular,
@@ -329,8 +328,22 @@ Sidebar zeigt das Logo statt des Produktnamens, sobald eines gesetzt ist.
 Fristen bewusst **nicht** mitgebaut – Björns Entscheidung 2026-10-02: erst wenn der
 Baustein „Ablaufpläne“ (Phase 2) konkrete Felder braucht, kein Rätselraten vorher.
 
+Schritt 3 (globale Suche, Abschnitt 2) ist fertig (2026-10-02): Suchfeld fest in
+der Sidebar, immer sichtbar, ohne Button (250 ms Verzögerung wie jedes andere
+Suchfeld). Durchsucht aktuell nur Kontakte, geprüft über die normale
+Rechte-Prüfung (`darf(user, "kontakte", "sehen")`) – kein Baustein mit eigener
+Suchquelle existiert bisher, daher keine Plugin-Mechanik dafür gebaut (Abschnitt 8,
+Regel 1 sieht das für künftige Bausteine vor; wird nachgerüstet, wenn der erste
+Baustein eine eigene Suchquelle braucht).
+
+Offene Idee für später (Björn, 2026-10-02, noch nicht umgesetzt): Rechte-Matrix
+soll bearbeitbar werden, und zwar pro Mitarbeiter (nicht nur pro Rolle) –
+Bereiche wie Mitarbeiterverwaltung, Stammdaten/Einstellungen, Projekte einzeln
+an-/abwählbar. Vor dem Bauen erneut mit Björn klären (Abweichung vom heutigen
+rollenbasierten Modell).
+
 **Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
-Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
+Schritt 4 (Dashboard).
 Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
 nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
 
