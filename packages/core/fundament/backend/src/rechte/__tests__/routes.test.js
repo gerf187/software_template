@@ -55,13 +55,16 @@ test("Login liefert die eigenen Rechte mit", async () => {
   assert.equal(daten.rechte.kontakte.loeschen, false);
 });
 
-test("Admin darf die Rechte-Matrix sehen ('Wer sieht was')", async () => {
+test("Admin darf die Rechte-Matrix sehen ('Wer sieht was') -- zeigt nur, was User darf", async () => {
   const { cookie } = await login(emailAdmin);
   const res = await fetch(`${basis}/api/rechte`, { headers: { cookie } });
   assert.equal(res.status, 200);
   const rows = await res.json();
   assert.ok(rows.length > 0);
-  assert.ok(rows.some((r) => r.rolle === "User" && r.bereich === "kontakte"));
+  assert.ok(!("rolle" in rows[0]));
+  const kontakteZeile = rows.find((r) => r.bereich === "kontakte");
+  assert.equal(kontakteZeile.sehen, true);
+  assert.equal(kontakteZeile.loeschen, false);
 });
 
 test("User darf die Rechte-Matrix nicht sehen", async () => {

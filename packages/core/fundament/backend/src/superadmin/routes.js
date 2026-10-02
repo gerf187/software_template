@@ -4,7 +4,7 @@ import { requireAuth, requireSuperadmin } from "../auth/middleware.js";
 import { pool } from "../db/pool.js";
 import { withFirma } from "../db/withFirma.js";
 import { hashPassword, pruefePasswort } from "../auth/password.js";
-import { rechteStandardAnlegen } from "../rechte/standardAnlegen.js";
+import { rechteStandardAnlegen, rechteFuerBausteinAnlegen } from "../rechte/standardAnlegen.js";
 import { fehlendeAbhaengigkeiten } from "../module/abhaengigkeiten.js";
 import appConfig from "../appConfig.js";
 import { ladeModule } from "../module/lade.js";
@@ -149,13 +149,19 @@ router.patch("/firmen/:id/module/:modul", async (req, res) => {
     }
   }
 
-  await withFirma(firmaId, (client) =>
-    client.query(
+  await withFirma(firmaId, async (client) => {
+    await client.query(
       `INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, $2, $3)
        ON CONFLICT (firma_id, modul) DO UPDATE SET aktiv = EXCLUDED.aktiv`,
       [firmaId, modul, aktiv]
-    )
-  );
+    );
+    // Beim Freischalten bringt der Baustein seine eigenen Rechte-Bereiche mit
+    // (Abschnitt 8) -- ohne das wäre der Bereich in "rechte" unbekannt und
+    // niemand (auch kein Admin) dürfte etwas damit tun.
+    if (aktiv) {
+      await rechteFuerBausteinAnlegen(client, firmaId, eintrag.config.rechteBereiche);
+    }
+  });
 
   res.json({ modul, aktiv });
 });

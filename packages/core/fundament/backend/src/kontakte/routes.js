@@ -260,8 +260,10 @@ router.patch(
 );
 
 // Verlauf (Tab "Verlauf"): lesbar formulierte Einträge aus dem
-// Änderungsprotokoll (Abschnitt 6), nur für diesen Kontakt.
-router.get("/:id/verlauf", erfordertRecht("kontakte", "sehen"), async (req, res) => {
+// Änderungsprotokoll (Abschnitt 6), nur für diesen Kontakt. Eigenes Recht
+// "protokoll" statt "kontakte" -- Änderungsprotokoll ist laut Abschnitt 7
+// nur für Admin sichtbar, unabhängig davon, ob der Nutzer den Kontakt sehen darf.
+router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res) => {
   const rows = await withFirma(req.user.firmaId, (client) =>
     client
       .query(

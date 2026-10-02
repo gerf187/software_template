@@ -33,6 +33,13 @@ test("User darf Kontakte sehen und bearbeiten, aber nicht löschen", async () =>
   assert.equal(await darf(user, "kontakte", "loeschen"), false);
 });
 
+test("Änderungsprotokoll ist nur für Admin sichtbar, nicht für User", async () => {
+  const admin = { firmaId: firmaA, rolle: "Admin" };
+  const user = { firmaId: firmaA, rolle: "User" };
+  assert.equal(await darf(admin, "protokoll", "sehen"), true);
+  assert.equal(await darf(user, "protokoll", "sehen"), false);
+});
+
 test("Superadmin (keine Firma) hat nie Fach-Rechte", async () => {
   const user = { firmaId: null, rolle: "Superadmin" };
   assert.equal(await darf(user, "kontakte", "sehen"), false);

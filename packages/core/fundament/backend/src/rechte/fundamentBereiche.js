@@ -18,6 +18,6 @@ export const STANDARD_RECHTE_FUNDAMENT = {
     kontakte: { sehen: true, bearbeiten: true, loeschen: false },
     mitarbeiter: { sehen: false, bearbeiten: false, loeschen: false },
     einstellungen: { sehen: false, bearbeiten: false, loeschen: false },
-    protokoll: { sehen: true, bearbeiten: false, loeschen: false },
+    protokoll: { sehen: false, bearbeiten: false, loeschen: false },
   },
 };

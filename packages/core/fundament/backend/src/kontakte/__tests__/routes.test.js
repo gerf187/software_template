@@ -203,6 +203,14 @@ test("Verlauf zeigt Protokoll-Einträge nur für diesen Kontakt", async () => {
   assert.ok(rows.some((r) => r.aktion === "geaendert"));
 });
 
+test("User sieht den Verlauf eines Kontakts nicht (Änderungsprotokoll ist Admin-only)", async () => {
+  const anlegen = await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "Verlauf für User" });
+  const kontakt = await anlegen.json();
+
+  const res = await api(cookieUserA, "GET", `/api/kontakte/${kontakt.id}/verlauf`);
+  assert.equal(res.status, 403);
+});
+
 test("Ohne Anmeldung gibt es 401", async () => {
   const res = await fetch(`${basis}/api/kontakte`);
   assert.equal(res.status, 401);

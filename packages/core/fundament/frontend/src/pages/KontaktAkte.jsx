@@ -240,6 +240,7 @@ export default function KontaktAkte() {
 
   const darfBearbeiten = !!user?.rechte?.kontakte?.bearbeiten;
   const darfLoeschen = !!user?.rechte?.kontakte?.loeschen;
+  const darfVerlaufSehen = !!user?.rechte?.protokoll?.sehen;
 
   async function speichern(daten) {
     const aktualisiert = await speichereKontakt(id, daten);
@@ -285,7 +286,7 @@ export default function KontaktAkte() {
           { key: "uebersicht", label: "Übersicht" },
           { key: "notizen", label: "Notizen" },
           { key: "aufgaben", label: "Aufgaben" },
-          { key: "verlauf", label: "Verlauf" },
+          ...(darfVerlaufSehen ? [{ key: "verlauf", label: "Verlauf" }] : []),
         ]}
         activeTab={tab}
         onTabChange={setTab}
@@ -293,7 +294,7 @@ export default function KontaktAkte() {
         {tab === "uebersicht" && <ÜbersichtTab kontakt={kontakt} />}
         {tab === "notizen" && <NotizenTab kontaktId={id} darfBearbeiten={darfBearbeiten} />}
         {tab === "aufgaben" && <AufgabenTab kontaktId={id} darfBearbeiten={darfBearbeiten} />}
-        {tab === "verlauf" && <VerlaufTab kontaktId={id} />}
+        {tab === "verlauf" && darfVerlaufSehen && <VerlaufTab kontaktId={id} />}
       </RecordView>
 
       <Dialog

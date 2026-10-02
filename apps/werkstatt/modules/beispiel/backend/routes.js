@@ -1,8 +1,9 @@
 import { Router } from "express";
+import { erfordertRecht } from "@fundament/backend/src/rechte/darf.js";
 
 const router = Router();
 
-router.get("/", (req, res) => {
+router.get("/", erfordertRecht("beispiel", "sehen"), (req, res) => {
   res.json({ nachricht: "Hallo Baustein!" });
 });
 

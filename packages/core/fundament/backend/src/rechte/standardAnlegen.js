@@ -14,3 +14,21 @@ export async function rechteStandardAnlegen(client, firmaId, standardRechte) {
     }
   }
 }
+
+// Ein Baustein meldet seine Rechte-Bereiche selbst an (Abschnitt 8, Regel 1+2)
+// -- was ein User darf, legt also der Baustein in seiner modul.config.js fest
+// (z. B. { kontakte: { sehen: true, bearbeiten: true, loeschen: false } }),
+// nie ein fester Umfang im Fundament-Code. Admin bekommt für jeden vom
+// Baustein gemeldeten Bereich automatisch vollen Zugriff eingetragen -- das
+// ist reine Daten-Voreinstellung, keine Sonderprüfung auf `rolle` im Code
+// (Abschnitt 7: `darf()` kennt nur Zeilen in der Tabelle, nie Rollennamen).
+export async function rechteFuerBausteinAnlegen(client, firmaId, rechteBereiche) {
+  if (!rechteBereiche) return;
+
+  const admin = {};
+  for (const bereich of Object.keys(rechteBereiche)) {
+    admin[bereich] = { sehen: true, bearbeiten: true, loeschen: true };
+  }
+
+  await rechteStandardAnlegen(client, firmaId, { Admin: admin, User: rechteBereiche });
+}

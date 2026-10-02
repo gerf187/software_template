@@ -27,7 +27,19 @@ async function erstelleBenutzer(email, rolle) {
 }
 
 const emailAdmin = `admin-${firma}@example.test`;
+const emailUser = `user-${firma}@example.test`;
 await erstelleBenutzer(emailAdmin, "Admin");
+await erstelleBenutzer(emailUser, "User");
+
+const firmaOhneBeispiel = await erstelleTestfirmaMitRechten("Superadmin-Routen Test (ohne Beispiel)");
+const emailAdminOhneBeispiel = `admin-${firmaOhneBeispiel}@example.test`;
+const hashOhneBeispiel = await hashPassword(PASSWORT);
+await withFirma(firmaOhneBeispiel, (client) =>
+  client.query(
+    "INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES ($1, $2, $3, 'Admin', 'Admin')",
+    [firmaOhneBeispiel, emailAdminOhneBeispiel, hashOhneBeispiel]
+  )
+);
 
 const emailSuperadmin = `superadmin-${crypto.randomUUID()}@example.test`;
 const superadminHash = await hashPassword("Ein-Sicheres-Passwort-12");
@@ -44,6 +56,7 @@ after(async () => {
     await loescheTestfirma(id);
   }
   await loescheTestfirma(firma);
+  await loescheTestfirma(firmaOhneBeispiel);
   await loescheTestSuperadmin(emailSuperadmin);
   await schliesseTestVerbindungen();
   await pool.end();
@@ -243,4 +256,22 @@ test("Abhängigkeit verhindert Einschalten", async () => {
 test("Superadmin sieht weiterhin keine Fachdaten", async () => {
   const res = await api(cookieSuperadmin, "GET", "/api/kontakte");
   assert.equal(res.status, 403);
+});
+
+// Abschnitt 8: ein Baustein meldet seine eigenen Rechte-Bereiche selbst an.
+// Hier geprüft am Test-Baustein "beispiel" (rechteBereiche: { beispiel: { sehen: true, ... } }),
+// der oben für "firma" schon freigeschaltet wurde.
+test("Beim Freischalten bekommt User automatisch das vom Baustein gemeldete Recht", async () => {
+  const { cookie: cookieUser } = await login(emailUser, PASSWORT);
+  const res = await api(cookieUser, "GET", "/api/module/beispiel");
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).nachricht, "Hallo Baustein!");
+});
+
+test("Baustein-Rechte einer Firma wirken nicht auf eine andere Firma", async () => {
+  // firmaOhneBeispiel hat "beispiel" nie freigeschaltet -- weder Modul
+  // noch Rechte-Zeile existieren dort.
+  const { cookie: cookieAdminOhneBeispiel } = await login(emailAdminOhneBeispiel, PASSWORT);
+  const res = await api(cookieAdminOhneBeispiel, "GET", "/api/module/beispiel");
+  assert.equal(res.status, 404);
 });

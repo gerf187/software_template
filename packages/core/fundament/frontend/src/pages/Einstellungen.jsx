@@ -33,19 +33,21 @@ function RechteMatrix() {
 
   return (
     <Card title="Wer sieht was">
+      <p style={{ fontSize: 12.5, color: "var(--ink-mute)", marginTop: 0 }}>
+        Zeigt, was die Rolle „User“ darf. Admin hat immer vollen Zugriff auf alles.
+      </p>
       {fehler && <Message type="fehler">{fehler}</Message>}
       {!fehler && rechte === undefined && <Spinner label="Rechte werden geladen …" />}
       {!fehler && rechte !== undefined && (
         <Table
           columns={[
-            { key: "rolle", label: "Rolle", sortable: true },
             { key: "bereich", label: "Bereich", sortable: true },
             { key: "sehen", label: "Sehen", render: (r) => <JaNein wert={r.sehen} /> },
             { key: "bearbeiten", label: "Bearbeiten", render: (r) => <JaNein wert={r.bearbeiten} /> },
             { key: "loeschen", label: "Löschen", render: (r) => <JaNein wert={r.loeschen} /> },
           ]}
           rows={rechte}
-          rowKey={(r) => `${r.rolle}-${r.bereich}`}
+          rowKey={(r) => r.bereich}
           emptyText="Keine Rechte hinterlegt."
         />
       )}
