@@ -135,7 +135,7 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
 |---|---|---|
 | **Superadmin** | Plattform (nur Björn) | Firmen anlegen/sperren, Firmen-Admins einladen, **Bausteine pro Firma freischalten**. Sieht **keine** Fachdaten der Firmen. |
 | **Admin** | Firma | Alles in der eigenen Firma inkl. Mitarbeiter, Einstellungen, Löschen |
-| **User** | Firma | Daten sehen und bearbeiten, nicht löschen, keine Mitarbeiterverwaltung/Einstellungen |
+| **User** | Firma | Je Baustein das, was der Baustein für User vorsieht (i. d. R. sehen + bearbeiten, nicht löschen). Fundament-Bereiche Mitarbeiterverwaltung, Einstellungen und Änderungsprotokoll sieht nur Admin. |
 
 Stand 2026-10-02 (Björns Entscheidung): nur noch zwei Rollen pro Firma, Admin und
 User. Keine Betrachter-Rolle mehr – externe Einsicht läuft künftig über ein
@@ -147,10 +147,21 @@ eigenes Kundenportal (Abschnitt 13), nicht über eine interne Rolle.
   Aufgaben) – er arbeitet nur mit Plattform-Tabellen (`firmen`, `firma_module`).
 
 - **Rechte-Matrix statt fest verdrahteter Rollen:** Pro Rolle und Bereich festgelegt:
-  sehen / bearbeiten / löschen. Jeder Baustein meldet seine Bereiche selbst an.
-  Im Code wird nie `rolle === 'Admin'` geprüft, sondern immer das Recht,
-  z. B. `darf('projekte', 'loeschen')`.
-- Seite „Wer sieht was“ unter Einstellungen zeigt die Matrix als Tabelle (nur lesen in Phase 1).
+  sehen / bearbeiten / löschen. **Jeder Baustein legt in seiner `modul.config.js`
+  selbst fest, was die Rolle User in seinen Bereichen darf** (Feld
+  `rechteBereiche`, z. B. `{ kontakte: { sehen: true, bearbeiten: true,
+  loeschen: false } }`) – kein fest vorgegebener User-Umfang im Fundament-Code.
+  Beim Freischalten eines Bausteins für eine Firma trägt das Fundament diese
+  Bereiche automatisch in die Rechte-Tabelle ein; Admin bekommt dabei für jeden
+  gemeldeten Bereich automatisch vollen Zugriff (reine Daten-Voreinstellung,
+  keine Sonderprüfung im Code). Im Code wird nie `rolle === 'Admin'` geprüft,
+  sondern immer das Recht, z. B. `darf(user, 'projekte', 'loeschen')`.
+  Stand 2026-10-02 (Björns Entscheidung): **kein** bearbeitbarer Rollen-Standard
+  und **keine** Ausnahmen pro einzelnem Mitarbeiter – bewusst so einfach wie
+  möglich gehalten. Ein angefangener Entwurf für Mitarbeiter-Ausnahmen wurde
+  noch vor der Umsetzung verworfen.
+- Seite „Wer sieht was“ unter Einstellungen zeigt nur, was die Rolle User darf
+  (nur lesen) – Admin hat ohnehin immer vollen Zugriff, braucht keine eigene Zeile.
 - Rechte werden **im Backend** geprüft. Frontend blendet nur aus (Komfort, kein Schutz).
 - Anzeigenamen der Rollen sind pro App konfigurierbar.
 - Mitarbeiter haben Reiter „Aktiv“ / „Archiv“ statt Löschen. Endgültiges Löschen ist im
@@ -343,12 +354,6 @@ Suchquelle existiert bisher, daher keine Plugin-Mechanik dafür gebaut (Abschnit
 Regel 1 sieht das für künftige Bausteine vor; wird nachgerüstet, wenn der erste
 Baustein eine eigene Suchquelle braucht).
 
-Offene Idee für später (Björn, 2026-10-02, noch nicht umgesetzt): Rechte-Matrix
-soll bearbeitbar werden, und zwar pro Mitarbeiter (nicht nur pro Rolle) –
-Bereiche wie Mitarbeiterverwaltung, Stammdaten/Einstellungen, Projekte einzeln
-an-/abwählbar. Vor dem Bauen erneut mit Björn klären (Abweichung vom heutigen
-rollenbasierten Modell).
-
 Schritt 4 (Start-Dashboard) ist fertig (2026-10-02): Start-Seite zeigt echte
 Zahlen statt Platzhaltertext – Anzahl Kontakte, Anzahl offener Aufgaben, und
 eine Liste „Aufgaben, die Aufmerksamkeit brauchen“ (überfällig/heute zuerst,
@@ -363,14 +368,26 @@ Fundament (Abschnitt 11), sind branchenneutral; komplexere Abläufe mit
 Voraussetzungen/Phasen kommen separat als Baustein „Ablaufpläne“ (Phase 2).
 Keine Code-Änderung nötig, war schon so gebaut.
 
-**Nächste Schritte:** Mit Schritt 4 ist die in Abschnitt 12 geplante
-Grund-Reihenfolge für Phase 1 durch (bis auf den Baustein „Projekte“, der laut
-Abschnitt 12 erst mit der Energieberater-Software kommt). Nächster Schritt ist
-noch nicht freigegeben – mit Björn klären, was als Nächstes sinnvoll ist
-(z. B. die offene Rechte-Matrix-Frage angehen, oder direkt Richtung Phase 4).
-Arbeitsweise bleibt: bauen → Tests grün → commit + push → kurzer Zwischenbericht
-→ weiter, nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten
-Tests.
+Rechte-Matrix (2026-10-02) ist geklärt und fertig umgesetzt, **einfacher als
+zunächst angedacht**: kein bearbeitbarer Rollen-Standard, keine Ausnahmen pro
+Mitarbeiter (ein angefangener Entwurf dafür wurde vor der Umsetzung wieder
+verworfen, siehe Abschnitt 7). Stattdessen: jeder Baustein meldet in seiner
+`modul.config.js` über `rechteBereiche` selbst an, was User in seinen eigenen
+Bereichen darf; beim Freischalten eines Bausteins trägt das Fundament das
+automatisch in die Rechte-Tabelle ein (Admin bekommt dabei immer vollen
+Zugriff, als Daten-Voreinstellung, nie als Code-Sonderfall). Nebenbei
+festgelegt: Änderungsprotokoll (Bereich `protokoll`, auch der „Verlauf“-Tab
+am Kontakt) ist jetzt nur für Admin sichtbar, nicht mehr für User – vorher
+unbeabsichtigt offen. „Wer sieht was“ zeigt jetzt nur noch, was User darf
+(Admin-Zeile entfernt, da ohnehin immer voller Zugriff).
+
+**Nächste Schritte:** Mit Schritt 4 und der Rechte-Matrix ist die in
+Abschnitt 12 geplante Grund-Reihenfolge für Phase 1 durch (bis auf den
+Baustein „Projekte“, der laut Abschnitt 12 erst mit der Energieberater-Software
+kommt). Nächster Schritt ist noch nicht freigegeben – mit Björn klären, was
+als Nächstes sinnvoll ist. Arbeitsweise bleibt: bauen → Tests grün → commit +
+push → kurzer Zwischenbericht → weiter, nur anhalten bei echten
+Entscheidungen, Sicherheitsfragen oder roten Tests.
 
 Fundament für Ablaufpläne mitdenken: Tabelle `tasks` mit firma_id, contact_id,
 project_id, zustaendig_id, faellig_am, status, step_key (gesetzt = aus Ablaufplan,
