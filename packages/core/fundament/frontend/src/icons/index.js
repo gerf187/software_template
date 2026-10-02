@@ -3,3 +3,8 @@ export { default as IconUsers } from "./IconUsers.jsx";
 export { default as IconSettings } from "./IconSettings.jsx";
 export { default as IconLogout } from "./IconLogout.jsx";
 export { default as IconSearch } from "./IconSearch.jsx";
+export { default as IconEye } from "./IconEye.jsx";
+export { default as IconEyeOff } from "./IconEyeOff.jsx";
+export { default as IconGripVertical } from "./IconGripVertical.jsx";
+export { default as IconArrowsMaximize } from "./IconArrowsMaximize.jsx";
+export { default as IconArrowsMinimize } from "./IconArrowsMinimize.jsx";

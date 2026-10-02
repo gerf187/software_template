@@ -10,4 +10,7 @@ export default {
   rechteBereiche: {
     beispiel: { sehen: true, bearbeiten: false, loeschen: false },
   },
+  // Meldet eine Dashboard-Kachel an (Abschnitt 8/10). Nutzt dasselbe Recht
+  // wie die Seite -- kein eigener Rechte-Bereich nur für die Kachel nötig.
+  kacheln: [{ key: "beispiel", titel: "Beispiel", groesse: "klein", rechtBereich: "beispiel" }],
 };

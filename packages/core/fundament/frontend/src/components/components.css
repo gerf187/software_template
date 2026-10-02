@@ -456,6 +456,61 @@
   color: #fff;
 }
 
+/* Dashboard-Kacheln (Abschnitt 8/10) */
+.kachel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+}
+.kachel-gross {
+  grid-column: 1 / -1;
+}
+.kachel-ausgeblendet .card {
+  opacity: 0.5;
+}
+.kachel-werkzeuge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.kachel-ziehgriff {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-mute);
+  cursor: grab;
+  padding: 0 4px;
+}
+.kachel-werkzeug {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--ink-mute);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.kachel-werkzeug:hover {
+  background: var(--line-soft);
+  color: var(--ink);
+}
+.kachel-ausgeblendet-hinweis {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-mute);
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .kachel-grid {
+    grid-template-columns: 1fr;
+  }
+  .kachel-gross {
+    grid-column: auto;
+  }
+}
+
 /* Fristbalken */
 .deadline-bar {
   width: 100%;

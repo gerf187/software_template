@@ -5,7 +5,8 @@ import { pool } from "./pool.js";
 import { withFirma } from "./withFirma.js";
 import { hashPassword } from "../auth/password.js";
 import { WERKSTATT_PASSWORT } from "../werkstatt/nutzer.js";
-import { rechteStandardAnlegen } from "../rechte/standardAnlegen.js";
+import { rechteStandardAnlegen, rechteFuerBausteinAnlegen } from "../rechte/standardAnlegen.js";
+import { ladeModule } from "../module/lade.js";
 import appConfig from "../appConfig.js";
 import pg from "pg";
 
@@ -92,6 +93,7 @@ export async function werkstattDatenZuruecksetzen() {
   for (const { id } of rows) {
     await ownerPool.query("DELETE FROM notes WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM tasks WHERE firma_id = $1", [id]);
+    await ownerPool.query("DELETE FROM benutzer_dashboard WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [id]);
     // Erst nach den Fachtabellen: deren Löschen trägt selbst noch ins
     // Änderungsprotokoll ein (Trigger). Auch vor "users", weil das Protokoll
@@ -153,9 +155,21 @@ export async function werkstattDatenAnlegen() {
       `INSERT INTO tasks (firma_id, contact_id, text, status, faellig_am) VALUES
        ($1, $2, 'Angebot nachfassen', 'offen', current_date + 3),
        ($1, $3, 'Unterlagen anfordern', 'offen', current_date + 7),
-       ($1, $4, 'Termin vor Ort vereinbaren', 'erledigt', current_date - 2)`,
-      [firmaA, idsA[1], idsA[4], idsA[9]]
+       ($1, $4, 'Termin vor Ort vereinbaren', 'erledigt', current_date - 2),
+       ($1, $5, 'Rückruf -- überfällig', 'offen', current_date - 1)`,
+      [firmaA, idsA[1], idsA[4], idsA[9], idsA[2]]
     );
+
+    // Baustein "beispiel" für Firma A schon freigeschaltet, damit die
+    // Dashboard-Kachel eines Bausteins (Abschnitt 8/10) sofort zu sehen ist,
+    // ohne erst über die Superadmin-Seite "Bausteine" gehen zu müssen.
+    const module = await ladeModule();
+    const beispielConfig = module.find((m) => m.name === "beispiel")?.config;
+    await client.query(
+      "INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, 'beispiel', true)",
+      [firmaA]
+    );
+    await rechteFuerBausteinAnlegen(client, firmaA, beispielConfig?.rechteBereiche);
   });
 
   await withFirma(firmaB, async (client) => {

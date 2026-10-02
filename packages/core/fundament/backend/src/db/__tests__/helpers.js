@@ -33,6 +33,7 @@ export async function erstelleTestfirmaMitRechten(namePrefix) {
 }
 
 export async function loescheTestfirma(firmaId) {
+  await ownerPool.query("DELETE FROM benutzer_dashboard WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM notes WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM tasks WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [firmaId]);
