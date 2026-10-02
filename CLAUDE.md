@@ -323,10 +323,25 @@ vorbereitet (gesetzt = aus Vorlage, leer = manuell). Vorher eigener Plan mit Fre
 ✔ Fertig, wenn: ein Projekt aus einer Vorlage seine Aufgaben erzeugt und die
 Tagesaufgaben nur freigegebene Aufgaben zeigen.
 
-**Phase 3 – Betrieb** ⏳ offen
-Dockerfile, Docker Compose (App, PostgreSQL, Caddy), tägliches Datenbank-Backup
-nach extern, Update-Anleitung mit Backup vorher, einfache Überwachung.
-✔ Fertig, wenn: Björn mit einer Anleitung die App auf dem VPS starten und aktualisieren kann.
+**Phase 3 – Betrieb**
+- ✅ Dockerfile (schlank, pro Branche gebaut) + docker-compose.prod.yml
+  (App, PostgreSQL, Caddy mit automatischem HTTPS, Backup-Container).
+  Migrationen laufen beim Start automatisch. Werkstatt startet im
+  Produktivbetrieb nicht (harter Abbruch, nicht nur ausgeblendete Routen).
+- ✅ Backup täglich (14 Tage Aufbewahrung, optional externes Ziel),
+  Wiederherstellung mit Sicherheitsabfrage, lokal echt getestet (Daten
+  weg, zurückgespielt, Daten wieder da).
+- ✅ Update-Skript: Backup → neue Version → bauen → Health-Check, bricht
+  bei Fehler ab und meldet das, vorheriges Image bleibt erhalten.
+- ✅ Sicherheit gehärtet: eigene Content-Security-Policy (Backend + Caddy),
+  Anfragen-Begrenzung pro Minute, CSRF-Schutz ohne eigenes Token-System
+  (Sec-Fetch-Site/Origin), einheitliche Fehlerausgabe ohne technische
+  Details im Produktivbetrieb. Geprüft, schon richtig: Cookie "secure" im
+  Produktivbetrieb, Logo-Upload ohne SVG, `npm audit` ohne Lücken.
+- README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
+✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
+und aktualisieren kann -- **noch nicht auf einem echten Server geprüft**,
+nur lokal (siehe Abschlussbericht).
 
 **Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
