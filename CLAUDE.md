@@ -174,13 +174,14 @@ interne Rolle.
 
 ### Fundament (immer drin, nicht abwählbar)
 Login, Firmen, Mitarbeiter, Rechte-Matrix, Einstellungen, Superadmin, Änderungsprotokoll,
-DSGVO-Grundlagen, globale Suche, **Kontakte** (inkl. Notizen und freie Aufgaben am Kontakt).
+DSGVO-Grundlagen, globale Suche, Start-Dashboard (Kacheln), **Kontakte** (inkl. Notizen
+und freie Aufgaben am Kontakt).
 
 ### Regeln für jeden Baustein
 1. Ein Baustein bringt alles selbst mit: Tabellen, Routen, Seiten, Menüpunkte,
-   Rechte-Bereiche, Tabs für die Projekt-Akte, Suchquellen.
+   Rechte-Bereiche, Tabs für die Projekt-Akte, Suchquellen, Dashboard-Kacheln.
 2. Beschreibung in `modul.config.js`: Name, Beschreibung, `braucht: [...]`
-   (Abhängigkeiten), Menüpunkte, Rechte-Bereiche, Tabs.
+   (Abhängigkeiten), Menüpunkte, Rechte-Bereiche, Tabs, Kacheln.
 3. Das Fundament lädt nur Bausteine, die für die Firma freigeschaltet sind.
    Nicht freigeschaltet = Menüpunkte, Seiten und API-Routen gibt es für diese Firma nicht.
 4. **Ausschalten = ausblenden.** Daten bleiben erhalten und sind beim Wiedereinschalten da.
@@ -199,6 +200,12 @@ Projektarten, Phasen und Tabs der Projekt-Akte, Rollen-Anzeigenamen.
 
 **Pro Firma (Seite „Einstellungen“, pflegt der Firmen-Admin):** Firmenname, Logo
 (erscheint in der Sidebar), Akzentfarbe, Fristen.
+
+**Pro Benutzer (Start-Dashboard):** eigene Kachel-Auswahl, -Reihenfolge und
+-Größe (klein/groß). Admin kann seine Ansicht als Firmen-Standard festlegen,
+für neue Mitarbeiter und zum Zurücksetzen. Kacheln ohne Recht oder aus einem
+ausgeschalteten Baustein sind weg, tauchen aber mit alter Position wieder auf,
+sobald Baustein/Recht wieder da sind (wie Abschnitt 8, Regel 4).
 
 ---
 
@@ -254,7 +261,9 @@ Auswahl · Checkbox · Formularfeld mit Label + Fehlertext · Karte · Tabelle
 (ersetzt `confirm()`) · Tabs · Meldung (Erfolg/Fehler/Hinweis) · Ladeanzeige ·
 Leerzustand · Seitenkopf (Titel + Aktionen) · **Phasen-Leiste** · **Akte**
 (Seitenkopf + Phasen-Leiste + Tabs, Tabs aus Konfiguration) · **Fristbalken**
-(Balken füllt sich grün → rot bis zum Fristende)
+(Balken füllt sich grün → rot bis zum Fristende) · **Kachel** (Baustein der
+Startseite, klein/groß, im Bearbeiten-Modus ein-/ausblendbar und per Ziehen
+sortierbar)
 
 Keine interne Musterseite nötig – Björn beschreibt direkt, wie eine Seite
 aussehen soll, das wird gemeinsam erarbeitet.
@@ -299,7 +308,9 @@ Schriften + Icons, `README.md`.
   kommen erst mit Phase 2)
 - ✅ Kontakte (inkl. Notizen, freie Aufgaben, Verlauf nur für Admin)
 - ✅ Globale Suche (bisher nur Kontakte, erweiterbar pro Baustein)
-- ✅ Start-Dashboard
+- ✅ Start-Dashboard (Kacheln: pro Benutzer an-/abwählbar, sortierbar, Größe
+  klein/groß; Admin kann Firmen-Standard festlegen; Bausteine bringen eigene
+  Kacheln mit)
 - ⏳ Baustein „Projekte“ – kommt mit Phase 4. Rahmen (Projekt-Akte, Phasen-Leiste,
   Tabs-Mechanik) ist branchenneutral und gehört nach `packages/modules/projekte/`
   (Abschnitt 5); Inhalte (Phasen-Namen, Tabs, Fachbausteine) kommen pro App.
