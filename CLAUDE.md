@@ -294,6 +294,13 @@ Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“, Mitarbeiterve
 (Schritt 1 + Nachbesserung), Einstellungen pro Firma (Schritt 2: Name, Logo,
 Akzentfarbe), globale Suche (Schritt 3) und Start-Dashboard (Schritt 4) sind fertig.
 Offen: Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
+Klargestellt (2026-10-02, Björns Frage): der Projekte-*Rahmen* (Projekt-Akte,
+Phasen-Leiste, Status, Tabs-Mechanik) ist branchenneutral und gehört als
+gemeinsamer Baustein nach `packages/core/modules/projekte/` (Abschnitt 5) –
+nur die *Inhalte* (Projektarten, Phasen-Namen, Tabs, Fachbausteine wie
+Anträge/Gutachten) sind pro App über `app.config.js` bzw. eigene Fachbausteine
+unterschiedlich. Trotzdem bewusst vertagt: ohne echten Bedarf (Energieberater)
+würde der Rahmen am Reißbrett geraten statt am echten Bedarf gebaut.
 
 Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
 250-ms-Verzögerung (Kontakte), Abschnitts-Labels, Seitenmuster a (Liste + Formular,
