@@ -290,10 +290,11 @@ Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, L
 Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
 Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
 Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
-Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“ und Mitarbeiterverwaltung
-(Schritt 1 + Nachbesserung) sind fertig.
-Offen: Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
-globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
+Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“, Mitarbeiterverwaltung
+(Schritt 1 + Nachbesserung) und Einstellungen pro Firma (Schritt 2: Name, Logo,
+Akzentfarbe) sind fertig.
+Offen: globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software,
+Abschnitt 12).
 
 Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
 250-ms-Verzögerung (Kontakte), Abschnitts-Labels, Seitenmuster a (Liste + Formular,
@@ -317,8 +318,19 @@ Offen/vertagt: eine bearbeitbare Rechte-Matrix, damit ein Firmen-Admin selbst
 festlegen kann, was die Rolle User sehen/bearbeiten darf (aktuell Phase-1-Vorgabe:
 nur lesen) – Björn will das noch genauer festlegen.
 
+Schritt 2 (Einstellungen pro Firma, Abschnitt 8) ist fertig (2026-10-02): eigener
+Reiter „Firma“ unter Einstellungen, nur für Rolle Admin sichtbar/bearbeitbar
+(Recht `einstellungen`). Firmenname, Logo und Akzentfarbe lassen sich pflegen.
+Logo wird als kleines Bild (Daten-URL, max. ca. 200 KB) direkt in
+`firmen.einstellungen` gespeichert, bewusst ohne eigene Datei-Upload-Technik.
+Akzentfarbe wird nach dem Login auf die Design-Variablen angewendet (`--accent`,
+`--accent-soft`, `--bg-sidebar-active`), Status-Farben bleiben unabhängig davon.
+Sidebar zeigt das Logo statt des Produktnamens, sobald eines gesetzt ist.
+Fristen bewusst **nicht** mitgebaut – Björns Entscheidung 2026-10-02: erst wenn der
+Baustein „Ablaufpläne“ (Phase 2) konkrete Felder braucht, kein Rätselraten vorher.
+
 **Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
-Schritt 2 (Einstellungen pro Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
+Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
 Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
 nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
 
