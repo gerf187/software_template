@@ -8,6 +8,7 @@ import Message from "../components/Message.jsx";
 import Tabs from "../components/Tabs.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import MitarbeiterListe from "../mitarbeiter/MitarbeiterListe.jsx";
+import FirmaEinstellungenFormular from "../firma/FirmaEinstellungenFormular.jsx";
 
 function JaNein({ wert }) {
   return <Badge status={wert ? "success" : "neutral"}>{wert ? "Ja" : "Nein"}</Badge>;
@@ -55,9 +56,13 @@ function RechteMatrix() {
 export default function Einstellungen() {
   const { user } = useAuth();
   const darfMitarbeiterSehen = !!user?.rechte?.mitarbeiter?.sehen;
-  const [tab, setTab] = useState(darfMitarbeiterSehen ? "mitarbeiter" : "rechte");
+  const darfFirmaSehen = !!user?.rechte?.einstellungen?.sehen;
+  const [tab, setTab] = useState(
+    darfFirmaSehen ? "firma" : darfMitarbeiterSehen ? "mitarbeiter" : "rechte"
+  );
 
   const tabs = [];
+  if (darfFirmaSehen) tabs.push({ key: "firma", label: "Firma" });
   if (darfMitarbeiterSehen) tabs.push({ key: "mitarbeiter", label: "Mitarbeiter" });
   tabs.push({ key: "rechte", label: "Wer sieht was" });
 
@@ -68,6 +73,9 @@ export default function Einstellungen() {
       <Tabs tabs={tabs} active={tab} onChange={setTab} />
       <div style={{ height: 16 }} />
 
+      {tab === "firma" && darfFirmaSehen && (
+        <FirmaEinstellungenFormular darfBearbeiten={!!user?.rechte?.einstellungen?.bearbeiten} />
+      )}
       {tab === "mitarbeiter" && darfMitarbeiterSehen && <MitarbeiterListe />}
       {tab === "rechte" && <RechteMatrix />}
     </div>

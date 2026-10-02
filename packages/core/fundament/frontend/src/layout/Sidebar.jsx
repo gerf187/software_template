@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Button from "../components/Button.jsx";
 
-export default function Sidebar({ brand, subtitle, groups, user, onLogout }) {
+export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -12,7 +12,11 @@ export default function Sidebar({ brand, subtitle, groups, user, onLogout }) {
       </button>
       <aside className={`sidebar${open ? " sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-name">{brand}</div>
+          {logo ? (
+            <img className="sidebar-brand-logo" src={logo} alt={brand} />
+          ) : (
+            <div className="sidebar-brand-name">{brand}</div>
+          )}
           {subtitle && <div className="sidebar-brand-subtitle">{subtitle}</div>}
         </div>
 

@@ -52,6 +52,12 @@
   font-weight: 600;
   letter-spacing: -0.02em;
 }
+.sidebar-brand-logo {
+  max-height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
 .sidebar-brand-subtitle {
   font-size: 11px;
   text-transform: uppercase;

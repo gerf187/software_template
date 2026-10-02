@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import Sidebar from "./layout/Sidebar.jsx";
 import Start from "./pages/Start.jsx";
@@ -13,6 +14,7 @@ import { IconHome, IconSettings, IconUsers } from "./icons/index.js";
 import TestBanner from "./layout/TestBanner.jsx";
 import ModulSeite from "./module/ModulSeite.jsx";
 import { modulConfig, modulSeitenLader } from "./module/registry.js";
+import { wendeAkzentfarbeAn } from "./theme/akzentfarbe.js";
 import appConfig from "~app-config";
 
 // Menüpunkte, die aktive Bausteine selbst anmelden (Abschnitt 8) -- das
@@ -44,6 +46,12 @@ function modulRouten(user) {
 function AppLayout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Akzentfarbe ist per Firma überschreibbar (Anhang A.1) -- einmal pro
+  // geladenem Benutzer auf die Design-Variablen anwenden.
+  useEffect(() => {
+    wendeAkzentfarbeAn(user?.firma?.akzentfarbe);
+  }, [user?.firma?.akzentfarbe]);
 
   async function abmelden() {
     await logout();
@@ -78,6 +86,7 @@ function AppLayout({ children }) {
         <Sidebar
           brand={appConfig.produktname}
           subtitle="Fundament"
+          logo={user?.firma?.logo}
           groups={groups}
           user={user ? { name: user.name, role: user.rolle } : null}
           onLogout={abmelden}

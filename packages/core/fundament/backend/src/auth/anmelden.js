@@ -3,6 +3,7 @@ import { neuesToken, tokenHash } from "./session.js";
 import { setzeSessionCookie } from "./cookies.js";
 import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
 import { holeAktiveModule } from "../module/firmaModule.js";
+import { holeFirmaAnzeige } from "../firma/firmaAnzeige.js";
 
 // Legt die Sitzung an und setzt das Cookie. Genutzt vom normalen Login und
 // vom Werkstatt-Rollen-Umschalter (beide melden am Ende genau gleich an).
@@ -16,11 +17,13 @@ export async function sitzungErstellen(benutzer, req, res) {
   setzeSessionCookie(res, token);
   const rechte = await holeRechteFuerRolle(benutzer.firma_id, benutzer.rolle);
   const module = await holeAktiveModule(benutzer.firma_id);
+  const firma = await holeFirmaAnzeige(benutzer.firma_id);
   return {
     id: benutzer.id,
     name: benutzer.name,
     rolle: benutzer.rolle,
     firmaId: benutzer.firma_id,
+    firma,
     rechte,
     module,
     mussPasswortAendern: !!benutzer.muss_passwort_aendern,

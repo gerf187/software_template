@@ -4,6 +4,7 @@ import { leseSessionToken, loescheSessionCookie } from "./cookies.js";
 import { tokenHash } from "./session.js";
 import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
 import { holeAktiveModule } from "../module/firmaModule.js";
+import { holeFirmaAnzeige } from "../firma/firmaAnzeige.js";
 
 // Prüft die Sitzung aus dem Cookie, verlängert sie gleitend (7 Tage) und
 // liefert den zugehörigen, noch aktiven Benutzer -- oder null.
@@ -51,11 +52,13 @@ export async function authenticate(req, res) {
 
   const rechte = await holeRechteFuerRolle(session.firma_id, user.rolle);
   const module = await holeAktiveModule(session.firma_id);
+  const firma = await holeFirmaAnzeige(session.firma_id);
   return {
     id: user.id,
     name: user.name,
     rolle: user.rolle,
     firmaId: session.firma_id,
+    firma,
     rechte,
     module,
     mussPasswortAendern: !!user.muss_passwort_aendern,

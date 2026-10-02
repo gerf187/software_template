@@ -5,6 +5,7 @@ import werkstattRoutes from "./werkstatt/routes.js";
 import rechteRoutes from "./rechte/routes.js";
 import kontakteRoutes from "./kontakte/routes.js";
 import mitarbeiterRoutes from "./mitarbeiter/routes.js";
+import firmaRoutes from "./firma/routes.js";
 import superadminRoutes from "./superadmin/routes.js";
 import { requireAuth } from "./auth/middleware.js";
 import { ladeModule } from "./module/lade.js";
@@ -22,11 +23,15 @@ export function createApp({
 } = {}) {
   const app = express();
 
-  app.use(express.json());
+  // Grenze über dem Logo-Limit (firma/routes.js, ~280 KB Daten-URL), damit
+  // Express selbst nicht schon vorher mit einem rohen 413 abbricht, bevor
+  // die eigene, verständliche Fehlermeldung greifen kann.
+  app.use(express.json({ limit: "500kb" }));
   app.use("/api/auth", authRoutes);
   app.use("/api/rechte", rechteRoutes);
   app.use("/api/kontakte", kontakteRoutes);
   app.use("/api/mitarbeiter", mitarbeiterRoutes);
+  app.use("/api/firma", firmaRoutes);
   app.use("/api/superadmin", superadminRoutes);
 
   // Nicht freigeschaltete Bausteine gibt es für diese Firma per API nicht
