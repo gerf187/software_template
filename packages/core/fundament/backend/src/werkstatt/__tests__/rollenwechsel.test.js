@@ -23,11 +23,11 @@ test("Rollenwechsel meldet als bekanntes Werkstatt-Test-Konto an", async () => {
   const res = await fetch(`${basis}/api/werkstatt/anmelden-als`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: "betrachter-a@werkstatt.test" }),
+    body: JSON.stringify({ email: "user-a@werkstatt.test" }),
   });
   assert.equal(res.status, 200);
   const daten = await res.json();
-  assert.equal(daten.rolle, "Betrachter");
+  assert.equal(daten.rolle, "User");
   assert.ok(res.headers.get("set-cookie")?.includes("session="));
 });
 

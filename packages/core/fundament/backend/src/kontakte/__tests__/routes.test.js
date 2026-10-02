@@ -25,12 +25,10 @@ async function erstelleBenutzer(firmaId, email, rolle) {
 }
 
 const emailAdminA = `admin-a-${firmaA}@example.test`;
-const emailMitarbeiterA = `mitarbeiter-a-${firmaA}@example.test`;
-const emailBetrachterA = `betrachter-a-${firmaA}@example.test`;
+const emailUserA = `user-a-${firmaA}@example.test`;
 const emailAdminB = `admin-b-${firmaB}@example.test`;
 await erstelleBenutzer(firmaA, emailAdminA, "Admin");
-await erstelleBenutzer(firmaA, emailMitarbeiterA, "Mitarbeiter");
-await erstelleBenutzer(firmaA, emailBetrachterA, "Betrachter");
+await erstelleBenutzer(firmaA, emailUserA, "User");
 await erstelleBenutzer(firmaB, emailAdminB, "Admin");
 
 const server = createApp().listen(0);
@@ -62,8 +60,7 @@ function api(cookie, method, path, body) {
 }
 
 const cookieAdminA = await login(emailAdminA);
-const cookieMitarbeiterA = await login(emailMitarbeiterA);
-const cookieBetrachterA = await login(emailBetrachterA);
+const cookieUserA = await login(emailUserA);
 const cookieAdminB = await login(emailAdminB);
 
 test("Admin kann einen Kontakt anlegen", async () => {
@@ -95,24 +92,14 @@ test("Kontakt ohne Nachname wird abgelehnt", async () => {
   assert.equal(res.status, 400);
 });
 
-test("Betrachter kann keinen Kontakt anlegen", async () => {
-  const res = await api(cookieBetrachterA, "POST", "/api/kontakte", { nachname: "Verboten" });
-  assert.equal(res.status, 403);
-});
-
-test("Betrachter kann Kontakte sehen", async () => {
-  const res = await api(cookieBetrachterA, "GET", "/api/kontakte");
-  assert.equal(res.status, 200);
-});
-
-test("Mitarbeiter kann einen Kontakt anlegen, aber nicht löschen", async () => {
-  const anlegen = await api(cookieMitarbeiterA, "POST", "/api/kontakte", {
-    nachname: "Mitarbeiter-Kontakt",
+test("User kann einen Kontakt anlegen, aber nicht löschen", async () => {
+  const anlegen = await api(cookieUserA, "POST", "/api/kontakte", {
+    nachname: "User-Kontakt",
   });
   assert.equal(anlegen.status, 201);
   const kontakt = await anlegen.json();
 
-  const loeschen = await api(cookieMitarbeiterA, "DELETE", `/api/kontakte/${kontakt.id}`);
+  const loeschen = await api(cookieUserA, "DELETE", `/api/kontakte/${kontakt.id}`);
   assert.equal(loeschen.status, 403);
 });
 

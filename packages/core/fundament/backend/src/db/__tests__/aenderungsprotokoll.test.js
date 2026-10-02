@@ -11,7 +11,7 @@ const firmaB = await erstelleTestfirma("Protokoll Test B");
 const benutzerA = await withFirma(firmaA, async (client) => {
   const hash = await hashPassword("Ein-Sicheres-Passwort-12");
   const { rows } = await client.query(
-    "INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES ($1, $2, $3, 'Protokoll Tester', 'Mitarbeiter') RETURNING id",
+    "INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES ($1, $2, $3, 'Protokoll Tester', 'User') RETURNING id",
     [firmaA, `protokoll-${firmaA}@example.test`, hash]
   );
   return rows[0].id;

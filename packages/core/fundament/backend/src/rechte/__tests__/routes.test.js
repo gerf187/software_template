@@ -24,11 +24,9 @@ async function erstelleBenutzer(email, rolle) {
 }
 
 const emailAdmin = `admin-${firma}@example.test`;
-const emailMitarbeiter = `mitarbeiter-${firma}@example.test`;
-const emailBetrachter = `betrachter-${firma}@example.test`;
+const emailUser = `user-${firma}@example.test`;
 await erstelleBenutzer(emailAdmin, "Admin");
-await erstelleBenutzer(emailMitarbeiter, "Mitarbeiter");
-await erstelleBenutzer(emailBetrachter, "Betrachter");
+await erstelleBenutzer(emailUser, "User");
 
 const server = createApp().listen(0);
 const basis = `http://localhost:${server.address().port}`;
@@ -52,7 +50,7 @@ async function login(email) {
 }
 
 test("Login liefert die eigenen Rechte mit", async () => {
-  const { daten } = await login(emailMitarbeiter);
+  const { daten } = await login(emailUser);
   assert.equal(daten.rechte.kontakte.sehen, true);
   assert.equal(daten.rechte.kontakte.loeschen, false);
 });
@@ -63,17 +61,11 @@ test("Admin darf die Rechte-Matrix sehen ('Wer sieht was')", async () => {
   assert.equal(res.status, 200);
   const rows = await res.json();
   assert.ok(rows.length > 0);
-  assert.ok(rows.some((r) => r.rolle === "Betrachter" && r.bereich === "kontakte"));
+  assert.ok(rows.some((r) => r.rolle === "User" && r.bereich === "kontakte"));
 });
 
-test("Mitarbeiter darf die Rechte-Matrix nicht sehen", async () => {
-  const { cookie } = await login(emailMitarbeiter);
-  const res = await fetch(`${basis}/api/rechte`, { headers: { cookie } });
-  assert.equal(res.status, 403);
-});
-
-test("Betrachter darf die Rechte-Matrix nicht sehen", async () => {
-  const { cookie } = await login(emailBetrachter);
+test("User darf die Rechte-Matrix nicht sehen", async () => {
+  const { cookie } = await login(emailUser);
   const res = await fetch(`${basis}/api/rechte`, { headers: { cookie } });
   assert.equal(res.status, 403);
 });

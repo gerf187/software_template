@@ -137,8 +137,7 @@ export async function werkstattDatenAnlegen() {
     await client.query(
       `INSERT INTO users (firma_id, email, passwort_hash, name, rolle) VALUES
        ($1, 'admin-a@werkstatt.test', $2, 'Admin (Firma A)', 'Admin'),
-       ($1, 'mitarbeiter-a@werkstatt.test', $2, 'Mitarbeiter (Firma A)', 'Mitarbeiter'),
-       ($1, 'betrachter-a@werkstatt.test', $2, 'Betrachter (Firma A)', 'Betrachter')`,
+       ($1, 'user-a@werkstatt.test', $2, 'User (Firma A)', 'User')`,
       [firmaA, hash]
     );
     const idsA = await kontakteAnlegen(client, firmaA, KONTAKTE_FIRMA_A);
@@ -185,8 +184,7 @@ async function run() {
   await werkstattDatenAnlegen();
   console.log(`Werkstatt-Demo-Daten stehen. Passwort für alle Test-Konten: ${PASSWORT}`);
   console.log("  admin-a@werkstatt.test        -- Admin, Demo Firma A");
-  console.log("  mitarbeiter-a@werkstatt.test  -- Mitarbeiter, Demo Firma A");
-  console.log("  betrachter-a@werkstatt.test   -- Betrachter, Demo Firma A");
+  console.log("  user-a@werkstatt.test         -- User, Demo Firma A");
   console.log("  admin-b@werkstatt.test        -- Admin, Demo Firma B");
   console.log("  superadmin@werkstatt.test     -- Superadmin, keine Firma");
   await ownerPool.end();

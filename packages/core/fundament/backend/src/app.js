@@ -4,7 +4,7 @@ import authRoutes from "./auth/routes.js";
 import werkstattRoutes from "./werkstatt/routes.js";
 import rechteRoutes from "./rechte/routes.js";
 import kontakteRoutes from "./kontakte/routes.js";
-import benutzerRoutes from "./benutzer/routes.js";
+import mitarbeiterRoutes from "./mitarbeiter/routes.js";
 import superadminRoutes from "./superadmin/routes.js";
 import { requireAuth } from "./auth/middleware.js";
 import { ladeModule } from "./module/lade.js";
@@ -26,7 +26,7 @@ export function createApp({
   app.use("/api/auth", authRoutes);
   app.use("/api/rechte", rechteRoutes);
   app.use("/api/kontakte", kontakteRoutes);
-  app.use("/api/benutzer", benutzerRoutes);
+  app.use("/api/mitarbeiter", mitarbeiterRoutes);
   app.use("/api/superadmin", superadminRoutes);
 
   // Nicht freigeschaltete Bausteine gibt es für diese Firma per API nicht

@@ -38,8 +38,7 @@ zwei Demo-Firmen, 5 Test-Konten, Passwort überall `Werkstatt-Test-2026`.
 | E-Mail | Rolle | Firma |
 |---|---|---|
 | `admin-a@werkstatt.test` | Admin | Demo Firma A |
-| `mitarbeiter-a@werkstatt.test` | Mitarbeiter | Demo Firma A |
-| `betrachter-a@werkstatt.test` | Betrachter | Demo Firma A |
+| `user-a@werkstatt.test` | User | Demo Firma A |
 | `admin-b@werkstatt.test` | Admin | Demo Firma B |
 | `superadmin@werkstatt.test` | Superadmin | keine |
 

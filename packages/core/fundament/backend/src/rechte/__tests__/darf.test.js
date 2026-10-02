@@ -26,17 +26,10 @@ test("Admin darf in seiner Firma Kontakte sehen, bearbeiten und löschen", async
   assert.equal(await darf(user, "kontakte", "loeschen"), true);
 });
 
-test("Mitarbeiter darf Kontakte sehen und bearbeiten, aber nicht löschen", async () => {
-  const user = { firmaId: firmaA, rolle: "Mitarbeiter" };
+test("User darf Kontakte sehen und bearbeiten, aber nicht löschen", async () => {
+  const user = { firmaId: firmaA, rolle: "User" };
   assert.equal(await darf(user, "kontakte", "sehen"), true);
   assert.equal(await darf(user, "kontakte", "bearbeiten"), true);
-  assert.equal(await darf(user, "kontakte", "loeschen"), false);
-});
-
-test("Betrachter darf Kontakte nur sehen, nicht bearbeiten oder löschen", async () => {
-  const user = { firmaId: firmaA, rolle: "Betrachter" };
-  assert.equal(await darf(user, "kontakte", "sehen"), true);
-  assert.equal(await darf(user, "kontakte", "bearbeiten"), false);
   assert.equal(await darf(user, "kontakte", "loeschen"), false);
 });
 
@@ -53,13 +46,13 @@ test("Unbekannter Bereich: keine Berechtigung statt Absturz", async () => {
 test("Rechte einer Firma wirken nicht auf eine andere Firma", async () => {
   await withFirma(firmaB, (client) =>
     client.query(
-      "UPDATE rechte SET loeschen = true WHERE firma_id = $1 AND rolle = 'Mitarbeiter' AND bereich = 'kontakte'",
+      "UPDATE rechte SET loeschen = true WHERE firma_id = $1 AND rolle = 'User' AND bereich = 'kontakte'",
       [firmaB]
     )
   );
 
-  const mitarbeiterA = { firmaId: firmaA, rolle: "Mitarbeiter" };
-  const mitarbeiterB = { firmaId: firmaB, rolle: "Mitarbeiter" };
-  assert.equal(await darf(mitarbeiterA, "kontakte", "loeschen"), false);
-  assert.equal(await darf(mitarbeiterB, "kontakte", "loeschen"), true);
+  const userA = { firmaId: firmaA, rolle: "User" };
+  const userB = { firmaId: firmaB, rolle: "User" };
+  assert.equal(await darf(userA, "kontakte", "loeschen"), false);
+  assert.equal(await darf(userB, "kontakte", "loeschen"), true);
 });

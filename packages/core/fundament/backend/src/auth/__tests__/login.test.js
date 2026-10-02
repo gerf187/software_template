@@ -17,7 +17,7 @@ async function erstelleBenutzer(email, aktiv) {
   const hash = await hashPassword(PASSWORT);
   await withFirma(firma, (client) =>
     client.query(
-      "INSERT INTO users (firma_id, email, passwort_hash, name, rolle, aktiv) VALUES ($1, $2, $3, 'Test', 'Mitarbeiter', $4)",
+      "INSERT INTO users (firma_id, email, passwort_hash, name, rolle, aktiv) VALUES ($1, $2, $3, 'Test', 'User', $4)",
       [firma, email, hash, aktiv]
     )
   );

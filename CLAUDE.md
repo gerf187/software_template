@@ -73,7 +73,7 @@ saas-grundgeruest/
   packages/
     core/
       fundament/           ← immer drin
-        frontend/          ← Design-System, Komponenten, Layout, Login, Benutzer,
+        frontend/          ← Design-System, Komponenten, Layout, Login, Mitarbeiter,
                              Rechte, Einstellungen, Superadmin, Kontakte, Suche
         backend/           ← Auth, Mandanten-Schutz, Rechte, Änderungsprotokoll,
                              Modul-Verwaltung, Basis-Routen, DB-Schema Fundament
@@ -134,11 +134,14 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
 | Rolle | Ebene | Darf |
 |---|---|---|
 | **Superadmin** | Plattform (nur Björn) | Firmen anlegen/sperren, Firmen-Admins einladen, **Bausteine pro Firma freischalten**. Sieht **keine** Fachdaten der Firmen. |
-| **Admin** | Firma | Alles in der eigenen Firma inkl. Benutzer, Einstellungen, Löschen |
-| **Mitarbeiter** | Firma | Daten sehen und bearbeiten, nicht löschen, keine Benutzer/Einstellungen |
-| **Betrachter** | Firma | Nur lesen – muss im Code tatsächlich durchgesetzt werden |
+| **Admin** | Firma | Alles in der eigenen Firma inkl. Mitarbeiter, Einstellungen, Löschen |
+| **User** | Firma | Daten sehen und bearbeiten, nicht löschen, keine Mitarbeiterverwaltung/Einstellungen |
 
-- **Superadmin hat keine Firma:** `firma_id` ist bei Benutzern nur beim Superadmin
+Stand 2026-10-02 (Björns Entscheidung): nur noch zwei Rollen pro Firma, Admin und
+User. Keine Betrachter-Rolle mehr – externe Einsicht läuft künftig über ein
+eigenes Kundenportal (Abschnitt 13), nicht über eine interne Rolle.
+
+- **Superadmin hat keine Firma:** `firma_id` ist bei Mitarbeitern nur beim Superadmin
   leer, bei allen anderen Rollen Pflicht (Datenbank-Regel erzwingt das). Dadurch
   liefert die Mandanten-Trennung dem Superadmin nie Fachdaten (Kontakte, Notizen,
   Aufgaben) – er arbeitet nur mit Plattform-Tabellen (`firmen`, `firma_module`).
@@ -149,15 +152,18 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
   z. B. `darf('projekte', 'loeschen')`.
 - Seite „Wer sieht was“ unter Einstellungen zeigt die Matrix als Tabelle (nur lesen in Phase 1).
 - Rechte werden **im Backend** geprüft. Frontend blendet nur aus (Komfort, kein Schutz).
-- Anzeigenamen der Rollen sind pro App konfigurierbar (z. B. „Berater“ statt „Mitarbeiter“).
-- Benutzer haben Reiter „Aktiv“ / „Archiv“ statt Löschen.
+- Anzeigenamen der Rollen sind pro App konfigurierbar.
+- Mitarbeiter haben Reiter „Aktiv“ / „Archiv“ statt Löschen. Endgültiges Löschen ist im
+  Archiv zusätzlich möglich, aber nur wenn der Mitarbeiter keine Einträge im
+  Änderungsprotokoll hat (DSGVO Abschnitt 6: endgültiges Löschen nur über eigene
+  Funktion, ohne die Nachvollziehbarkeit alter Protokoll-Einträge zu zerstören).
 
 ---
 
 ## 8. Baukasten – Modul-System
 
 ### Fundament (immer drin, nicht abwählbar)
-Login, Firmen, Benutzer, Rechte-Matrix, Einstellungen, Superadmin, Änderungsprotokoll,
+Login, Firmen, Mitarbeiter, Rechte-Matrix, Einstellungen, Superadmin, Änderungsprotokoll,
 DSGVO-Grundlagen, globale Suche, **Kontakte** (inkl. Notizen und freie Aufgaben am Kontakt).
 
 ### Regeln für jeden Baustein
@@ -209,7 +215,7 @@ Verbesserungen gegenüber dem Original:
 - **Bedingte Felder:** erscheinen erst, wenn die zugehörige Checkbox aktiv ist.
 - **Löschen immer über die Dialog-Komponente**, nie über `confirm()`.
 - **Zwei Seitenmuster:**
-  - a) **Einfache Listen** (Benutzer, Firmen, Einstellungs-Listen): Liste links +
+  - a) **Einfache Listen** (Firmen, Einstellungs-Listen): Liste links +
     Formular rechts (`.list-form-split`, Grid 1.3fr / 1fr, mobil untereinander).
     Klick auf eine Zeile füllt das Formular, die Zeile wird hervorgehoben
     (`--accent-soft`, Tabelle-Prop `selectedRowKey`). Gleiches Formular für
@@ -217,6 +223,12 @@ Verbesserungen gegenüber dem Original:
     Bearbeiten-Modus (führt zurück in den leeren Anlegen-Zustand). Bei
     ungespeicherten Änderungen vor dem Zeilenwechsel nachfragen (Dialog).
     Beispiel: Superadmin-Seite „Firmen“.
+  - a2) **Liste mit Dialog statt festem Formular** (Mitarbeiter, unter
+    Einstellungen): volle Breite Liste mit Reitern Aktiv/Archiv, kein
+    dauerhaftes Formular daneben. Ein Button oben öffnet die Eingabemaske als
+    Dialog, sowohl zum Anlegen als auch (Klick auf eine Zeile) zum Bearbeiten.
+    Sinnvoll, wenn die Liste lang werden kann und ein ständig sichtbares
+    Formular zu viel Platz wegnimmt. Beispiel: Seite „Mitarbeiter“.
   - b) **Datensätze mit Tabs** (Kontakte, später Projekte): Liste → eigene
     Detailseite (Akte) mit Tabs. Beispiel: Kontakte.
 
@@ -271,15 +283,15 @@ PostgreSQL im Codespace über Docker, Schriften + Icons einmalig holen (mit Lize
 Reihenfolge: Design-System → Komponenten → Layout/Sidebar → Datenbank-Schema Fundament
 (firmen, firma_module, users, sessions, rechte, aenderungsprotokoll, contacts, notes, tasks)
 → Login → Mandanten-Schutz inkl. Tests → Modul-System inkl. Superadmin-Seite „Bausteine“
-→ Rechte-Matrix → Änderungsprotokoll → Benutzer → Einstellungen → Kontakte → Suche
+→ Rechte-Matrix → Änderungsprotokoll → Mitarbeiter → Einstellungen → Kontakte → Suche
 → **erster Baustein „Projekte“** mit Projekt-Akte (beweist, dass das Modul-System funktioniert).
 
 Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, Login,
 Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
 Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
 Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
-Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“ und Benutzerverwaltung
-(Schritt 1) sind fertig.
+Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“ und Mitarbeiterverwaltung
+(Schritt 1 + Nachbesserung) sind fertig.
 Offen: Einstellungen pro Firma (Name/Logo/Akzentfarbe/Fristen),
 globale Suche, Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
 
@@ -290,11 +302,20 @@ und b (schon bei Kontakten da), Löschen-über-Dialog-Regel bestätigt (nirgends
 Musterseite `/muster` ist komplett entfernt (Code + Menüpunkt), Björn beschreibt
 Design direkt statt über einen Komponenten-Katalog.
 
-Schritt 1 (Benutzerverwaltung, Abschnitt 7) ist fertig: Seite „Benutzer“ nach
-Seitenmuster a mit Reitern Aktiv/Archiv, Einladen mit Startpasswort (Zwang zum
-Ändern beim ersten Login), Rolle ändern, Archivieren über Dialog, Reaktivieren.
-Schutzregeln: ein Admin kann sich nicht selbst herabstufen/archivieren, der
-letzte aktive Admin einer Firma ist immer geschützt — beides mit Tests.
+Schritt 1 (Mitarbeiterverwaltung, Abschnitt 7) ist fertig, nach einer Nachbesserung
+direkt am selben Tag (2026-10-02) auf Björns Rückmeldung hin. Aktueller Stand:
+Seite „Mitarbeiter“ liegt unter Einstellungen (eigener Reiter, nicht mehr eigener
+Menüpunkt), nach Seitenmuster a2 (volle Liste mit Reitern Aktiv/Archiv, Anlegen/
+Bearbeiten über einen Dialog statt festem Formular). Nur noch zwei Rollen: Admin
+und User (Betrachter komplett entfernt, siehe Abschnitt 7). Einladen mit
+Startpasswort (Zwang zum Ändern beim ersten Login), Rolle ändern, Archivieren über
+Dialog, Reaktivieren, **endgültig löschen** im Archiv (nur wenn der Mitarbeiter
+keine Einträge im Änderungsprotokoll hat, sonst Fehlermeldung und er bleibt
+archiviert). Schutzregeln: ein Admin kann sich nicht selbst herabstufen/archivieren,
+der letzte aktive Admin einer Firma ist immer geschützt — alles mit Tests.
+Offen/vertagt: eine bearbeitbare Rechte-Matrix, damit ein Firmen-Admin selbst
+festlegen kann, was die Rolle User sehen/bearbeiten darf (aktuell Phase-1-Vorgabe:
+nur lesen) – Björn will das noch genauer festlegen.
 
 **Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
 Schritt 2 (Einstellungen pro Firma) → Schritt 3 (globale Suche) → Schritt 4 (Dashboard).
@@ -332,9 +353,8 @@ die komplette Software.
 - Zwei Demo-Firmen mit Demo-Daten (Kontakte, Projekte, Notizen, Aufgaben),
   erzeugt über ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
 - Die zweite Demo-Firma dient dazu, die Mandanten-Trennung selbst durchzuklicken.
-- 5 Test-Nutzer: in Demo-Firma A je einer für Admin, Mitarbeiter, Betrachter;
-  in Demo-Firma B ein Nutzer (für den Trennungstest); dazu ein Superadmin ohne
-  Firma.
+- 4 Test-Nutzer: in Demo-Firma A je einer für Admin und User; in Demo-Firma B
+  ein Admin (für den Trennungstest); dazu ein Superadmin ohne Firma.
 - Rollen-Umschalter nur in dieser App: mit einem Klick als andere Rolle ansehen
   (echter Login im Hintergrund, kein Trick). Die Server-Route dafür existiert nur,
   wenn die App die Werkstatt ist **und** es kein Produktivbetrieb ist – sonst wird
@@ -358,7 +378,7 @@ die komplette Software.
 | Auftrag | ⭐ Projekte + Akte · Ablaufpläne · ⭐ Termine/Kalender (ICS, Outlook/Google) · ⭐ Wiedervorlagen · Fristen + Fristbalken · Objekte/Gebäude projektübergreifend · Vor-Ort-Protokoll mit Fotos + Unterschrift · Plausibilitätsprüfung von Daten |
 | Dokumente | ⭐ Dokumentenablage · ⭐ Dokumente aus Vorlagen erzeugen · Upload-Routing (automatisch zuordnen) · E-Signatur |
 | Geld | ⭐ Rechnungen + E-Rechnung (XRechnung/ZUGFeRD) · Mahnwesen · DATEV-Export · Stundensatz-Auswertung |
-| Mitarbeiter | Mitarbeiter (Stammdaten, Qualifikationen; Mitarbeiter ≠ Benutzer) · Abwesenheit (Urlaubskalender, Antrag + Freigabe, Krank, Resturlaub) · Zeiterfassung (Stempeluhr am Handy, Buchung auf Projekte; braucht Projekte; Korrekturen nur mit Protokoll) · Team-Board · Geräte/Fahrzeuge · Schulungsnachweise |
+| Mitarbeiter | Zeiterfassung (Stempeluhr am Handy, Buchung auf Projekte, auch Stundenlohn/Gehalt zur vorbereitenden Lohnabrechnung; braucht Projekte; Korrekturen nur mit Protokoll) · Abwesenheit (Urlaubskalender, Antrag + Freigabe, Krank, Resturlaub) · Team-Board · Geräte/Fahrzeuge · Schulungsnachweise |
 | Kommunikation | ⭐ E-Mails in die Akte · E-Mail-Versand mit Textvorlagen (EU-Dienst) · Benachrichtigungen |
 | KI | RAG-Wissensdatenbank · Dokumente auslesen · Textentwürfe · Sprachnotiz → Protokoll |
 | Marketing | Social Media · Website-Anbindung |
