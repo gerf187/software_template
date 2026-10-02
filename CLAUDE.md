@@ -292,7 +292,7 @@ Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispal
 Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
 Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“, Mitarbeiterverwaltung
 (Schritt 1 + Nachbesserung), Einstellungen pro Firma (Schritt 2: Name, Logo,
-Akzentfarbe) und globale Suche (Schritt 3) sind fertig.
+Akzentfarbe), globale Suche (Schritt 3) und Start-Dashboard (Schritt 4) sind fertig.
 Offen: Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
 
 Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
@@ -342,10 +342,28 @@ Bereiche wie Mitarbeiterverwaltung, Stammdaten/Einstellungen, Projekte einzeln
 an-/abwählbar. Vor dem Bauen erneut mit Björn klären (Abweichung vom heutigen
 rollenbasierten Modell).
 
-**Nächste Schritte (freigegeben, Reihenfolge steht, noch nicht begonnen):**
-Schritt 4 (Dashboard).
-Arbeitsweise: bauen → Tests grün → commit + push → kurzer Zwischenbericht → weiter,
-nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten Tests.
+Schritt 4 (Start-Dashboard) ist fertig (2026-10-02): Start-Seite zeigt echte
+Zahlen statt Platzhaltertext – Anzahl Kontakte, Anzahl offener Aufgaben, und
+eine Liste „Aufgaben, die Aufmerksamkeit brauchen“ (überfällig/heute zuerst,
+Klick führt zum Kontakt). Noch **kein** eigener Baustein aus dem Katalog
+(Abschnitt 13 „Dashboard ‚Braucht Aufmerksamkeit‘“) – nur die Fundament-eigene
+Startseite mit dem, was es schon gibt (Kontakte + freie Aufgaben). Der
+richtige Baustein kommt erst, wenn Projekte/Fristen existieren.
+
+Zwischenstand (2026-10-02): kurz geklärt, ob freie Aufgaben am Kontakt ins
+Fundament gehören oder erst in die Branchen-Software – bestätigt: bleiben im
+Fundament (Abschnitt 11), sind branchenneutral; komplexere Abläufe mit
+Voraussetzungen/Phasen kommen separat als Baustein „Ablaufpläne“ (Phase 2).
+Keine Code-Änderung nötig, war schon so gebaut.
+
+**Nächste Schritte:** Mit Schritt 4 ist die in Abschnitt 12 geplante
+Grund-Reihenfolge für Phase 1 durch (bis auf den Baustein „Projekte“, der laut
+Abschnitt 12 erst mit der Energieberater-Software kommt). Nächster Schritt ist
+noch nicht freigegeben – mit Björn klären, was als Nächstes sinnvoll ist
+(z. B. die offene Rechte-Matrix-Frage angehen, oder direkt Richtung Phase 4).
+Arbeitsweise bleibt: bauen → Tests grün → commit + push → kurzer Zwischenbericht
+→ weiter, nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder roten
+Tests.
 
 Fundament für Ablaufpläne mitdenken: Tabelle `tasks` mit firma_id, contact_id,
 project_id, zustaendig_id, faellig_am, status, step_key (gesetzt = aus Ablaufplan,
