@@ -6,6 +6,7 @@ import rechteRoutes from "./rechte/routes.js";
 import kontakteRoutes from "./kontakte/routes.js";
 import mitarbeiterRoutes from "./mitarbeiter/routes.js";
 import firmaRoutes from "./firma/routes.js";
+import sucheRoutes from "./suche/routes.js";
 import superadminRoutes from "./superadmin/routes.js";
 import { requireAuth } from "./auth/middleware.js";
 import { ladeModule } from "./module/lade.js";
@@ -32,6 +33,7 @@ export function createApp({
   app.use("/api/kontakte", kontakteRoutes);
   app.use("/api/mitarbeiter", mitarbeiterRoutes);
   app.use("/api/firma", firmaRoutes);
+  app.use("/api/suche", sucheRoutes);
   app.use("/api/superadmin", superadminRoutes);
 
   // Nicht freigeschaltete Bausteine gibt es für diese Firma per API nicht

@@ -16,3 +16,4 @@ export { default as PageHeader } from "./PageHeader.jsx";
 export { default as PhaseBar } from "./PhaseBar.jsx";
 export { default as RecordView } from "./RecordView.jsx";
 export { default as DeadlineBar } from "./DeadlineBar.jsx";
+export { default as GlobaleSuche } from "./GlobaleSuche.jsx";

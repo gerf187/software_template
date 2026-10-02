@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Button from "../components/Button.jsx";
+import GlobaleSuche from "../components/GlobaleSuche.jsx";
 
 export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -19,6 +20,8 @@ export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout 
           )}
           {subtitle && <div className="sidebar-brand-subtitle">{subtitle}</div>}
         </div>
+
+        <GlobaleSuche />
 
         <nav className="sidebar-nav">
           {groups.map((group) => (
