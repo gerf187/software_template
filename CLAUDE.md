@@ -19,7 +19,11 @@ Diese Datei ist die **einzige** Vorgabe – es gibt kein weiteres Dokument.
 ## 2. Arbeitsregeln – verbindlich
 
 1. **Keine eigenständigen Änderungen.** Vor jedem Arbeitsschritt: kurzen Plan vorlegen
-   (welche Dateien, was genau), auf Freigabe warten, dann umsetzen.
+   (welche Dateien, was genau), auf Freigabe warten, dann umsetzen. Bei einer
+   freigegebenen Reihenfolge aus mehreren Schritten: bauen → Tests grün →
+   commit + push → kurzer Zwischenbericht → nächster Schritt, ohne erneut zu
+   fragen – nur anhalten bei echten Entscheidungen, Sicherheitsfragen oder
+   roten Tests.
 2. **Unklar = sofort melden.** Nicht raten, nicht drumherum arbeiten. Wenn eine Datei
    fehlt, etwas widersprüchlich ist oder ein Befehl fehlschlägt: klar sagen.
 3. **Kurz und einfach antworten.** Deutsch, verständlich, ohne Fachchinesisch.
@@ -68,24 +72,21 @@ Diese Datei ist die **einzige** Vorgabe – es gibt kein weiteres Dokument.
 ## 5. Ordnerstruktur (Ziel)
 
 ```
-saas-grundgeruest/
+software_template/
   CLAUDE.md
   packages/
     core/
       fundament/           ← immer drin
-        frontend/          ← Design-System, Komponenten, Layout, Login, Mitarbeiter,
-                             Rechte, Einstellungen, Superadmin, Kontakte, Suche
-        backend/           ← Auth, Mandanten-Schutz, Rechte, Änderungsprotokoll,
-                             Modul-Verwaltung, Basis-Routen, DB-Schema Fundament
-      modules/             ← Bausteine, je ein Ordner
-        projekte/
-          modul.config.js
-          frontend/
-          backend/
-          db/
-        ablaufplaene/
-        mitarbeiter/
-        ...
+        frontend/src/      ← Design-System, Komponenten, Layout, Login, Mitarbeiter,
+                             Rechte, Einstellungen, Firma, Kontakte, Suche, Dashboard
+        backend/src/       ← Auth, Mandanten-Schutz, Rechte, Module, Superadmin,
+                             Basis-Routen; backend/db/migrations/ = DB-Schema Fundament
+    modules/              ← gemeinsame Bausteine, branchenneutral, je ein Ordner
+      projekte/           ← noch nicht gebaut (Abschnitt 12)
+        modul.config.js
+        frontend/
+        backend/
+        db/
   apps/
     energieberater/
       app.config.js
@@ -137,9 +138,9 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
 | **Admin** | Firma | Alles in der eigenen Firma inkl. Mitarbeiter, Einstellungen, Löschen |
 | **User** | Firma | Je Baustein das, was der Baustein für User vorsieht (i. d. R. sehen + bearbeiten, nicht löschen). Fundament-Bereiche Mitarbeiterverwaltung, Einstellungen und Änderungsprotokoll sieht nur Admin. |
 
-Stand 2026-10-02 (Björns Entscheidung): nur noch zwei Rollen pro Firma, Admin und
-User. Keine Betrachter-Rolle mehr – externe Einsicht läuft künftig über ein
-eigenes Kundenportal (Abschnitt 13), nicht über eine interne Rolle.
+Nur zwei Rollen pro Firma, Admin und User, keine Betrachter-Rolle – externe
+Einsicht läuft über ein eigenes Kundenportal (Abschnitt 13), nicht über eine
+interne Rolle.
 
 - **Superadmin hat keine Firma:** `firma_id` ist bei Mitarbeitern nur beim Superadmin
   leer, bei allen anderen Rollen Pflicht (Datenbank-Regel erzwingt das). Dadurch
@@ -156,10 +157,8 @@ eigenes Kundenportal (Abschnitt 13), nicht über eine interne Rolle.
   gemeldeten Bereich automatisch vollen Zugriff (reine Daten-Voreinstellung,
   keine Sonderprüfung im Code). Im Code wird nie `rolle === 'Admin'` geprüft,
   sondern immer das Recht, z. B. `darf(user, 'projekte', 'loeschen')`.
-  Stand 2026-10-02 (Björns Entscheidung): **kein** bearbeitbarer Rollen-Standard
-  und **keine** Ausnahmen pro einzelnem Mitarbeiter – bewusst so einfach wie
-  möglich gehalten. Ein angefangener Entwurf für Mitarbeiter-Ausnahmen wurde
-  noch vor der Umsetzung verworfen.
+  Bewusst **kein** bearbeitbarer Rollen-Standard und **keine** Ausnahmen pro
+  einzelnem Mitarbeiter – so einfach wie möglich gehalten.
 - Seite „Wer sieht was“ unter Einstellungen zeigt nur, was die Rolle User darf
   (nur lesen) – Admin hat ohnehin immer vollen Zugriff, braucht keine eigene Zeile.
 - Rechte werden **im Backend** geprüft. Frontend blendet nur aus (Komfort, kein Schutz).
@@ -196,7 +195,7 @@ DSGVO-Grundlagen, globale Suche, **Kontakte** (inkl. Notizen und freie Aufgaben 
 
 ### Weitere Einstellungen
 **Pro App (`app.config.js`):** Produktname, Menügruppen, Projektstatus-Liste,
-Projektarten, Phasen und Tabs der Projekt-Akte, Standard-Rechte-Matrix, Rollen-Anzeigenamen.
+Projektarten, Phasen und Tabs der Projekt-Akte, Rollen-Anzeigenamen.
 
 **Pro Firma (Seite „Einstellungen“, pflegt der Firmen-Admin):** Firmenname, Logo
 (erscheint in der Sidebar), Akzentfarbe, Fristen.
@@ -270,7 +269,6 @@ aussehen soll, das wird gemeinsam erarbeitet.
 - Eine Adresse am Kontakt (Straße und Hausnummer, PLZ, Ort). Keine Objektadresse am
   Kontakt: Ein Kunde kann mehrere Objekte haben, die Objektadresse gehört zum
   Projekt bzw. Auftrag (Baustein „Projekte“ / „Objekte“).
-- Feld „Empfohlen von“ (Verweis auf anderen Kontakt oder Freitext, z. B. „Google“).
 - Notizen und freie Aufgaben (Freitext + Fälligkeit) direkt am Kontakt.
 
 **Projekt-Akte (Baustein „Projekte“):** Eine Seite pro Projekt, auf der alles liegt.
@@ -283,142 +281,53 @@ Tabs in Phase 1: Übersicht, Kontakt, Notizen, Aufgaben, Verlauf.
 ## 12. Phasen
 
 Jede Phase endet mit einer kurzen Zusammenfassung für Björn und wartet auf Freigabe.
+Details zu fertigen Schritten stehen in den Commits, nicht hier – hier nur der Stand.
 
-**Phase 0 – Grundstruktur**
-Monorepo mit Ordnern wie in Abschnitt 5, Workspaces, Frontend + Backend starten,
-PostgreSQL im Codespace über Docker, Schriften + Icons einmalig holen (mit Lizenzen),
-`README.md` mit Startanleitung.
-✔ Fertig, wenn: `npm run dev` startet eine leere App mit Sidebar-Layout.
+**Phase 0 – Grundstruktur** ✅ fertig
+Monorepo (Abschnitt 5), Workspaces, Frontend + Backend, PostgreSQL im Codespace,
+Schriften + Icons, `README.md`.
 
 **Phase 1 – Fundament + Baustein „Projekte“**
-Reihenfolge: Design-System → Komponenten → Layout/Sidebar → Datenbank-Schema Fundament
-(firmen, firma_module, users, sessions, rechte, aenderungsprotokoll, contacts, notes, tasks)
-→ Login → Mandanten-Schutz inkl. Tests → Modul-System inkl. Superadmin-Seite „Bausteine“
-→ Rechte-Matrix → Änderungsprotokoll → Mitarbeiter → Einstellungen → Kontakte → Suche
-→ **erster Baustein „Projekte“** mit Projekt-Akte (beweist, dass das Modul-System funktioniert).
+- ✅ Design-System, Komponenten, Layout/Sidebar
+- ✅ Datenbank-Schema Fundament, Login, Mandanten-Schutz
+- ✅ Modul-System inkl. Superadmin-Seite „Bausteine“
+- ✅ Rechte-Matrix (Abschnitt 7: Baustein meldet eigene Bereiche an, Admin immer
+  alles, keine Ausnahmen pro Mitarbeiter)
+- ✅ Änderungsprotokoll
+- ✅ Mitarbeiter (Einladen, Rollen, Archiv, endgültig löschen, Admin-Schutzregeln)
+- ✅ Einstellungen pro Firma (Name, Logo, Akzentfarbe; Fristen bewusst offen,
+  kommen erst mit Phase 2)
+- ✅ Kontakte (inkl. Notizen, freie Aufgaben, Verlauf nur für Admin)
+- ✅ Globale Suche (bisher nur Kontakte, erweiterbar pro Baustein)
+- ✅ Start-Dashboard
+- ⏳ Baustein „Projekte“ – kommt mit Phase 4. Rahmen (Projekt-Akte, Phasen-Leiste,
+  Tabs-Mechanik) ist branchenneutral und gehört nach `packages/modules/projekte/`
+  (Abschnitt 5); Inhalte (Phasen-Namen, Tabs, Fachbausteine) kommen pro App.
 
-Stand: Design-System, Komponenten, Layout/Sidebar, Datenbank-Schema Fundament, Login,
-Mandanten-Schutz, Änderungsprotokoll, Rechte-Matrix (inkl. Seite „Wer sieht was“),
-Kontakte (mit Oberfläche, inkl. Schritt K: Zeile anklickbar, kompaktes zweispaltiges
-Formular, Objektadresse entfernt, Empfehlung-Felder entfernt, Kopfkarte auf der
-Detailseite), Modul-System inkl. Superadmin-Seite „Bausteine“, Mitarbeiterverwaltung
-(Schritt 1 + Nachbesserung), Einstellungen pro Firma (Schritt 2: Name, Logo,
-Akzentfarbe), globale Suche (Schritt 3) und Start-Dashboard (Schritt 4) sind fertig.
-Offen: Baustein „Projekte“ (kommt erst mit der Energieberater-Software, Abschnitt 12).
-Klargestellt (2026-10-02, Björns Frage): der Projekte-*Rahmen* (Projekt-Akte,
-Phasen-Leiste, Status, Tabs-Mechanik) ist branchenneutral und gehört als
-gemeinsamer Baustein nach `packages/core/modules/projekte/` (Abschnitt 5) –
-nur die *Inhalte* (Projektarten, Phasen-Namen, Tabs, Fachbausteine wie
-Anträge/Gutachten) sind pro App über `app.config.js` bzw. eigene Fachbausteine
-unterschiedlich. Trotzdem bewusst vertagt: ohne echten Bedarf (Energieberater)
-würde der Rahmen am Reißbrett geraten statt am echten Bedarf gebaut.
-
-Schritt 0 (Design-Ergänzungen, Abschnitt 9) ist fertig: Suche ohne Button mit
-250-ms-Verzögerung (Kontakte), Abschnitts-Labels, Seitenmuster a (Liste + Formular,
-am Beispiel Superadmin „Firmen“ umgesetzt, Einladen/Bausteine ins Formular integriert)
-und b (schon bei Kontakten da), Löschen-über-Dialog-Regel bestätigt (nirgends `confirm()`).
-Musterseite `/muster` ist komplett entfernt (Code + Menüpunkt), Björn beschreibt
-Design direkt statt über einen Komponenten-Katalog.
-
-Schritt 1 (Mitarbeiterverwaltung, Abschnitt 7) ist fertig, nach einer Nachbesserung
-direkt am selben Tag (2026-10-02) auf Björns Rückmeldung hin. Aktueller Stand:
-Seite „Mitarbeiter“ liegt unter Einstellungen (eigener Reiter, nicht mehr eigener
-Menüpunkt), nach Seitenmuster a2 (volle Liste mit Reitern Aktiv/Archiv, Anlegen/
-Bearbeiten über einen Dialog statt festem Formular). Nur noch zwei Rollen: Admin
-und User (Betrachter komplett entfernt, siehe Abschnitt 7). Einladen mit
-Startpasswort (Zwang zum Ändern beim ersten Login), Rolle ändern, Archivieren über
-Dialog, Reaktivieren, **endgültig löschen** im Archiv (nur wenn der Mitarbeiter
-keine Einträge im Änderungsprotokoll hat, sonst Fehlermeldung und er bleibt
-archiviert). Schutzregeln: ein Admin kann sich nicht selbst herabstufen/archivieren,
-der letzte aktive Admin einer Firma ist immer geschützt — alles mit Tests.
-Offen/vertagt: eine bearbeitbare Rechte-Matrix, damit ein Firmen-Admin selbst
-festlegen kann, was die Rolle User sehen/bearbeiten darf (aktuell Phase-1-Vorgabe:
-nur lesen) – Björn will das noch genauer festlegen.
-
-Schritt 2 (Einstellungen pro Firma, Abschnitt 8) ist fertig (2026-10-02): eigener
-Reiter „Firma“ unter Einstellungen, nur für Rolle Admin sichtbar/bearbeitbar
-(Recht `einstellungen`). Firmenname, Logo und Akzentfarbe lassen sich pflegen.
-Logo wird als kleines Bild (Daten-URL, max. ca. 200 KB) direkt in
-`firmen.einstellungen` gespeichert, bewusst ohne eigene Datei-Upload-Technik.
-Akzentfarbe wird nach dem Login auf die Design-Variablen angewendet (`--accent`,
-`--accent-soft`, `--bg-sidebar-active`), Status-Farben bleiben unabhängig davon.
-Sidebar zeigt das Logo statt des Produktnamens, sobald eines gesetzt ist.
-Fristen bewusst **nicht** mitgebaut – Björns Entscheidung 2026-10-02: erst wenn der
-Baustein „Ablaufpläne“ (Phase 2) konkrete Felder braucht, kein Rätselraten vorher.
-
-Schritt 3 (globale Suche, Abschnitt 2) ist fertig (2026-10-02): Suchfeld fest in
-der Sidebar, immer sichtbar, ohne Button (250 ms Verzögerung wie jedes andere
-Suchfeld). Durchsucht aktuell nur Kontakte, geprüft über die normale
-Rechte-Prüfung (`darf(user, "kontakte", "sehen")`) – kein Baustein mit eigener
-Suchquelle existiert bisher, daher keine Plugin-Mechanik dafür gebaut (Abschnitt 8,
-Regel 1 sieht das für künftige Bausteine vor; wird nachgerüstet, wenn der erste
-Baustein eine eigene Suchquelle braucht).
-
-Schritt 4 (Start-Dashboard) ist fertig (2026-10-02): Start-Seite zeigt echte
-Zahlen statt Platzhaltertext – Anzahl Kontakte, Anzahl offener Aufgaben, und
-eine Liste „Aufgaben, die Aufmerksamkeit brauchen“ (überfällig/heute zuerst,
-Klick führt zum Kontakt). Noch **kein** eigener Baustein aus dem Katalog
-(Abschnitt 13 „Dashboard ‚Braucht Aufmerksamkeit‘“) – nur die Fundament-eigene
-Startseite mit dem, was es schon gibt (Kontakte + freie Aufgaben). Der
-richtige Baustein kommt erst, wenn Projekte/Fristen existieren.
-
-Zwischenstand (2026-10-02): kurz geklärt, ob freie Aufgaben am Kontakt ins
-Fundament gehören oder erst in die Branchen-Software – bestätigt: bleiben im
-Fundament (Abschnitt 11), sind branchenneutral; komplexere Abläufe mit
-Voraussetzungen/Phasen kommen separat als Baustein „Ablaufpläne“ (Phase 2).
-Keine Code-Änderung nötig, war schon so gebaut.
-
-Rechte-Matrix (2026-10-02) ist geklärt und fertig umgesetzt, **einfacher als
-zunächst angedacht**: kein bearbeitbarer Rollen-Standard, keine Ausnahmen pro
-Mitarbeiter (ein angefangener Entwurf dafür wurde vor der Umsetzung wieder
-verworfen, siehe Abschnitt 7). Stattdessen: jeder Baustein meldet in seiner
-`modul.config.js` über `rechteBereiche` selbst an, was User in seinen eigenen
-Bereichen darf; beim Freischalten eines Bausteins trägt das Fundament das
-automatisch in die Rechte-Tabelle ein (Admin bekommt dabei immer vollen
-Zugriff, als Daten-Voreinstellung, nie als Code-Sonderfall). Nebenbei
-festgelegt: Änderungsprotokoll (Bereich `protokoll`, auch der „Verlauf“-Tab
-am Kontakt) ist jetzt nur für Admin sichtbar, nicht mehr für User – vorher
-unbeabsichtigt offen. „Wer sieht was“ zeigt jetzt nur noch, was User darf
-(Admin-Zeile entfernt, da ohnehin immer voller Zugriff).
-
-**Nächste Schritte:** Mit Schritt 4 und der Rechte-Matrix ist die in
-Abschnitt 12 geplante Grund-Reihenfolge für Phase 1 durch (bis auf den
-Baustein „Projekte“, der laut Abschnitt 12 erst mit der Energieberater-Software
-kommt). Nächster Schritt ist noch nicht freigegeben – mit Björn klären, was
-als Nächstes sinnvoll ist. Arbeitsweise bleibt: bauen → Tests grün → commit +
-push → kurzer Zwischenbericht → weiter, nur anhalten bei echten
-Entscheidungen, Sicherheitsfragen oder roten Tests.
-
-Fundament für Ablaufpläne mitdenken: Tabelle `tasks` mit firma_id, contact_id,
-project_id, zustaendig_id, faellig_am, status, step_key (gesetzt = aus Ablaufplan,
-leer = manuell). Noch keine Engine.
-✔ Fertig, wenn: zwei Testfirmen existieren, getrennt arbeiten, der Trennungstest grün ist
-und „Projekte“ sich pro Firma ein- und ausschalten lässt.
-
-**Phase 2 – Baustein „Ablaufpläne“ (Tagesaufgaben)**
-Nach „Prinzip C“ (Anhang A.5):
-Abläufe als Daten, harte/weiche Voraussetzungen, Status „entfällt“ vs. „ausgeblendet“,
-Pausieren mit Grund, Eskalationsketten, Fristen pro Firma, Tagesaufgaben-Ansicht.
-Vorher eigener Plan mit Freigabe.
+**Phase 2 – Baustein „Ablaufpläne“ (Tagesaufgaben)** ⏳ offen
+Nach „Prinzip C“ (Anhang A.5): Abläufe als Daten, harte/weiche Voraussetzungen,
+Status „entfällt“ vs. „ausgeblendet“, Pausieren mit Grund, Eskalationsketten,
+Fristen pro Firma, Tagesaufgaben-Ansicht. `tasks` hat `step_key` dafür schon
+vorbereitet (gesetzt = aus Vorlage, leer = manuell). Vorher eigener Plan mit Freigabe.
 ✔ Fertig, wenn: ein Projekt aus einer Vorlage seine Aufgaben erzeugt und die
 Tagesaufgaben nur freigegebene Aufgaben zeigen.
 
-**Phase 3 – Betrieb**
+**Phase 3 – Betrieb** ⏳ offen
 Dockerfile, Docker Compose (App, PostgreSQL, Caddy), tägliches Datenbank-Backup
 nach extern, Update-Anleitung mit Backup vorher, einfache Überwachung.
 ✔ Fertig, wenn: Björn mit einer Anleitung die App auf dem VPS starten und aktualisieren kann.
 
-**Phase 4 – Energieberater umziehen**
+**Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
 
-**Phase 5 – Sachverständige starten**
+**Phase 5 – Sachverständige starten** ⏳ offen
 
 **Werkstatt (läuft neben allen Phasen, ab jetzt)**
 `apps/werkstatt` ist keine Kunden-App, sondern Björns eigene Testumgebung für
 die komplette Software.
 - Bietet alle bisher gebauten Bausteine an (`app.config.js`).
-- Zwei Demo-Firmen mit Demo-Daten (Kontakte, Projekte, Notizen, Aufgaben),
-  erzeugt über ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
+- Zwei Demo-Firmen mit Demo-Daten (Kontakte, Notizen, Aufgaben), erzeugt über
+  ein Seed-Skript, jederzeit mit einem Befehl zurücksetzbar.
 - Die zweite Demo-Firma dient dazu, die Mandanten-Trennung selbst durchzuklicken.
 - 4 Test-Nutzer: in Demo-Firma A je einer für Admin und User; in Demo-Firma B
   ein Admin (für den Trennungstest); dazu ein Superadmin ohne Firma.
