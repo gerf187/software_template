@@ -53,6 +53,18 @@ inhalt() {
     | grep -v -e '^--' -e '^\\restrict' -e '^\\unrestrict' | sort
 }
 
+# Das Änderungsprotokoll darf die App-Rolle nicht ändern oder löschen
+# (Migration 0008: REVOKE UPDATE, DELETE). Die Prüfung läuft als App-Rolle;
+# "WHERE false" ändert nichts, die Rechteprüfung greift trotzdem.
+schreibschutz() {
+  if psql_als "$APP_DB_USER" "$APP_DB_PASSWORD" "UPDATE aenderungsprotokoll SET aktion = aktion WHERE false" >/dev/null 2>&1 \
+     || psql_als "$APP_DB_USER" "$APP_DB_PASSWORD" "DELETE FROM aenderungsprotokoll WHERE false" >/dev/null 2>&1; then
+    echo "NICHT gesperrt (App darf Protokoll ändern oder löschen)"
+  else
+    echo "gesperrt"
+  fi
+}
+
 aufraeumen() {
   # Root-Dateien aus dem Backup-Container entfernen, dann den Ordner
   docker run --rm -v "$ARBEITSORDNER:/d" postgres:16-alpine sh -c 'rm -rf /d/* /d/.[!.]* 2>/dev/null' || true
@@ -86,6 +98,11 @@ echo "   fertig"
 
 echo "== 2. Zeilen vor der Sicherung"
 zaehle | tee "$ARBEITSORDNER/vorher.txt"
+echo "   Schreibschutz Protokoll vorher: $(schreibschutz)"
+if [ "$(schreibschutz)" != "gesperrt" ]; then
+  echo "ABBRUCH: Ausgangszustand ist falsch -- der Schreibschutz des Protokolls fehlt schon vor der Sicherung." >&2
+  exit 1
+fi
 # Inhalt (ohne Kommentarzeilen mit Erstellungsdatum) festhalten
 inhalt > "$ARBEITSORDNER/inhalt_vorher.sql"
 
@@ -105,6 +122,8 @@ restore_lauf "$SICHERUNG" | grep -E "Fertig|FEHLER|ERROR|Abgebrochen" || true
 echo "== 6. Zeilen nach der Wiederherstellung"
 echo "   Tabellen im Schema public: $(sql "SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")"
 zaehle | tee "$ARBEITSORDNER/nachher.txt"
+SCHREIBSCHUTZ_NACHHER=$(schreibschutz)
+echo "   Schreibschutz Protokoll nachher: $SCHREIBSCHUTZ_NACHHER"
 inhalt > "$ARBEITSORDNER/inhalt_nachher.sql"
 
 echo "== 7. Vergleich"
@@ -127,6 +146,12 @@ if psql_als "$APP_DB_USER" "$APP_DB_PASSWORD" "SELECT count(*) FROM firmen" >/de
   echo "   App-Rolle '${APP_DB_USER}' darf wieder lesen: ja"
 else
   echo "   App-Rolle '${APP_DB_USER}' darf wieder lesen: NEIN"; FEHLER=1
+fi
+
+if [ "$SCHREIBSCHUTZ_NACHHER" = "gesperrt" ]; then
+  echo "   Schreibschutz Protokoll nach Wiederherstellung: gesperrt"
+else
+  echo "   Schreibschutz Protokoll nach Wiederherstellung: NICHT gesperrt"; FEHLER=1
 fi
 
 if [ "$FEHLER" -eq 0 ]; then

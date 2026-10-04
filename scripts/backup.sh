@@ -1,9 +1,13 @@
 #!/bin/sh
-# Tägliche Datenbanksicherung (Phase 3). --clean --if-exists --no-privileges:
-# das Backup lässt sich direkt in eine bestehende (auch leere) Datenbank
-# zurückspielen, ohne vorher Tabellen händisch zu löschen. Rechte für die
-# Rolle "app" kommen beim Zurückspielen automatisch zurück (Migration 0001:
-# ALTER DEFAULT PRIVILEGES gilt für neu angelegte Tabellen).
+# Tägliche Datenbanksicherung (Phase 3). --clean --if-exists: das Backup
+# lässt sich direkt in eine bestehende (auch leere) Datenbank zurückspielen,
+# ohne vorher Tabellen händisch zu löschen.
+#
+# Bewusst OHNE --no-privileges: Die Rechte (GRANT/REVOKE) gehören zum Schutz.
+# Beispiel: Migration 0008 entzieht der Rolle "app" UPDATE und DELETE auf dem
+# Änderungsprotokoll. Ohne Rechte im Backup würde die Wiederherstellung diesen
+# Entzug verlieren, und die Standardrechte (Migration 0001) gäben "app" die
+# Rechte wieder -- das Protokoll wäre dann änderbar. Siehe scripts/backup-test.sh.
 #
 # Ablauf: pg_dump schreibt zuerst in eine Arbeitsdatei (ohne Pipe, damit ein
 # Fehler von pg_dump nicht verschluckt wird). Erst wenn alles geprüft ist,
@@ -32,7 +36,7 @@ echo "[$(date)] Backup wird erstellt: ${ZIEL_DATEI}"
 
 if ! PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
   -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" \
-  --clean --if-exists --no-privileges \
+  --clean --if-exists \
   "${POSTGRES_DB}" > "$ARBEIT_SQL"; then
   abbruch "pg_dump konnte die Datenbank nicht lesen (Verbindung, Passwort oder Datenbankname prüfen)"
 fi
