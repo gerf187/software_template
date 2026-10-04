@@ -89,6 +89,25 @@ test("CSRF: Sec-Fetch-Site same-origin wird nicht blockiert, cross-site schon", 
   assert.equal(fremdeSeite.status, 403);
 });
 
+test("CSRF: Anfrage von fremder Seite mit richtigem Passwort meldet nicht an und setzt kein Cookie", async () => {
+  const res = await fetch(`${basis}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://boese-seite.test", "Sec-Fetch-Site": "cross-site" },
+    body: JSON.stringify({ email: emailAdmin, passwort: PASSWORT }),
+  });
+  assert.equal(res.status, 403);
+  assert.equal(res.headers.get("set-cookie"), null);
+});
+
+test("CSRF: 'same-site' (Subdomain einer fremden Seite) wird bei Schreibzugriffen abgelehnt", async () => {
+  const res = await fetch(`${basis}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Sec-Fetch-Site": "same-site" },
+    body: JSON.stringify({ email: emailAdmin, passwort: PASSWORT }),
+  });
+  assert.equal(res.status, 403);
+});
+
 test("Cookie ist im Produktivbetrieb 'secure', außerhalb nicht", async () => {
   const vorher = process.env.NODE_ENV;
   try {
