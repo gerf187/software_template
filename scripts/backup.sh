@@ -4,18 +4,62 @@
 # zurückspielen, ohne vorher Tabellen händisch zu löschen. Rechte für die
 # Rolle "app" kommen beim Zurückspielen automatisch zurück (Migration 0001:
 # ALTER DEFAULT PRIVILEGES gilt für neu angelegte Tabellen).
+#
+# Ablauf: pg_dump schreibt zuerst in eine Arbeitsdatei (ohne Pipe, damit ein
+# Fehler von pg_dump nicht verschluckt wird). Erst wenn alles geprüft ist,
+# bekommt die Sicherung ihren endgültigen Namen. Ein Fehler bricht mit
+# Exit-Code 1 ab und lässt keine leere Datei zurück.
 set -eu
 
 mkdir -p /backups
 ZEITSTEMPEL=$(date +%Y-%m-%d_%H-%M-%S)
 ZIEL_DATEI="/backups/datenbank_${ZEITSTEMPEL}.sql.gz"
+ARBEIT_SQL="/backups/.arbeit_${ZEITSTEMPEL}.sql"
+ARBEIT_GZ="/backups/.arbeit_${ZEITSTEMPEL}.sql.gz"
+
+# Diese Tabellen müssen im Dump vorkommen (Fundament). Neue Tabellen müssen
+# nicht eingetragen werden; fehlt aber eine dieser, ist das Backup unbrauchbar.
+ERWARTETE_TABELLEN="firmen users sessions login_versuche rechte firma_module aenderungsprotokoll contacts notes tasks benutzer_dashboard"
+
+abbruch() {
+  echo "[$(date)] FEHLER: Backup fehlgeschlagen -- ${1}" >&2
+  echo "[$(date)] Es wurde KEIN neues Backup angelegt. Alte Backups bleiben unverändert." >&2
+  rm -f "$ARBEIT_SQL" "$ARBEIT_GZ"
+  exit 1
+}
 
 echo "[$(date)] Backup wird erstellt: ${ZIEL_DATEI}"
-PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+
+if ! PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
   -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" \
   --clean --if-exists --no-privileges \
-  "${POSTGRES_DB}" | gzip > "${ZIEL_DATEI}"
-echo "[$(date)] Backup fertig: $(du -h "${ZIEL_DATEI}" | cut -f1)"
+  "${POSTGRES_DB}" > "$ARBEIT_SQL"; then
+  abbruch "pg_dump konnte die Datenbank nicht lesen (Verbindung, Passwort oder Datenbankname prüfen)"
+fi
+
+if [ ! -s "$ARBEIT_SQL" ]; then
+  abbruch "der Dump ist leer"
+fi
+
+for TABELLE in $ERWARTETE_TABELLEN; do
+  if ! grep -q "^CREATE TABLE public\.${TABELLE} " "$ARBEIT_SQL"; then
+    abbruch "Tabelle '${TABELLE}' fehlt im Dump"
+  fi
+done
+
+if ! gzip -c "$ARBEIT_SQL" > "$ARBEIT_GZ"; then
+  abbruch "Komprimierung mit gzip ist fehlgeschlagen"
+fi
+if ! gzip -t "$ARBEIT_GZ"; then
+  abbruch "die gepackte Datei ist beschädigt"
+fi
+if [ ! -s "$ARBEIT_GZ" ]; then
+  abbruch "die gepackte Datei ist leer"
+fi
+
+mv "$ARBEIT_GZ" "$ZIEL_DATEI"
+rm -f "$ARBEIT_SQL"
+echo "[$(date)] Backup geprüft und fertig: $(du -h "${ZIEL_DATEI}" | cut -f1), alle Tabellen vorhanden."
 
 AUFBEWAHRUNG="${BACKUP_AUFBEWAHRUNG_TAGE:-14}"
 echo "[$(date)] Lösche Backups älter als ${AUFBEWAHRUNG} Tage..."

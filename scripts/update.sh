@@ -7,7 +7,11 @@ set -eu
 COMPOSE="docker compose -f docker-compose.prod.yml"
 
 echo "1/5 Backup wird erstellt..."
-$COMPOSE exec -T backup /usr/local/bin/backup.sh
+if ! $COMPOSE exec -T backup /usr/local/bin/backup.sh; then
+  echo "ABBRUCH: Das Backup ist fehlgeschlagen. Das Update wurde NICHT gestartet." >&2
+  echo "Die laufende Version bleibt unverändert. Ursache oben in der Ausgabe prüfen." >&2
+  exit 1
+fi
 
 echo "2/5 Aktuelles Image wird als Sicherung markiert (app:vorher)..."
 BISHERIGES_IMAGE=$($COMPOSE config --images app 2>/dev/null | head -1 || true)
