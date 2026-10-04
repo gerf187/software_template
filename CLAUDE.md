@@ -39,6 +39,9 @@ Diese Datei ist die **einzige** Vorgabe – es gibt kein weiteres Dokument.
 9. **Bausteine nur auf Bedarf bauen.** Der Baustein-Katalog (Abschnitt 13) ist eine
    Ideensammlung, kein Auftrag.
    Gebaut wird nur, was Björn ausdrücklich freigibt.
+10. **Nie „getestet“ oder „funktioniert“ behaupten ohne Nachweis.** Im Bericht stehen
+   der Befehl und das tatsächliche Ergebnis (gekürzt). Ohne Nachweis heißt es
+   „nicht geprüft“.
 
 ---
 
@@ -323,25 +326,25 @@ vorbereitet (gesetzt = aus Vorlage, leer = manuell). Vorher eigener Plan mit Fre
 ✔ Fertig, wenn: ein Projekt aus einer Vorlage seine Aufgaben erzeugt und die
 Tagesaufgaben nur freigegebene Aufgaben zeigen.
 
-**Phase 3 – Betrieb**
-- ✅ Dockerfile (schlank, pro Branche gebaut) + docker-compose.prod.yml
-  (App, PostgreSQL, Caddy mit automatischem HTTPS, Backup-Container).
-  Migrationen laufen beim Start automatisch. Werkstatt startet im
-  Produktivbetrieb nicht (harter Abbruch, nicht nur ausgeblendete Routen).
-- ✅ Backup täglich (14 Tage Aufbewahrung, optional externes Ziel),
-  Wiederherstellung mit Sicherheitsabfrage, lokal echt getestet (Daten
-  weg, zurückgespielt, Daten wieder da).
-- ✅ Update-Skript: Backup → neue Version → bauen → Health-Check, bricht
-  bei Fehler ab und meldet das, vorheriges Image bleibt erhalten.
-- ✅ Sicherheit gehärtet: eigene Content-Security-Policy (Backend + Caddy),
-  Anfragen-Begrenzung pro Minute, CSRF-Schutz ohne eigenes Token-System
-  (Sec-Fetch-Site/Origin), einheitliche Fehlerausgabe ohne technische
-  Details im Produktivbetrieb. Geprüft, schon richtig: Cookie "secure" im
-  Produktivbetrieb, Logo-Upload ohne SVG, `npm audit` ohne Lücken.
-- README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
+**Phase 3 – Betrieb** ⏳ teilweise, Test auf echtem Server steht aus
+- ✅ Dockerfile + docker-compose.prod.yml: lokal gestartet und geprüft (Start,
+  Migrationen, /api/health, Login, Werkstatt-Routen fehlen, Werkstatt-Start bricht
+  mit Fehler ab). Lokal nur über Caddy mit interner Zertifikatsstelle, nicht über
+  die echte Domain.
+- ⚠️ Backup täglich (14 Tage), Wiederherstellung: lokal getestet mit
+  `npm run backup:test` (Zeilen und Inhalt identisch, Schreibschutz des
+  Änderungsprotokolls bleibt erhalten). Das Backup prüft sich selbst und meldet
+  erst dann Erfolg. Nicht getestet: externes Ziel (`BACKUP_ZIEL`).
+- ⚠️ Update-Skript: bricht ab, wenn das Backup fehlschlägt. Nicht durchgeführt
+  (lokal nicht möglich, weil der Compose-Projektname und `APP_NAME` auf dem
+  Server anders sind).
+- ✅ Sicherheit: Content-Security-Policy, Anfragen-Begrenzung (300/Minute, getestet),
+  CSRF-Schutz (getestet), Cookie "secure" im Produktivbetrieb, Logo-Upload ohne SVG,
+  `npm audit` ohne Lücken. Offen: unbekannte Adressen liefern Express-
+  Standard-HTML statt JSON.
+- ✅ README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
 ✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
-und aktualisieren kann -- **noch nicht auf einem echten Server geprüft**,
-nur lokal (siehe Abschlussbericht).
+und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
 
 **Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
