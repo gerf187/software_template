@@ -7,6 +7,7 @@
     "packages/core/fundament/backend"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace packages/core/fundament/backend & npm run dev --workspace packages/core/fundament/frontend & wait"
+    "dev": "npm run dev --workspace packages/core/fundament/backend & npm run dev --workspace packages/core/fundament/frontend & wait",
+    "backup:test": "sh scripts/backup-test.sh"
   }
 }
