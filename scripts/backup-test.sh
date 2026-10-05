@@ -24,6 +24,13 @@ set +a
 
 DB_CONTAINER_NETZ="--network host"
 ARBEITSORDNER=$(mktemp -d)
+
+# Sicherung und Wiederherstellung laufen im gebauten Produktions-Image
+# (docker/backup.Dockerfile, mit age). VERSCHLUESSELT=1 testet zusätzlich die
+# Verschlüsselung mit einem frisch erzeugten Test-Schlüsselpaar.
+BACKUP_BILD=swt-backup-test
+VERSCHLUESSELT="${VERSCHLUESSELT:-0}"
+docker build -q -f docker/backup.Dockerfile -t "$BACKUP_BILD" . >/dev/null
 TABELLEN="firmen users sessions login_versuche rechte firma_module aenderungsprotokoll contacts notes tasks benutzer_dashboard"
 
 # Postgres-Werkzeuge aus dem offiziellen Image, gleiche Version wie im Betrieb
@@ -74,22 +81,30 @@ trap aufraeumen EXIT
 
 # Wie im Betrieb: Skripte laufen im Image mit /backups als Ordner
 backup_lauf() {
-  docker run --rm $DB_CONTAINER_NETZ \
+  VERSCHL=""
+  if [ "$VERSCHLUESSELT" = 1 ]; then
+    VERSCHL="-e BACKUP_VERSCHLUESSELUNG_SCHLUESSEL=$PUBKEY"
+  fi
+  docker run --rm $DB_CONTAINER_NETZ $VERSCHL \
     -e POSTGRES_HOST="$POSTGRES_HOST" -e POSTGRES_PORT="$POSTGRES_PORT" \
     -e POSTGRES_DB="$POSTGRES_DB" -e POSTGRES_USER="$POSTGRES_USER" \
     -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" -e BACKUP_AUFBEWAHRUNG_TAGE=14 \
     -v "$ARBEITSORDNER:/backups" -v "$PWD/scripts:/skripte:ro" \
-    postgres:16-alpine sh /skripte/backup.sh
+    "$BACKUP_BILD" sh /skripte/backup.sh
 }
 
 restore_lauf() {
   # $1 = Dateiname im Arbeitsordner; "JA" beantwortet die Sicherheitsabfrage
-  echo "JA" | docker run --rm -i $DB_CONTAINER_NETZ \
+  ENTSCHL=""
+  if [ "$VERSCHLUESSELT" = 1 ]; then
+    ENTSCHL="-e BACKUP_ENTSCHLUESSELUNG_DATEI=/backups/schluessel.txt"
+  fi
+  echo "JA" | docker run --rm -i $DB_CONTAINER_NETZ $ENTSCHL \
     -e POSTGRES_HOST="$POSTGRES_HOST" -e POSTGRES_PORT="$POSTGRES_PORT" \
     -e POSTGRES_DB="$POSTGRES_DB" -e POSTGRES_USER="$POSTGRES_USER" \
     -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
     -v "$ARBEITSORDNER:/backups" -v "$PWD/scripts:/skripte:ro" \
-    postgres:16-alpine sh /skripte/restore.sh "$1"
+    "$BACKUP_BILD" sh /skripte/restore.sh "$1"
 }
 
 echo "== 1. Demo-Daten einspielen"
@@ -107,10 +122,28 @@ fi
 inhalt > "$ARBEITSORDNER/inhalt_vorher.sql"
 
 echo "== 3. Sicherung erstellen"
+if [ "$VERSCHLUESSELT" = 1 ]; then
+  # Test-Schlüsselpaar: privater Teil nur im Arbeitsordner, öffentlicher Teil für die Sicherung
+  docker run --rm -v "$ARBEITSORDNER:/backups" "$BACKUP_BILD" age-keygen -o /backups/schluessel.txt >/dev/null 2>&1
+  PUBKEY=$(docker run --rm -v "$ARBEITSORDNER:/backups" "$BACKUP_BILD" age-keygen -y /backups/schluessel.txt)
+  echo "   Verschlüsselung: Test-Schlüssel erzeugt (${PUBKEY%"${PUBKEY#????????}"}...)"
+fi
 backup_lauf
-SICHERUNG=$(ls "$ARBEITSORDNER"/datenbank_*.sql.gz | head -1)
+SICHERUNG=$(ls "$ARBEITSORDNER"/datenbank_*.sql.gz* | head -1)
 SICHERUNG=$(basename "$SICHERUNG")
 echo "   Datei: $SICHERUNG"
+if [ "$VERSCHLUESSELT" = 1 ]; then
+  case "$SICHERUNG" in
+    *.age) echo "   Endung .age: ja" ;;
+    *) echo "   Endung .age: NEIN"; exit 1 ;;
+  esac
+  # Ohne Schlüssel darf die Datei kein gepacktes SQL sein (kein Klartext)
+  if docker run --rm -v "$ARBEITSORDNER:/d" postgres:16-alpine gzip -t "/d/$SICHERUNG" >/dev/null 2>&1; then
+    echo "   Klartext-Prüfung: FEHLER, die Datei ist NICHT verschlüsselt"; exit 1
+  else
+    echo "   Klartext-Prüfung: verschlüsselt (kein gzip ohne Schlüssel lesbar)"
+  fi
+fi
 
 echo "== 4. Datenbank leeren"
 sql "DO \$\$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP EXECUTE format('DROP TABLE IF EXISTS public.%I CASCADE', r.tablename); END LOOP; END \$\$;" >/dev/null

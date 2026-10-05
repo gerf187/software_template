@@ -165,6 +165,15 @@ docker compose -f docker-compose.prod.yml exec -it backup /usr/local/bin/restore
 `<dateiname>` ist der Name der Datei aus `./backups/` (z. B.
 `datenbank_2026-10-02_03-00-00.sql.gz`), ohne Pfad davor.
 
+**Verschlüsselte Backups (optional):** Ist in `.env` der öffentliche Schlüssel
+`BACKUP_VERSCHLUESSELUNG_SCHLUESSEL` (beginnt mit `age1…`) eingetragen, endet
+jede neue Sicherung auf `.age` und ist ohne den privaten Schlüssel nicht
+lesbar. Den privaten Schlüssel **nicht** auf dem Server aufbewahren, sondern
+z. B. im Passwort-Manager. Für eine Wiederherstellung die Schlüsseldatei
+kurz in den Ordner `./backups/` legen, `BACKUP_ENTSCHLUESSELUNG_DATEI=/backups/<schluesseldatei>`
+setzen (z. B. `docker compose ... exec -e BACKUP_ENTSCHLUESSELUNG_DATEI=/backups/schluessel.txt -it backup /usr/local/bin/restore.sh <dateiname>`)
+und danach wieder löschen.
+
 ### Beenden
 
 ```bash

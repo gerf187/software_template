@@ -61,13 +61,32 @@ if [ ! -s "$ARBEIT_GZ" ]; then
   abbruch "die gepackte Datei ist leer"
 fi
 
+# Optional: Verschlüsselung mit age. Nur wenn ein öffentlicher Schlüssel
+# (age1...) in .env steht. Den privaten Schlüssel braucht nur restore.sh, und
+# der gehört NICHT auf den Server.
+if [ -n "${BACKUP_VERSCHLUESSELUNG_SCHLUESSEL:-}" ]; then
+  ARBEIT_AGE="/backups/.arbeit_${ZEITSTEMPEL}.sql.gz.age"
+  if ! age -r "${BACKUP_VERSCHLUESSELUNG_SCHLUESSEL}" -o "$ARBEIT_AGE" "$ARBEIT_GZ"; then
+    rm -f "$ARBEIT_AGE"
+    abbruch "Verschlüsselung mit age ist fehlgeschlagen (Schlüssel in .env prüfen)"
+  fi
+  if [ ! -s "$ARBEIT_AGE" ]; then
+    rm -f "$ARBEIT_AGE"
+    abbruch "die verschlüsselte Datei ist leer"
+  fi
+  rm -f "$ARBEIT_GZ"
+  ARBEIT_GZ="$ARBEIT_AGE"
+  ZIEL_DATEI="${ZIEL_DATEI}.age"
+  echo "[$(date)] Sicherung ist mit age verschlüsselt."
+fi
+
 mv "$ARBEIT_GZ" "$ZIEL_DATEI"
 rm -f "$ARBEIT_SQL"
 echo "[$(date)] Backup geprüft und fertig: $(du -h "${ZIEL_DATEI}" | cut -f1), alle Tabellen vorhanden."
 
 AUFBEWAHRUNG="${BACKUP_AUFBEWAHRUNG_TAGE:-14}"
 echo "[$(date)] Lösche Backups älter als ${AUFBEWAHRUNG} Tage..."
-find /backups -name "datenbank_*.sql.gz" -mtime "+${AUFBEWAHRUNG}" -delete
+find /backups -name "datenbank_*.sql.gz*" -mtime "+${AUFBEWAHRUNG}" -delete
 
 if [ -n "${BACKUP_ZIEL:-}" ]; then
   echo "[$(date)] Kopiere nach ${BACKUP_ZIEL} ..."
