@@ -53,15 +53,24 @@ router.patch("/firmen/:id", async (req, res) => {
   const slug = req.body?.slug ?? bestehend[0].slug;
   const aktiv = req.body?.aktiv !== undefined ? !!req.body.aktiv : bestehend[0].aktiv;
 
+  let geaendert;
   try {
     const { rows } = await pool.query(
       "UPDATE firmen SET name = $2, slug = $3, aktiv = $4 WHERE id = $1 RETURNING id, name, slug, aktiv, erstellt_am",
       [req.params.id, name, slug, aktiv]
     );
-    res.json(rows[0]);
+    geaendert = rows[0];
   } catch (err) {
-    res.status(400).json({ error: "Firma konnte nicht gespeichert werden (Kürzel schon vergeben?)." });
+    return res.status(400).json({ error: "Firma konnte nicht gespeichert werden (Kürzel schon vergeben?)." });
   }
+
+  // Gesperrt: alle Sitzungen dieser Firma sofort beenden (nicht erst beim
+  // nächsten Login). Außerhalb des try, damit ein Datenbankfehler hier nicht
+  // als "Kürzel schon vergeben" gemeldet wird.
+  if (!aktiv) {
+    await pool.query("DELETE FROM sessions WHERE firma_id = $1", [req.params.id]);
+  }
+  res.json(geaendert);
 });
 
 function erzeugeStartpasswort() {

@@ -24,6 +24,19 @@ export async function authenticate(req, res) {
     return null;
   }
 
+  // Gesperrte Firma: auch bestehende Sitzungen enden sofort (nicht erst beim
+  // nächsten Login). Superadmin hat keine Firma, dort entfällt die Prüfung.
+  if (session.firma_id !== null) {
+    const { rows: firmaRows } = await pool.query("SELECT aktiv FROM firmen WHERE id = $1", [
+      session.firma_id,
+    ]);
+    if (!firmaRows[0]?.aktiv) {
+      await pool.query("DELETE FROM sessions WHERE id = $1", [hash]);
+      loescheSessionCookie(res);
+      return null;
+    }
+  }
+
   // Superadmin hat keine Firma -- für ihn kann withFirma() nicht greifen,
   // die Sitzungsprüfung läuft über eine eng begrenzte Ausnahme (wie beim
   // Login), nicht über die normale Mandanten-Trennung.
