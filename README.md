@@ -113,6 +113,21 @@ curl https://deine-domain.de/api/health   # sollte {"status":"ok","datenbank":"o
 
 Logs ansehen, falls etwas nicht passt: `docker compose -f docker-compose.prod.yml logs -f app`.
 
+### Ersten Superadmin anlegen (einmalig)
+
+Der Superadmin ist die Plattform-Rolle (Björn), die Firmen anlegt und sperrt.
+Er wird nicht über die Web-Oberfläche angelegt, sondern mit einem Befehl im
+Server-Terminal:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -it -w /app/packages/core/fundament/backend app npm run superadmin:anlegen
+```
+
+Der Befehl fragt nach E-Mail-Adresse und Name und zeigt danach ein
+Startpasswort **genau einmal** an. Bitte sofort notieren. Beim ersten Login
+muss es geändert werden. Ein zweiter Aufruf mit derselben E-Mail-Adresse
+bricht mit einer Meldung ab, ohne etwas zu ändern.
+
 ### Aktualisieren (neue Version einspielen)
 
 ```bash
