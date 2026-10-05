@@ -2,8 +2,10 @@ import { Router } from "express";
 import { requireAuth } from "../auth/middleware.js";
 import { erfordertRecht } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
+import { pruefeIdsAusUrl, istFremdschluesselFehler } from "../db/ids.js";
 
 const router = Router();
+pruefeIdsAusUrl(router, ["id", "aufgabeId"]);
 
 const KONTAKT_SPALTEN = `
   id, anrede, vorname, nachname, organisation, email, telefon, mobil,
@@ -186,20 +188,28 @@ router.post("/:id/notizen", erfordertRecht("kontakte", "bearbeiten"), async (req
   const text = (req.body?.text || "").trim();
   if (!text) return res.status(400).json({ error: "Bitte einen Text angeben." });
 
-  const rows = await withFirma(
-    req.user.firmaId,
-    (client) =>
-      client
-        .query(
-          `INSERT INTO notes (firma_id, contact_id, text, erstellt_von)
-           VALUES ($1, $2, $3, $4)
-           RETURNING id, text, erstellt_von, erstellt_am`,
-          [req.user.firmaId, req.params.id, text, req.user.id]
-        )
-        .then((r) => r.rows),
-    { userId: req.user.id }
-  );
-  res.status(201).json(rows[0]);
+  try {
+    const rows = await withFirma(
+      req.user.firmaId,
+      (client) =>
+        client
+          .query(
+            `INSERT INTO notes (firma_id, contact_id, text, erstellt_von)
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, text, erstellt_von, erstellt_am`,
+            [req.user.firmaId, req.params.id, text, req.user.id]
+          )
+          .then((r) => r.rows),
+      { userId: req.user.id }
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    // Fremder oder unbekannter Kontakt: Firma-Fremdschlüssel schlägt fehl.
+    if (istFremdschluesselFehler(err)) {
+      return res.status(404).json({ error: "Kontakt nicht gefunden." });
+    }
+    throw err;
+  }
 });
 
 // Aufgaben (Tab "Aufgaben"): Freitext + Fälligkeit + erledigt.
@@ -220,20 +230,28 @@ router.post("/:id/aufgaben", erfordertRecht("kontakte", "bearbeiten"), async (re
   const text = (req.body?.text || "").trim();
   if (!text) return res.status(400).json({ error: "Bitte einen Text angeben." });
 
-  const rows = await withFirma(
-    req.user.firmaId,
-    (client) =>
-      client
-        .query(
-          `INSERT INTO tasks (firma_id, contact_id, text, faellig_am, status)
-           VALUES ($1, $2, $3, $4, 'offen')
-           RETURNING id, text, faellig_am, status, erstellt_am`,
-          [req.user.firmaId, req.params.id, text, req.body?.faelligAm || null]
-        )
-        .then((r) => r.rows),
-    { userId: req.user.id }
-  );
-  res.status(201).json(rows[0]);
+  try {
+    const rows = await withFirma(
+      req.user.firmaId,
+      (client) =>
+        client
+          .query(
+            `INSERT INTO tasks (firma_id, contact_id, text, faellig_am, status)
+             VALUES ($1, $2, $3, $4, 'offen')
+             RETURNING id, text, faellig_am, status, erstellt_am`,
+            [req.user.firmaId, req.params.id, text, req.body?.faelligAm || null]
+          )
+          .then((r) => r.rows),
+      { userId: req.user.id }
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    // Fremder oder unbekannter Kontakt: Firma-Fremdschlüssel schlägt fehl.
+    if (istFremdschluesselFehler(err)) {
+      return res.status(404).json({ error: "Kontakt nicht gefunden." });
+    }
+    throw err;
+  }
 });
 
 router.patch(

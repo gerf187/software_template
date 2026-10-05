@@ -8,8 +8,10 @@ import { rechteStandardAnlegen, rechteFuerBausteinAnlegen } from "../rechte/stan
 import { fehlendeAbhaengigkeiten } from "../module/abhaengigkeiten.js";
 import appConfig from "../appConfig.js";
 import { ladeModule } from "../module/lade.js";
+import { pruefeIdsAusUrl } from "../db/ids.js";
 
 const router = Router();
+pruefeIdsAusUrl(router, ["id"]);
 router.use(requireAuth, requireSuperadmin);
 
 // Firmen anlegen/sperren (Abschnitt 7). "firmen" hat kein RLS -- wird nur

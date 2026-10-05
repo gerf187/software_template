@@ -4,8 +4,10 @@ import { requireAuth } from "../auth/middleware.js";
 import { erfordertRecht } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
 import { hashPassword } from "../auth/password.js";
+import { pruefeIdsAusUrl } from "../db/ids.js";
 
 const router = Router();
+pruefeIdsAusUrl(router, ["id"]);
 
 // Rollen innerhalb einer Firma (Abschnitt 7, Stand 2026-10-02: nur noch zwei
 // Rollen). "Superadmin" ist eine Plattform-Rolle ohne Firma und entsteht nie
