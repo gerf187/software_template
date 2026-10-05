@@ -122,6 +122,13 @@ router.post("/passwort-aendern", async (req, res) => {
     await pool.query("SELECT superadmin_passwort_setzen($1, $2)", [user.id, neuerHash]);
   }
 
+  // Nach dem Wechsel alle anderen Sitzungen dieses Nutzers beenden; die
+  // aktuelle bleibt bestehen (B3).
+  await pool.query("DELETE FROM sessions WHERE user_id = $1 AND id <> $2", [
+    user.id,
+    tokenHash(leseSessionToken(req)),
+  ]);
+
   res.json({ status: "ok" });
 });
 

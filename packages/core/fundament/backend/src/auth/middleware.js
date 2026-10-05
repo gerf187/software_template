@@ -83,6 +83,15 @@ export async function requireAuth(req, res, next) {
   if (!user) {
     return res.status(401).json({ error: "Nicht angemeldet." });
   }
+  // Startpasswort muss zuerst geändert werden (Abschnitt 8): Alle geschützten
+  // Routen sind gesperrt. Die Auth-Routen (/me, /passwort-aendern, /logout)
+  // nutzen requireAuth nicht und bleiben erreichbar.
+  if (user.mussPasswortAendern) {
+    return res.status(403).json({
+      error: "Bitte zuerst das Startpasswort ändern.",
+      mussPasswortAendern: true,
+    });
+  }
   req.user = user;
   next();
 }
