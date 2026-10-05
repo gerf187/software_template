@@ -345,8 +345,30 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
   `npm audit` ohne Lücken. Offen: unbekannte Adressen liefern Express-
   Standard-HTML statt JSON.
 - ✅ README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
+- ✅ Externe Prüfung behoben (je Punkt mit Test): Server stürzt bei Fehlern und
+  bei DB-Neustart nicht mehr ab (Express 5, ID-Prüfung); Superadmin per Befehl
+  `superadmin:anlegen`; Superadmin kann Passwort ändern; gesperrte Firma beendet
+  Sitzungen sofort; Health-Check meldet Datenbankausfall, `update.sh` prüft das;
+  Startpasswort-Pflicht auch im Backend; Passwortwechsel beendet andere Sitzungen;
+  gemeinsame Bausteine aus `packages/modules/`; Protokoll für Mitarbeiter (ohne
+  Passwort-Hash); App ohne Eigentümer-Passwort (Dienst `migrate`); Backup mit
+  SSH-Werkzeugen und optionaler Verschlüsselung (age).
+- ⚠️ Am Produktiv-Stack geprüft, aber mit Umweg: In dieser Codespace-Umgebung
+  funktioniert die Verbindung zwischen Containern nicht. Die Images wurden mit
+  Host-Netz gestartet. Ablauf (Migration, Superadmin, Passwort, Firma, Sperre,
+  Health, DB-Neustart) lief so durch. Nicht geprüft: der Compose-Netzwerkweg
+  selbst und Caddy mit echter Domain.
 ✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
 und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
+
+**Offen (Entscheidung Björn)**
+- DSGVO-Löschkonzept: Das Änderungsprotokoll speichert alte Werte dauerhaft. Ein
+  endgültiges Löschen eines Kontakts muss auch die Protokoll-Inhalte anonymisieren.
+- Externes Backup-Ziel: Welcher Server bzw. Ordner (`BACKUP_ZIEL`) und wo der
+  SSH-Schlüssel liegt.
+- Protokoll für Baustein ein/aus: Die Tabelle `firma_module` hat keine Spalte `id`,
+  darum ist sie nicht am Protokoll-Trigger. Soll sie protokolliert werden, braucht
+  es eine Entscheidung zur Datensatz-Nummer.
 
 **Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
