@@ -161,7 +161,9 @@ interne Rolle.
   keine Sonderprüfung im Code). Im Code wird nie `rolle === 'Admin'` geprüft,
   sondern immer das Recht, z. B. `darf(user, 'projekte', 'loeschen')`.
   Bewusst **kein** bearbeitbarer Rollen-Standard und **keine** Ausnahmen pro
-  einzelnem Mitarbeiter – so einfach wie möglich gehalten.
+  einzelnem Mitarbeiter – so einfach wie möglich gehalten. Die Fundament-Rechte
+  beim Anlegen einer Firma kommen aus `standardRechte` in der `app.config.js`
+  der App (fester Code-Stand, keine Firmen-Einstellung).
 - Seite „Wer sieht was“ unter Einstellungen zeigt nur, was die Rolle User darf
   (nur lesen) – Admin hat ohnehin immer vollen Zugriff, braucht keine eigene Zeile.
 - Rechte werden **im Backend** geprüft. Frontend blendet nur aus (Komfort, kein Schutz).
