@@ -98,11 +98,12 @@ eigener Datenbank und eigenem Server-Verzeichnis.
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Das baut das Produktions-Image (einmalig etwas langsamer) und startet vier
-Container: `app` (Backend, baut beim Start automatisch die Datenbank-Tabellen
-auf), `postgres` (Datenbank), `caddy` (Webserver, holt automatisch ein
-HTTPS-Zertifikat für die Domain) und `backup` (tägliche Sicherung, nachts um
-3 Uhr).
+Das baut das Produktions-Image (einmalig etwas langsamer) und startet die
+Container: `migrate` (baut beim Start die Datenbank-Tabellen auf und beendet
+sich danach), `app` (Backend), `postgres` (Datenbank), `caddy` (Webserver,
+holt automatisch ein HTTPS-Zertifikat für die Domain) und `backup`
+(tägliche Sicherung, nachts um 3 Uhr). Nur `migrate` kennt den Eigentümer-
+Zugang zur Datenbank; die `app` nutzt nur ihren eingeschränkten Zugang.
 
 Prüfen, ob alles läuft:
 
@@ -120,7 +121,7 @@ Er wird nicht über die Web-Oberfläche angelegt, sondern mit einem Befehl im
 Server-Terminal:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec -it -w /app/packages/core/fundament/backend app npm run superadmin:anlegen
+docker compose -f docker-compose.prod.yml run --rm -it --entrypoint npm -w /app/packages/core/fundament/backend migrate run superadmin:anlegen
 ```
 
 Der Befehl fragt nach E-Mail-Adresse und Name und zeigt danach ein

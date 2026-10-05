@@ -1,11 +1,8 @@
 #!/bin/sh
-# Startet den Produktivbetrieb: zuerst Migrationen (Abschnitt-Vorgabe
-# "Migrationen laufen beim Start automatisch"), dann das gebaute Frontend
-# in den von Caddy ausgelieferten Ordner kopieren, danach das Backend.
+# Startet den App-Container: das gebaute Frontend in den von Caddy ausgelieferten
+# Ordner kopieren, danach das Backend. Die Migrationen laufen vorher im Dienst
+# "migrate" (docker-compose.prod.yml) mit dem Eigentümer-Zugang.
 set -e
-
-echo "Migrationen werden ausgeführt..."
-node /app/packages/core/fundament/backend/src/db/migrate.js
 
 if [ -d /srv ]; then
   echo "Frontend-Dateien werden für Caddy bereitgestellt..."

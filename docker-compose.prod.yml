@@ -19,6 +19,27 @@ services:
       timeout: 5s
       retries: 5
 
+  # Migrationen laufen in einem eigenen, kurzen Dienst mit dem Eigentümer-Zugang
+  # und beenden sich danach. Die App selbst kennt nur ihren eingeschränkten
+  # Zugang (APP_DB_USER / APP_DB_PASSWORD).
+  migrate:
+    build:
+      context: .
+      args:
+        APP_NAME: ${APP_NAME}
+    entrypoint: ["node", "/app/packages/core/fundament/backend/src/db/migrate.js"]
+    restart: "no"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   app:
     build:
       context: .
@@ -32,13 +53,13 @@ services:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - frontend_dist:/srv
 
