@@ -29,10 +29,10 @@ $COMPOSE up -d app
 echo "5/5 Health-Check..."
 VERSUCH=0
 while [ "$VERSUCH" -lt 15 ]; do
+  # Gesund = HTTP 200 UND status "ok" UND Datenbank "ok" (sonst z. B. 503 bei Datenbankausfall).
   if $COMPOSE exec -T app node -e "
     fetch('http://localhost:3001/api/health')
-      .then((r) => r.json())
-      .then((d) => process.exit(d.status === 'ok' ? 0 : 1))
+      .then((r) => r.json().then((d) => process.exit(r.ok && d.status === 'ok' && d.datenbank === 'ok' ? 0 : 1)))
       .catch(() => process.exit(1));
   "; then
     echo "Update erfolgreich, Backend ist gesund."

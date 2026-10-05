@@ -105,7 +105,7 @@ export function createApp({
       await pool.query("SELECT 1");
       res.json({ status: "ok", datenbank: "ok" });
     } catch (err) {
-      res.status(503).json({ status: "ok", datenbank: "fehler" });
+      res.status(503).json({ status: "fehler", datenbank: "fehler" });
     }
   });
 
