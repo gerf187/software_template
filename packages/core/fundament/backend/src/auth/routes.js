@@ -93,12 +93,12 @@ router.post("/passwort-aendern", async (req, res) => {
     client
       .query("SELECT email, passwort_hash FROM users WHERE id = $1", [user.id])
       .then((r) => r.rows[0]);
+  // Superadmin hat keine Firma: die Mandanten-Trennung sieht seine Zeile nicht,
+  // darum eng begrenzte Funktion (Migration 0013), nicht die normale Abfrage.
   const benutzer = user.firmaId
     ? await withFirma(user.firmaId, laden)
     : await pool
-        .query("SELECT email, passwort_hash FROM users WHERE id = $1 AND firma_id IS NULL", [
-          user.id,
-        ])
+        .query("SELECT * FROM superadmin_passwort_lesen($1)", [user.id])
         .then((r) => r.rows[0]);
 
   if (!benutzer || !(await verifyPassword(aktuellesPasswort, benutzer.passwort_hash))) {
@@ -111,15 +111,15 @@ router.post("/passwort-aendern", async (req, res) => {
   }
 
   const neuerHash = await hashPassword(neuesPasswort);
-  const speichern = (client) =>
-    client.query(
-      "UPDATE users SET passwort_hash = $2, muss_passwort_aendern = false WHERE id = $1",
-      [user.id, neuerHash]
-    );
   if (user.firmaId) {
-    await withFirma(user.firmaId, speichern);
+    await withFirma(user.firmaId, (client) =>
+      client.query(
+        "UPDATE users SET passwort_hash = $2, muss_passwort_aendern = false WHERE id = $1",
+        [user.id, neuerHash]
+      )
+    );
   } else {
-    await speichern(pool);
+    await pool.query("SELECT superadmin_passwort_setzen($1, $2)", [user.id, neuerHash]);
   }
 
   res.json({ status: "ok" });
