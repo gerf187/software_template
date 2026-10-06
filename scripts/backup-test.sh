@@ -22,6 +22,11 @@ set -a
 . ./.env
 set +a
 
+# Eigene Wegwerf-Datenbank für diesen Test: er leert sie und spielt das Backup
+# zurück. Die Entwicklungs-Datenbank aus .env bleibt unberührt.
+POSTGRES_DB=saas_backup_test
+export POSTGRES_DB
+
 DB_CONTAINER_NETZ="--network host"
 ARBEITSORDNER=$(mktemp -d)
 
@@ -76,6 +81,10 @@ aufraeumen() {
   # Root-Dateien aus dem Backup-Container entfernen, dann den Ordner
   docker run --rm -v "$ARBEITSORDNER:/d" postgres:16-alpine sh -c 'rm -rf /d/* /d/.[!.]* 2>/dev/null' || true
   rmdir "$ARBEITSORDNER" 2>/dev/null || true
+  # Wegwerf-Datenbank wieder entfernen (nie die Entwicklungs-Datenbank)
+  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16-alpine \
+    psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tAX \
+    -c "DROP DATABASE IF EXISTS saas_backup_test" >/dev/null 2>&1 || true
 }
 trap aufraeumen EXIT
 
@@ -107,7 +116,11 @@ restore_lauf() {
     "$BACKUP_BILD" sh /skripte/restore.sh "$1"
 }
 
-echo "== 1. Demo-Daten einspielen"
+echo "== 1. Wegwerf-Datenbank $POSTGRES_DB anlegen, Schema und Demo-Daten einspielen"
+docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16-alpine \
+  psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tAX \
+  -c "DROP DATABASE IF EXISTS $POSTGRES_DB" -c "CREATE DATABASE $POSTGRES_DB" >/dev/null
+npm run db:migrate --workspace packages/core/fundament/backend >/dev/null
 npm run db:seed:werkstatt --workspace packages/core/fundament/backend >/dev/null
 echo "   fertig"
 
