@@ -88,3 +88,46 @@ test("Fremde Kontakt-ID wird auch beim Lesen nicht gefunden (404)", async () => 
   assert.equal(res.status, 404);
   assert.equal(await serverLebt(), true);
 });
+
+test("Aufgabe an einen fremden Kontakt liefert 404 und der Server läuft weiter", async () => {
+  const cookie = await login(emailAdminA);
+  const res = await api(cookie, "POST", `/api/kontakte/${fremderKontakt}/aufgaben`, {
+    text: "Versuch über fremde ID",
+  });
+  assert.equal(res.status, 404);
+  assert.equal(await serverLebt(), true);
+});
+
+test("Ungültige Aufgaben-ID in der URL liefert 404 und der Server läuft weiter", async () => {
+  const cookie = await login(emailAdminA);
+  const res = await api(cookie, "PATCH", `/api/kontakte/${fremderKontakt}/aufgaben/abc`, {
+    erledigt: true,
+  });
+  assert.equal(res.status, 404);
+  assert.equal(await serverLebt(), true);
+});
+
+test("Aufgabe einer fremden Firma wird über einen fremden Kontakt-Pfad nicht geändert (404)", async () => {
+  const fremdeAufgabe = await withFirma(firmaB, (client) =>
+    client
+      .query(
+        "INSERT INTO tasks (firma_id, contact_id, text, status) VALUES ($1, $2, 'Fremde Aufgabe', 'offen') RETURNING id",
+        [firmaB, fremderKontakt]
+      )
+      .then((r) => r.rows[0].id)
+  );
+
+  const cookie = await login(emailAdminA);
+  const res = await api(cookie, "PATCH", `/api/kontakte/${fremderKontakt}/aufgaben/${fremdeAufgabe}`, {
+    erledigt: true,
+  });
+  assert.equal(res.status, 404);
+  assert.equal(await serverLebt(), true);
+
+  const status = await withFirma(firmaB, (client) =>
+    client
+      .query("SELECT status FROM tasks WHERE id = $1", [fremdeAufgabe])
+      .then((r) => r.rows[0].status)
+  );
+  assert.equal(status, "offen", "fremde Aufgabe darf nicht verändert worden sein");
+});
