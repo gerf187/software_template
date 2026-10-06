@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import { Button, Input, FormField, Message, Card } from "../components/index.js";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, hinweis } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [passwort, setPasswort] = useState("");
@@ -33,7 +33,7 @@ export default function Login() {
             <div className="login-brand-name">SaaS-Grundgerüst</div>
           </div>
           <form onSubmit={absenden}>
-            {fehler && <Message type="fehler">{fehler}</Message>}
+            {(fehler || hinweis) && <Message type="fehler">{fehler || hinweis}</Message>}
             <FormField label="E-Mail" htmlFor="login-email">
               <Input
                 id="login-email"

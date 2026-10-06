@@ -6,6 +6,9 @@ import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
 import { holeAktiveModule } from "../module/firmaModule.js";
 import { holeFirmaAnzeige } from "../firma/firmaAnzeige.js";
 
+// Meldung, wenn die Firma gesperrt ist (Login mit richtigem Passwort und laufende Sitzung).
+export const SPERRE_MELDUNG = "Ihr Zugang ist gesperrt. Bitte wenden Sie sich an den Anbieter.";
+
 // Prüft die Sitzung aus dem Cookie, verlängert sie gleitend (7 Tage) und
 // liefert den zugehörigen, noch aktiven Benutzer -- oder null.
 export async function authenticate(req, res) {
@@ -33,6 +36,7 @@ export async function authenticate(req, res) {
     if (!firmaRows[0]?.aktiv) {
       await pool.query("DELETE FROM sessions WHERE id = $1", [hash]);
       loescheSessionCookie(res);
+      res.locals.zugangGesperrt = true;
       return null;
     }
   }
@@ -81,6 +85,9 @@ export async function authenticate(req, res) {
 export async function requireAuth(req, res, next) {
   const user = await authenticate(req, res);
   if (!user) {
+    if (res.locals.zugangGesperrt) {
+      return res.status(403).json({ error: SPERRE_MELDUNG, gesperrt: true });
+    }
     return res.status(401).json({ error: "Nicht angemeldet." });
   }
   // Startpasswort muss zuerst geändert werden (Abschnitt 8): Alle geschützten

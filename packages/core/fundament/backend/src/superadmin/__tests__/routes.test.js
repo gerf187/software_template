@@ -186,8 +186,10 @@ test("Eine gesperrte Firma kann sich nicht mehr anmelden", async () => {
 
   await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${neueFirma.id}`, { aktiv: false });
 
-  const { res } = await login(email, startpasswort);
-  assert.equal(res.status, 401);
+  // Richtiges Passwort, gesperrte Firma: eigene Meldung statt "falsch" (siehe gesperrt-meldung.test.js).
+  const { res, daten } = await login(email, startpasswort);
+  assert.equal(res.status, 403);
+  assert.match(daten.error, /gesperrt/);
 });
 
 test("Baustein 'beispiel' ist ohne Freischaltung per API nicht erreichbar (404)", async () => {

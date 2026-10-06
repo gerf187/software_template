@@ -4,7 +4,7 @@ import { withFirma } from "../db/withFirma.js";
 import { verifyPassword, hashPassword, pruefePasswort } from "./password.js";
 import { tokenHash } from "./session.js";
 import { loescheSessionCookie, leseSessionToken } from "./cookies.js";
-import { authenticate } from "./middleware.js";
+import { authenticate, SPERRE_MELDUNG } from "./middleware.js";
 import { sitzungErstellen } from "./anmelden.js";
 
 const router = Router();
@@ -53,9 +53,16 @@ router.post("/login", async (req, res) => {
 
   const passwortOk = await verifyPassword(passwort, benutzer ? benutzer.passwort_hash : DUMMY_HASH);
 
-  if (!benutzer || !benutzer.aktiv || !benutzer.firma_aktiv || !passwortOk) {
+  if (!benutzer || !benutzer.aktiv || !passwortOk) {
     await protokolliereVersuch(email, false, req.ip);
     return res.status(401).json({ error: GENERISCHER_FEHLER });
+  }
+
+  // Richtiges Passwort, aber die Firma ist gesperrt: eigene Meldung (sagt nichts
+  // über andere Konten aus, das Passwort ist ja richtig).
+  if (!benutzer.firma_aktiv) {
+    await protokolliereVersuch(email, false, req.ip);
+    return res.status(403).json({ error: SPERRE_MELDUNG, gesperrt: true });
   }
 
   await protokolliereVersuch(email, true, req.ip);
@@ -75,6 +82,9 @@ router.post("/logout", async (req, res) => {
 router.get("/me", async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) {
+    if (res.locals.zugangGesperrt) {
+      return res.status(403).json({ error: SPERRE_MELDUNG, gesperrt: true });
+    }
     return res.status(401).json({ error: "Nicht angemeldet." });
   }
   res.json(user);
