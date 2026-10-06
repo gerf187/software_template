@@ -346,6 +346,11 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
   `npm audit` ohne Lücken. Offen: unbekannte Adressen liefern Express-
   Standard-HTML statt JSON.
 - ✅ README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
+- ✅ Klicktest Werkstatt (06.10.): Erst-Passwortwechsel ohne altes Passwort, Startpasswörter
+  ohne verwechselbare Zeichen, Sperr-Meldung, Verlauf mit Feldänderungen, Handy-Menü
+  (⋯ und Hamburger), Logo-Knopf, Suche leert sich, Firmen-Protokoll (firma_module).
+  Testläufe löschen die Werkstatt-Demo nicht mehr. Offen: F1 (Passwortwechsel mit
+  Startpasswort) war nicht reproduzierbar, Nachfrage an Björn.
 - ✅ Externe Prüfung behoben (je Punkt mit Test): Server stürzt bei Fehlern und
   bei DB-Neustart nicht mehr ab (Express 5, ID-Prüfung); Superadmin per Befehl
   `superadmin:anlegen`; Superadmin kann Passwort ändern; gesperrte Firma beendet
@@ -367,9 +372,12 @@ und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
   endgültiges Löschen eines Kontakts muss auch die Protokoll-Inhalte anonymisieren.
 - Externes Backup-Ziel: Welcher Server bzw. Ordner (`BACKUP_ZIEL`) und wo der
   SSH-Schlüssel liegt.
-- Protokoll für Baustein ein/aus: Die Tabelle `firma_module` hat keine Spalte `id`,
-  darum ist sie nicht am Protokoll-Trigger. Soll sie protokolliert werden, braucht
-  es eine Entscheidung zur Datensatz-Nummer.
+- E-Mail-System: System-Mails (Einladung mit Link statt Passwort, Passwort vergessen)
+  zentral über Björns Absender, Firmenname als Absendername, Antwort-Adresse der
+  Firma. Später Kunden-Mails über ein eigenes Postfach pro Firma (SMTP in den
+  Einstellungen). Entscheidung Mail-Dienst: Björn.
+- Einrichtungs-Assistent beim ersten Login des Firmen-Admins (Logo, Farbe,
+  Antwort-E-Mail, erste Mitarbeiter).
 
 **Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
