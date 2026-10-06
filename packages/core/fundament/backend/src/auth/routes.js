@@ -99,7 +99,13 @@ router.post("/passwort-aendern", async (req, res) => {
   }
 
   const aktuellesPasswort = bereinigt(req.body?.aktuellesPasswort);
-  const neuesPasswort = bereinigt(req.body?.neuesPasswort);
+  const neuesPasswort = req.body?.neuesPasswort;
+  // Festgelegte Passwörter nicht still ändern: Leerzeichen am Rand werden abgelehnt.
+  if (typeof neuesPasswort === "string" && neuesPasswort !== neuesPasswort.trim()) {
+    return res
+      .status(400)
+      .json({ error: "Das neue Passwort darf nicht mit einem Leerzeichen beginnen oder enden." });
+  }
   // Erst-Passwortwechsel (Startpasswort): Mit der Anmeldung ist das Startpasswort
   // schon bewiesen, darum wird es hier nicht noch einmal abgefragt. Der freiwillige
   // Wechsel fragt das alte Passwort weiterhin ab.

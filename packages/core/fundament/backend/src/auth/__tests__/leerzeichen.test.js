@@ -47,15 +47,31 @@ test("Anmelden mit Leerzeichen am Rand klappt", async () => {
   assert.equal(res.status, 200);
 });
 
-test("Passwortwechsel mit Leerzeichen am Rand: altes und neues Passwort werden bereinigt", async () => {
+test("Passwortwechsel: altes Passwort mit Leerzeichen am Rand wird bereinigt", async () => {
   const anmeldung = await api("POST", "/api/auth/login", { body: { email, passwort: PASSWORT } });
   const cookie = anmeldung.headers.get("set-cookie")?.split(";")[0];
   const neu = "Neues-Sauberes-Zeichen-6612";
   const res = await api("POST", "/api/auth/passwort-aendern", {
     cookie,
-    body: { aktuellesPasswort: ` ${PASSWORT}  `, neuesPasswort: ` ${neu} ` },
+    body: { aktuellesPasswort: ` ${PASSWORT}  `, neuesPasswort: neu },
   });
   assert.equal(res.status, 200);
   const mitNeu = await api("POST", "/api/auth/login", { body: { email, passwort: neu } });
   assert.equal(mitNeu.status, 200);
+});
+
+test("Neues Passwort mit Leerzeichen am Rand wird mit klarer Meldung abgelehnt", async () => {
+  // Der Test davor hat das Passwort schon geändert: aktuell ist jetzt das neue.
+  const aktuell = "Neues-Sauberes-Zeichen-6612";
+  const anmeldung = await api("POST", "/api/auth/login", { body: { email, passwort: aktuell } });
+  const cookie = anmeldung.headers.get("set-cookie")?.split(";")[0];
+  const res = await api("POST", "/api/auth/passwort-aendern", {
+    cookie,
+    body: { aktuellesPasswort: aktuell, neuesPasswort: " Neues-Leer-Zeichen-7741 " },
+  });
+  assert.equal(res.status, 400);
+  assert.equal(
+    (await res.json()).error,
+    "Das neue Passwort darf nicht mit einem Leerzeichen beginnen oder enden."
+  );
 });
