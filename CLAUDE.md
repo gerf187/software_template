@@ -284,6 +284,7 @@ aussehen soll, das wird gemeinsam erarbeitet.
   Kontakt: Ein Kunde kann mehrere Objekte haben, die Objektadresse gehört zum
   Projekt bzw. Auftrag (Baustein „Projekte“ / „Objekte“).
 - Notizen und freie Aufgaben (Freitext + Fälligkeit) direkt am Kontakt.
+- "Empfohlen von" ist entfernt (Migration 0018); der Verlauf zeigt Namen statt Nummern.
 
 **Projekt-Akte (Baustein „Projekte“):** Eine Seite pro Projekt, auf der alles liegt.
 Oben Phasen-Leiste (z. B. Anfrage → Angebot → Beauftragt → In Arbeit → Abgeschlossen),
@@ -352,7 +353,8 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
   Tests laufen auf eigener Datenbank `saas_test` (Werkstatt wird nicht berührt, mit
   Zählung belegt). Erst-Wechsel ohne altes Passwort nur 60 Minuten nach dem Login
   mit dem Startpasswort. Leerzeichen am Rand bei neuen Passwörtern werden abgelehnt.
-  Testfirma und `db:seed` entfernt. F1 (Passwortwechsel mit Startpasswort): vermutlich
+  Testfirma und `db:seed` entfernt. Zweiter Klicktest (06.10.): Menü beim Öffnen nach
+  oben, Kopfkarte mit Mobil, Akzentfarbe-Vorschlag aus dem Logo, Verlauf mit Namen. F1 (Passwortwechsel mit Startpasswort): vermutlich
   Browser-Autofill, Felder jetzt ohne gespeicherte Zugangsdaten; Nachtest durch Björn.
 - ✅ Externe Prüfung behoben (je Punkt mit Test): Server stürzt bei Fehlern und
   bei DB-Neustart nicht mehr ab (Express 5, ID-Prüfung); Superadmin per Befehl
