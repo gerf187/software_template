@@ -7,7 +7,7 @@
     "db:migrate": "node --env-file=../../../../.env src/db/migrate.js",
     "db:seed:werkstatt": "node --env-file=../../../../.env src/db/seed-werkstatt.js",
     "superadmin:anlegen": "node src/db/superadmin-anlegen.js",
-    "test": "node --env-file=../../../../.env --test src/**/__tests__/*.test.js"
+    "test": "node --env-file=../../../../.env test-runner.mjs"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
