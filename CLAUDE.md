@@ -349,8 +349,11 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
 - ✅ Klicktest Werkstatt (06.10.): Erst-Passwortwechsel ohne altes Passwort, Startpasswörter
   ohne verwechselbare Zeichen, Sperr-Meldung, Verlauf mit Feldänderungen, Handy-Menü
   (⋯ und Hamburger), Logo-Knopf, Suche leert sich, Firmen-Protokoll (firma_module).
-  Testläufe löschen die Werkstatt-Demo nicht mehr. Offen: F1 (Passwortwechsel mit
-  Startpasswort) war nicht reproduzierbar, Nachfrage an Björn.
+  Tests laufen auf eigener Datenbank `saas_test` (Werkstatt wird nicht berührt, mit
+  Zählung belegt). Erst-Wechsel ohne altes Passwort nur 60 Minuten nach dem Login
+  mit dem Startpasswort. Leerzeichen am Rand bei neuen Passwörtern werden abgelehnt.
+  Testfirma und `db:seed` entfernt. F1 (Passwortwechsel mit Startpasswort): vermutlich
+  Browser-Autofill, Felder jetzt ohne gespeicherte Zugangsdaten; Nachtest durch Björn.
 - ✅ Externe Prüfung behoben (je Punkt mit Test): Server stürzt bei Fehlern und
   bei DB-Neustart nicht mehr ab (Express 5, ID-Prüfung); Superadmin per Befehl
   `superadmin:anlegen`; Superadmin kann Passwort ändern; gesperrte Firma beendet
