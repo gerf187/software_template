@@ -85,7 +85,11 @@ router.post("/passwort-aendern", async (req, res) => {
   }
 
   const { aktuellesPasswort, neuesPasswort } = req.body || {};
-  if (!aktuellesPasswort || !neuesPasswort) {
+  // Erst-Passwortwechsel (Startpasswort): Mit der Anmeldung ist das Startpasswort
+  // schon bewiesen, darum wird es hier nicht noch einmal abgefragt. Der freiwillige
+  // Wechsel fragt das alte Passwort weiterhin ab.
+  const erzwungen = user.mussPasswortAendern;
+  if (!neuesPasswort || (!erzwungen && !aktuellesPasswort)) {
     return res.status(400).json({ error: "Bitte aktuelles und neues Passwort angeben." });
   }
 
@@ -101,7 +105,7 @@ router.post("/passwort-aendern", async (req, res) => {
         .query("SELECT * FROM superadmin_passwort_lesen($1)", [user.id])
         .then((r) => r.rows[0]);
 
-  if (!benutzer || !(await verifyPassword(aktuellesPasswort, benutzer.passwort_hash))) {
+  if (!benutzer || (!erzwungen && !(await verifyPassword(aktuellesPasswort, benutzer.passwort_hash)))) {
     return res.status(401).json({ error: "Aktuelles Passwort ist falsch." });
   }
 

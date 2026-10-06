@@ -157,12 +157,7 @@ test("Einladung legt einen Admin mit Startpasswort an, das beim ersten Login ge√
   const { daten: loginDaten, cookie: cookieNeu } = await login(email, startpasswort);
   assert.equal(loginDaten.mussPasswortAendern, true);
 
-  const falschesAltes = await api(cookieNeu, "POST", "/api/auth/passwort-aendern", {
-    aktuellesPasswort: "falsches-passwort",
-    neuesPasswort: "Ein-Ganz-Neues-Kennwort-9",
-  });
-  assert.equal(falschesAltes.status, 401);
-
+  // Erst-Wechsel: das alte Passwort wird nicht abgefragt (siehe passwort-aendern-wege.test.js).
   const aendern = await api(cookieNeu, "POST", "/api/auth/passwort-aendern", {
     aktuellesPasswort: startpasswort,
     neuesPasswort: "Ein-Ganz-Neues-Kennwort-9",
