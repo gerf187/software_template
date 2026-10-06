@@ -18,12 +18,9 @@ Danach:
 
 ## Zum Ausprobieren des Logins
 
-```bash
-npm run db:seed --workspace packages/core/fundament/backend
-```
-
-Legt eine Testfirma mit Login `admin@testfirma.de` / `Testpasswort-2026` an.
-Login-Routen: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+Die Test-Logins kommen mit der Werkstatt-Demo, siehe Abschnitt unten
+(`npm run db:seed:werkstatt`). Login-Routen: `POST /api/auth/login`,
+`POST /api/auth/logout`, `GET /api/auth/me`.
 
 ## Werkstatt (Björns Testumgebung)
 
