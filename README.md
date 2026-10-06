@@ -52,6 +52,12 @@ npm test --workspace packages/core/fundament/backend
 Die Tests laufen auf einer eigenen Datenbank `saas_test` (wird beim Start angelegt
 und migriert). Die Werkstatt-Datenbank bleibt unberührt.
 
+Frontend-Tests (Farbe aus dem Logo, Kontrast):
+
+```bash
+npm test --workspace packages/core/fundament/frontend
+```
+
 Braucht eine laufende Datenbank (`docker compose up -d` + Migration).
 
 ## Beenden

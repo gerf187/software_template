@@ -7,6 +7,7 @@ import Message from "../components/Message.jsx";
 import Spinner from "../components/Spinner.jsx";
 import { ladeFirmaEinstellungen, speichereFirmaEinstellungen } from "./api.js";
 import { wendeAkzentfarbeAn } from "../theme/akzentfarbe.js";
+import { farbeAusBild, lesbareAkzentfarbe, kontrastVerhaeltnis, istZuHell } from "../theme/logoFarbe.js";
 
 const STANDARD_AKZENTFARBE = "#2f7d5c";
 const LOGO_MAX_BYTES = 200 * 1024;
@@ -14,6 +15,7 @@ const LOGO_MAX_BYTES = 200 * 1024;
 export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
   const [werte, setWerte] = useState(null);
   const [fehler, setFehler] = useState(null);
+  const [vorschlag, setVorschlag] = useState(null);
   const [erfolg, setErfolg] = useState(false);
   const [speichert, setSpeichert] = useState(false);
   const dateiInputRef = useRef(null);
@@ -39,11 +41,28 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
     }
     setFehler(null);
     const leser = new FileReader();
-    leser.onload = () => setWerte((w) => ({ ...w, logo: leser.result }));
+    leser.onload = () => {
+      setWerte((w) => ({ ...w, logo: leser.result }));
+      farbeVorschlagLaden(leser.result);
+    };
     leser.readAsDataURL(datei);
   }
 
+  // Vorschlag nur nach dem Hochladen, nie automatisch übernommen (Nutzer entscheidet).
+  function farbeVorschlagLaden(src) {
+    setVorschlag(null);
+    farbeAusBild(src)
+      .then((hex) => {
+        if (!hex) return;
+        const lesbar = lesbareAkzentfarbe(hex);
+        if (lesbar.farbe === werte.akzentfarbe) return;
+        setVorschlag(lesbar);
+      })
+      .catch(() => setVorschlag(null));
+  }
+
   function logoEntfernen() {
+    setVorschlag(null);
     setWerte((w) => ({ ...w, logo: null }));
     if (dateiInputRef.current) dateiInputRef.current.value = "";
   }
@@ -157,6 +176,44 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
                 </Button>
               )}
             </div>
+            {darfBearbeiten && istZuHell(werte.akzentfarbe) && (
+              <p className="farb-hinweis">
+                Weiße Schrift auf dieser Farbe ist schwer lesbar (Kontrast{" "}
+                {kontrastVerhaeltnis("#ffffff", werte.akzentfarbe).toFixed(1)}:1). Die Farbe
+                bleibt trotzdem erlaubt.
+              </p>
+            )}
+            {darfBearbeiten && vorschlag && (
+              <div className="farb-vorschlag">
+                <span
+                  className="farb-vorschlag-vorschau"
+                  style={{ background: vorschlag.farbe }}
+                  aria-hidden="true"
+                >
+                  Aa
+                </span>
+                <div className="farb-vorschlag-text">
+                  <div>
+                    Farbe aus dem Logo übernehmen? <code>{vorschlag.farbe.toUpperCase()}</code>
+                  </div>
+                  {vorschlag.abgedunkelt && (
+                    <div className="farb-hinweis">
+                      Etwas dunkler, damit weiße Schrift lesbar ist.
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setWerte((w) => ({ ...w, akzentfarbe: vorschlag.farbe }));
+                    setVorschlag(null);
+                  }}
+                >
+                  Übernehmen
+                </Button>
+              </div>
+            )}
           </FormField>
 
           {darfBearbeiten && (
