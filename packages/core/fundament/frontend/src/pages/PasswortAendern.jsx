@@ -4,7 +4,7 @@ import { Button, Input, FormField, Message, Card } from "../components/index.js"
 import { useAuth } from "../auth/AuthContext.jsx";
 
 export default function PasswortAendern() {
-  const { refresh } = useAuth();
+  const { refresh, logout } = useAuth();
   const navigate = useNavigate();
   const [aktuellesPasswort, setAktuelles] = useState("");
   const [neuesPasswort, setNeues] = useState("");
@@ -64,6 +64,10 @@ export default function PasswortAendern() {
               Passwort ändern
             </Button>
           </form>
+          {/* Ausweg, falls der Wechsel scheitert: sonst gibt es keinen Weg zurück */}
+          <Button variant="secondary" type="button" onClick={logout} className="btn-full">
+            Abmelden
+          </Button>
         </Card>
       </div>
     </div>
