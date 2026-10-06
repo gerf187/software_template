@@ -336,7 +336,8 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
 - ⚠️ Backup täglich (14 Tage), Wiederherstellung: lokal getestet mit
   `npm run backup:test` (Zeilen und Inhalt identisch, Schreibschutz des
   Änderungsprotokolls bleibt erhalten). Das Backup prüft sich selbst und meldet
-  erst dann Erfolg. Nicht getestet: externes Ziel (`BACKUP_ZIEL`).
+  erst dann Erfolg. Mit age-Verschlüsselung ebenfalls getestet (06.10.). Nicht
+  getestet: externes Ziel (`BACKUP_ZIEL`).
 - ⚠️ Update-Skript: bricht ab, wenn das Backup fehlschlägt. Nicht durchgeführt
   (lokal nicht möglich, weil der Compose-Projektname und `APP_NAME` auf dem
   Server anders sind).
@@ -353,11 +354,11 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
   gemeinsame Bausteine aus `packages/modules/`; Protokoll für Mitarbeiter (ohne
   Passwort-Hash); App ohne Eigentümer-Passwort (Dienst `migrate`); Backup mit
   SSH-Werkzeugen und optionaler Verschlüsselung (age).
-- ⚠️ Am Produktiv-Stack geprüft, aber mit Umweg: In dieser Codespace-Umgebung
-  funktioniert die Verbindung zwischen Containern nicht. Die Images wurden mit
-  Host-Netz gestartet. Ablauf (Migration, Superadmin, Passwort, Firma, Sperre,
-  Health, DB-Neustart) lief so durch. Nicht geprüft: der Compose-Netzwerkweg
-  selbst und Caddy mit echter Domain.
+- ⚠️ Produktions-Image lokal geprüft (06.10.), im Host-Netz gegen eine
+  Wegwerf-Datenbank: Migration, Superadmin-Befehl (zweiter Aufruf bricht ab),
+  Login, Passwortwechsel, Firma anlegen, Admin einladen, Sperre und Entsperren,
+  Health. Nicht geprüft: der Compose-Netzwerkweg (im Codespace zwischen Containern
+  blockiert, `ETIMEDOUT`) und Caddy mit echter Domain.
 ✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
 und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
 
