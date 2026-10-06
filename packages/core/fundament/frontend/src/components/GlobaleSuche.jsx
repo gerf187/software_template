@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Input from "./Input.jsx";
 import Spinner from "./Spinner.jsx";
 import { IconSearch } from "../icons/index.js";
@@ -15,12 +15,20 @@ async function sucheAnfrage(q) {
 // lädt 250 ms nach der letzten Eingabe automatisch (Abschnitt 9).
 export default function GlobaleSuche() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [text, setText] = useState("");
   const verzoegert = useDebouncedValue(text);
   const [ergebnisse, setErgebnisse] = useState([]);
   const [laedt, setLaedt] = useState(false);
   const [offen, setOffen] = useState(false);
   const boxRef = useRef(null);
+
+  // Die Suche sitzt in der Seitenleiste und bleibt beim Seitenwechsel stehen:
+  // nach einem Wechsel soll das Feld wieder leer sein.
+  useEffect(() => {
+    setText("");
+    setOffen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const q = verzoegert.trim();
