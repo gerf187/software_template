@@ -130,17 +130,6 @@ test("Firma A sieht Kontakte von Firma B nicht, auch nicht per direkter ID", asy
   assert.equal(direktA.status, 404);
 });
 
-test("Empfehlung auf einen Kontakt einer anderen Firma wird abgelehnt", async () => {
-  const anlegenB = await api(cookieAdminB, "POST", "/api/kontakte", { nachname: "Fremder Kontakt" });
-  const kontaktB = await anlegenB.json();
-
-  const res = await api(cookieAdminA, "POST", "/api/kontakte", {
-    nachname: "Verweist auf fremde Firma",
-    empfohlenVonKontaktId: kontaktB.id,
-  });
-  assert.equal(res.status, 400);
-});
-
 test("Notizen und Aufgaben lassen sich anlegen, Aufgaben als erledigt markieren", async () => {
   const anlegen = await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "Mit Notizen" });
   const kontakt = await anlegen.json();

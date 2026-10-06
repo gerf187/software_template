@@ -26,44 +26,40 @@ const SLUG_A = "werkstatt-demo-a";
 const SLUG_B = "werkstatt-demo-b";
 const SUPERADMIN_EMAIL = "superadmin@werkstatt.test";
 
-// empfohlenVonIndex zeigt auf einen vorherigen Eintrag in derselben Liste
-// (Empfehlungsketten, Abschnitt 11).
 const KONTAKTE_FIRMA_A = [
-  { vorname: "Anna", nachname: "Schmidt", email: "anna.schmidt@beispiel.test", telefon: "0221 1234567", mobil: "0171 1111111", wohnadresse_strasse: "Blumenstr. 1", wohnadresse_plz: "50667", wohnadresse_ort: "Köln", empfohlenVonText: "Google" },
-  { vorname: "Ben", nachname: "Fischer", email: "ben.fischer@beispiel.test", telefon: "0221 2222222", empfohlenVonIndex: 0 },
-  { vorname: "Clara", nachname: "Weber", email: "clara.weber@beispiel.test", empfohlenVonText: "Empfehlung Nachbar" },
+  { vorname: "Anna", nachname: "Schmidt", email: "anna.schmidt@beispiel.test", telefon: "0221 1234567", mobil: "0171 1111111", wohnadresse_strasse: "Blumenstr. 1", wohnadresse_plz: "50667", wohnadresse_ort: "Köln" },
+  { vorname: "Ben", nachname: "Fischer", email: "ben.fischer@beispiel.test", telefon: "0221 2222222" },
+  { vorname: "Clara", nachname: "Weber", email: "clara.weber@beispiel.test" },
   { vorname: "David", nachname: "Hoffmann", organisation: "Hoffmann Bau GmbH", email: "david@hoffmann-bau.test" },
-  { vorname: "Eva", nachname: "Wagner", email: "eva.wagner@beispiel.test", empfohlenVonIndex: 1 },
+  { vorname: "Eva", nachname: "Wagner", email: "eva.wagner@beispiel.test" },
   { vorname: "Felix", nachname: "Becker", email: "felix.becker@beispiel.test" },
-  { vorname: "Greta", nachname: "Schulz", email: "greta.schulz@beispiel.test", empfohlenVonText: "Facebook-Anzeige" },
+  { vorname: "Greta", nachname: "Schulz", email: "greta.schulz@beispiel.test" },
   { vorname: "Hannes", nachname: "Koch", organisation: "Koch Dachdecker", email: "hannes@koch-dach.test" },
-  { vorname: "Ina", nachname: "Richter", email: "ina.richter@beispiel.test", empfohlenVonIndex: 2 },
+  { vorname: "Ina", nachname: "Richter", email: "ina.richter@beispiel.test" },
   { vorname: "Jonas", nachname: "Klein", email: "jonas.klein@beispiel.test" },
-  { vorname: "Katrin", nachname: "Wolf", email: "katrin.wolf@beispiel.test", empfohlenVonText: "Messe 2025" },
+  { vorname: "Katrin", nachname: "Wolf", email: "katrin.wolf@beispiel.test" },
   { vorname: "Lukas", nachname: "Neumann", organisation: "Neumann Elektro", email: "lukas@neumann-elektro.test" },
-  { vorname: "Maria", nachname: "Schwarz", email: "maria.schwarz@beispiel.test", empfohlenVonIndex: 3 },
+  { vorname: "Maria", nachname: "Schwarz", email: "maria.schwarz@beispiel.test" },
   { vorname: "Niklas", nachname: "Zimmermann", email: "niklas.zimmermann@beispiel.test" },
-  { vorname: "Olivia", nachname: "König", email: "olivia.koenig@beispiel.test", empfohlenVonText: "Mundpropaganda" },
+  { vorname: "Olivia", nachname: "König", email: "olivia.koenig@beispiel.test" },
 ];
 
 const KONTAKTE_FIRMA_B = [
   { vorname: "Paul", nachname: "Krüger", email: "paul.krueger@kontrolle.test" },
-  { vorname: "Quinn", nachname: "Lorenz", email: "quinn.lorenz@kontrolle.test", empfohlenVonText: "Google" },
+  { vorname: "Quinn", nachname: "Lorenz", email: "quinn.lorenz@kontrolle.test" },
   { vorname: "Rosa", nachname: "Vogel", email: "rosa.vogel@kontrolle.test" },
   { vorname: "Stefan", nachname: "Huber", organisation: "Huber Sanitär", email: "stefan@huber-sanitaer.test" },
-  { vorname: "Tina", nachname: "Albrecht", email: "tina.albrecht@kontrolle.test", empfohlenVonIndex: 0 },
+  { vorname: "Tina", nachname: "Albrecht", email: "tina.albrecht@kontrolle.test" },
 ];
 
 async function kontakteAnlegen(client, firmaId, liste) {
   const ids = [];
   for (const k of liste) {
-    const empfohlenVonKontaktId = k.empfohlenVonIndex != null ? ids[k.empfohlenVonIndex] : null;
     const { rows } = await client.query(
       `INSERT INTO contacts
          (firma_id, anrede, vorname, nachname, organisation, email, telefon, mobil,
-          wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort,
-          empfohlen_von_kontakt_id, empfohlen_von_text)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id`,
       [
         firmaId,
@@ -77,8 +73,6 @@ async function kontakteAnlegen(client, firmaId, liste) {
         k.wohnadresse_strasse || null,
         k.wohnadresse_plz || null,
         k.wohnadresse_ort || null,
-        empfohlenVonKontaktId,
-        k.empfohlenVonText || null,
       ]
     );
     ids.push(rows[0].id);

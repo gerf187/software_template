@@ -3,6 +3,7 @@ import { requireAuth } from "../auth/middleware.js";
 import { erfordertRecht } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
 import { pruefeIdsAusUrl, istFremdschluesselFehler } from "../db/ids.js";
+import { aenderungenAus, loeseVerweiseAuf } from "./verlauf.js";
 
 const router = Router();
 pruefeIdsAusUrl(router, ["id", "aufgabeId"]);
@@ -10,7 +11,7 @@ pruefeIdsAusUrl(router, ["id", "aufgabeId"]);
 const KONTAKT_SPALTEN = `
   id, anrede, vorname, nachname, organisation, email, telefon, mobil,
   wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort,
-  empfohlen_von_kontakt_id, empfohlen_von_text, erstellt_am
+  erstellt_am
 `;
 
 function kontaktFelder(body) {
@@ -25,8 +26,6 @@ function kontaktFelder(body) {
     wohnadresse_strasse: body.wohnadresseStrasse || null,
     wohnadresse_plz: body.wohnadressePlz || null,
     wohnadresse_ort: body.wohnadresseOrt || null,
-    empfohlen_von_kontakt_id: body.empfohlenVonKontaktId || null,
-    empfohlen_von_text: body.empfohlenVonKontaktId ? null : body.empfohlenVonText || null,
   };
 }
 
@@ -78,9 +77,8 @@ router.post("/", erfordertRecht("kontakte", "bearbeiten"), async (req, res) => {
           .query(
             `INSERT INTO contacts (
                firma_id, anrede, vorname, nachname, organisation, email, telefon, mobil,
-               wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort,
-               empfohlen_von_kontakt_id, empfohlen_von_text
-             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+               wohnadresse_strasse, wohnadresse_plz, wohnadresse_ort
+             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
              RETURNING ${KONTAKT_SPALTEN}`,
             [
               req.user.firmaId,
@@ -94,8 +92,6 @@ router.post("/", erfordertRecht("kontakte", "bearbeiten"), async (req, res) => {
               felder.wohnadresse_strasse,
               felder.wohnadresse_plz,
               felder.wohnadresse_ort,
-              felder.empfohlen_von_kontakt_id,
-              felder.empfohlen_von_text,
             ]
           )
           .then((r) => r.rows),
@@ -122,8 +118,7 @@ router.put("/:id", erfordertRecht("kontakte", "bearbeiten"), async (req, res) =>
             `UPDATE contacts SET
                anrede = $2, vorname = $3, nachname = $4, organisation = $5, email = $6,
                telefon = $7, mobil = $8,
-               wohnadresse_strasse = $9, wohnadresse_plz = $10, wohnadresse_ort = $11,
-               empfohlen_von_kontakt_id = $12, empfohlen_von_text = $13
+               wohnadresse_strasse = $9, wohnadresse_plz = $10, wohnadresse_ort = $11
              WHERE id = $1 AND deleted_at IS NULL
              RETURNING ${KONTAKT_SPALTEN}`,
             [
@@ -138,8 +133,6 @@ router.put("/:id", erfordertRecht("kontakte", "bearbeiten"), async (req, res) =>
               felder.wohnadresse_strasse,
               felder.wohnadresse_plz,
               felder.wohnadresse_ort,
-              felder.empfohlen_von_kontakt_id,
-              felder.empfohlen_von_text,
             ]
           )
           .then((r) => r.rows),
@@ -281,34 +274,9 @@ router.patch(
 // Änderungsprotokoll (Abschnitt 6), nur für diesen Kontakt. Eigenes Recht
 // "protokoll" statt "kontakte" -- Änderungsprotokoll ist laut Abschnitt 7
 // nur für Admin sichtbar, unabhängig davon, ob der Nutzer den Kontakt sehen darf.
-// Lesbare Feldnamen für den Verlauf. Felder, die hier fehlen (id, firma_id,
-// Zeitstempel, ...), tauchen in der Anzeige nicht auf.
-const VERLAUF_FELDER = {
-  anrede: "Anrede",
-  vorname: "Vorname",
-  nachname: "Nachname",
-  organisation: "Organisation",
-  email: "E-Mail",
-  telefon: "Telefon",
-  mobil: "Mobil",
-  wohnadresse_strasse: "Straße",
-  wohnadresse_plz: "PLZ",
-  wohnadresse_ort: "Ort",
-  empfohlen_von_kontakt_id: "Empfohlen von (Kontakt)",
-  empfohlen_von_text: "Empfohlen von",
-};
-
-// Nur geänderte, bekannte Felder, mit altem und neuem Wert.
-function aenderungenAus(alt, neu) {
-  if (!alt || !neu) return [];
-  return Object.keys(VERLAUF_FELDER)
-    .filter((k) => JSON.stringify(alt[k] ?? null) !== JSON.stringify(neu[k] ?? null))
-    .map((k) => ({ feld: VERLAUF_FELDER[k], alt: alt[k] ?? "", neu: neu[k] ?? "" }));
-}
-
 router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res) => {
-  const rows = await withFirma(req.user.firmaId, (client) =>
-    client
+  const eintraege = await withFirma(req.user.firmaId, async (client) => {
+    const rows = await client
       .query(
         `SELECT ap.id, ap.zeitpunkt, ap.aktion, ap.alte_werte, ap.neue_werte, u.name AS benutzer_name
          FROM aenderungsprotokoll ap
@@ -317,14 +285,21 @@ router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res
          ORDER BY ap.zeitpunkt DESC`,
         [req.params.id]
       )
-      .then((r) => r.rows)
-  );
-  res.json(
-    rows.map(({ alte_werte, neue_werte, ...eintrag }) => ({
-      ...eintrag,
-      aenderungen: eintrag.aktion === "geaendert" ? aenderungenAus(alte_werte, neue_werte) : [],
-    }))
-  );
+      .then((r) => r.rows);
+    const listen = rows.map((r) =>
+      r.aktion === "geaendert" ? aenderungenAus(r.alte_werte, r.neue_werte) : []
+    );
+    const aufbereitet = await loeseVerweiseAuf(client, req.user.firmaId, listen);
+    return rows
+      .map(({ alte_werte, neue_werte, ...eintrag }, i) => ({
+        ...eintrag,
+        aenderungen: aufbereitet[i],
+      }))
+      // Alte Einträge, die nur noch entfernte Felder betrafen, sind hier nicht mehr
+      // anzeigbar. Das Protokoll selbst bleibt unverändert.
+      .filter((e) => e.aktion !== "geaendert" || e.aenderungen.length > 0);
+  });
+  res.json(eintraege);
 });
 
 // Datenexport pro Kontakt (DSGVO-Auskunftsrecht, Abschnitt 6).

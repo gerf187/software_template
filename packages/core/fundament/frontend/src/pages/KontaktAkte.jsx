@@ -66,7 +66,6 @@ function ÜbersichtTab({ kontakt }) {
     ["Telefon", kontakt.telefon],
     ["Mobil", kontakt.mobil],
     ["Adresse", adresseText(kontakt)],
-    ["Empfohlen von", kontakt.empfohlen_von_text || kontakt.empfohlen_von_kontakt_name],
   ].filter(([, wert]) => wert);
 
   return (
