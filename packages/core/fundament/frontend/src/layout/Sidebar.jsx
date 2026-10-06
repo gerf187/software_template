@@ -11,7 +11,12 @@ export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout 
     <>
       <button
         className="sidebar-toggle"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          // Beim Öffnen ganz nach oben: sonst verschiebt der Browser beim Aufklappen
+          // die Seite (Scroll-Anker), und das Menü liegt außerhalb des Bildschirms.
+          if (!open) window.scrollTo({ top: 0 });
+          setOpen(!open);
+        }}
         aria-label={open ? "Menü schließen" : "Menü öffnen"}
         aria-expanded={open}
       >
