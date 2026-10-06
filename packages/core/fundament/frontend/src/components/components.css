@@ -474,6 +474,28 @@
 .kontakt-kopfkarte-adresse {
   color: var(--ink-soft);
 }
+.kontakt-kopfkarte-zeile {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.kontakt-kopfkarte-label {
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+/* Handy: Angaben untereinander statt in einer Zeile */
+@media (max-width: 640px) {
+  .kontakt-kopfkarte {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  .kontakt-kopfkarte a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
 
 /* Phasen-Leiste */
 .phase-bar {

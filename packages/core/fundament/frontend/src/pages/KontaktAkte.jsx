@@ -40,6 +40,11 @@ function adresseText(kontakt) {
     .join(", ");
 }
 
+// Anrufbar nur mit reinen Ziffern (+ am Anfang): "0221 123" wird zu "0221123".
+function telefonLink(nummer) {
+  return `tel:${nummer.replace(/[^+\d]/g, "")}`;
+}
+
 function Kopfkarte({ kontakt }) {
   const adresse = adresseText(kontakt);
   return (
@@ -48,8 +53,24 @@ function Kopfkarte({ kontakt }) {
         {kontakt.organisation && (
           <span className="kontakt-kopfkarte-organisation">{kontakt.organisation}</span>
         )}
-        {kontakt.telefon && <a href={`tel:${kontakt.telefon}`}>{kontakt.telefon}</a>}
-        {kontakt.email && <a href={`mailto:${kontakt.email}`}>{kontakt.email}</a>}
+        {kontakt.telefon && (
+          <span className="kontakt-kopfkarte-zeile">
+            <span className="kontakt-kopfkarte-label">Telefon</span>
+            <a href={telefonLink(kontakt.telefon)}>{kontakt.telefon}</a>
+          </span>
+        )}
+        {kontakt.mobil && (
+          <span className="kontakt-kopfkarte-zeile">
+            <span className="kontakt-kopfkarte-label">Mobil</span>
+            <a href={telefonLink(kontakt.mobil)}>{kontakt.mobil}</a>
+          </span>
+        )}
+        {kontakt.email && (
+          <span className="kontakt-kopfkarte-zeile">
+            <span className="kontakt-kopfkarte-label">E-Mail</span>
+            <a href={`mailto:${kontakt.email}`}>{kontakt.email}</a>
+          </span>
+        )}
         {adresse && <span className="kontakt-kopfkarte-adresse">{adresse}</span>}
       </div>
     </Card>
