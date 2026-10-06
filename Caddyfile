@@ -1,27 +1,11 @@
+# Nur für das Profil "caddy" (Server ohne Traefik, siehe README).
+# Caddy leitet alles an die App weiter. Frontend und Sicherheits-Header
+# (Content-Security-Policy, HSTS usw.) kommen aus der App selbst (app.js).
 {
 	email {$ACME_EMAIL}
 }
 
 {$DOMAIN} {
 	encode gzip
-
-	# Sicherheits-Header (Phase 3) -- gleiche Politik wie im Backend
-	# (app.js, helmet): nur eigene Herkunft, "data:" für das Firmenlogo,
-	# keine externen CDNs (Abschnitt 4).
-	header {
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Referrer-Policy "same-origin"
-	}
-
-	handle /api/* {
-		reverse_proxy app:3001
-	}
-
-	handle {
-		root * /srv
-		try_files {path} /index.html
-		file_server
-	}
+	reverse_proxy app:3001
 }

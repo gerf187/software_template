@@ -41,7 +41,7 @@ TABELLEN="firmen users sessions login_versuche rechte firma_module aenderungspro
 # Postgres-Werkzeuge aus dem offiziellen Image, gleiche Version wie im Betrieb
 psql_als() {
   # $1 = Benutzer, $2 = Passwort, $3 = SQL
-  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$2" postgres:16-alpine \
+  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$2" postgres:16.10-alpine \
     psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$1" -d "$POSTGRES_DB" -tAX -c "$3"
 }
 sql() {
@@ -60,7 +60,7 @@ zaehle() {
 # echte Backup nutzt den vollständigen Dump), deshalb wird sie ausgeblendet.
 # \restrict/\unrestrict enthalten bei jedem Dump einen neuen Zufallswert.
 inhalt() {
-  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16-alpine \
+  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16.10-alpine \
     pg_dump -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" --data-only --inserts "$POSTGRES_DB" 2>/dev/null \
     | grep -v -e '^--' -e '^\\restrict' -e '^\\unrestrict' | sort
 }
@@ -79,10 +79,10 @@ schreibschutz() {
 
 aufraeumen() {
   # Root-Dateien aus dem Backup-Container entfernen, dann den Ordner
-  docker run --rm -v "$ARBEITSORDNER:/d" postgres:16-alpine sh -c 'rm -rf /d/* /d/.[!.]* 2>/dev/null' || true
+  docker run --rm -v "$ARBEITSORDNER:/d" postgres:16.10-alpine sh -c 'rm -rf /d/* /d/.[!.]* 2>/dev/null' || true
   rmdir "$ARBEITSORDNER" 2>/dev/null || true
   # Wegwerf-Datenbank wieder entfernen (nie die Entwicklungs-Datenbank)
-  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16-alpine \
+  docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16.10-alpine \
     psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tAX \
     -c "DROP DATABASE IF EXISTS saas_backup_test" >/dev/null 2>&1 || true
 }
@@ -117,7 +117,7 @@ restore_lauf() {
 }
 
 echo "== 1. Wegwerf-Datenbank $POSTGRES_DB anlegen, Schema und Demo-Daten einspielen"
-docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16-alpine \
+docker run --rm $DB_CONTAINER_NETZ -e PGPASSWORD="$POSTGRES_PASSWORD" postgres:16.10-alpine \
   psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tAX \
   -c "DROP DATABASE IF EXISTS $POSTGRES_DB" -c "CREATE DATABASE $POSTGRES_DB" >/dev/null
 npm run db:migrate --workspace packages/core/fundament/backend >/dev/null
@@ -151,7 +151,7 @@ if [ "$VERSCHLUESSELT" = 1 ]; then
     *) echo "   Endung .age: NEIN"; exit 1 ;;
   esac
   # Ohne Schlüssel darf die Datei kein gepacktes SQL sein (kein Klartext)
-  if docker run --rm -v "$ARBEITSORDNER:/d" postgres:16-alpine gzip -t "/d/$SICHERUNG" >/dev/null 2>&1; then
+  if docker run --rm -v "$ARBEITSORDNER:/d" postgres:16.10-alpine gzip -t "/d/$SICHERUNG" >/dev/null 2>&1; then
     echo "   Klartext-Prüfung: FEHLER, die Datei ist NICHT verschlüsselt"; exit 1
   else
     echo "   Klartext-Prüfung: verschlüsselt (kein gzip ohne Schlüssel lesbar)"

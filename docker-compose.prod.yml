@@ -1,14 +1,27 @@
-name: saas-prod
+# Produktivbetrieb (Phase 3, Abschnitt 4): eine Installation pro Branche.
+#
+# Standard: Traefik (läuft schon auf dem Server, Netz "edge") leitet HTTPS an
+# die App weiter. Die Datenbank und die Sicherung hängen NUR im internen Netz
+# und haben keinen Port nach außen.
+#
+# Alternative für einen Server OHNE Traefik: Profil "caddy" (siehe README).
+#
+# Alle Namen (Projekt, Traefik-Router, Volumes) hängen an INSTALLATION aus
+# der .env. So können auf einem Server mehrere Installationen nebeneinander
+# laufen, ohne sich gegenseitig zu überschreiben.
 
-# Produktivbetrieb (Phase 3, Abschnitt 4): App + PostgreSQL + Caddy, pro
-# Branche eine eigene Installation. APP_NAME legt beim Bauen fest, welche
-# Branche läuft (siehe .env.example) -- Werkstatt lässt sich hier absichtlich
-# nicht starten (Prüfung in src/index.js).
+name: ${INSTALLATION:?In der .env fehlt INSTALLATION, z. B. INSTALLATION=eb}-prod
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16.10-alpine
     restart: unless-stopped
+    # Speicher: fest begrenzt, damit Ollama oder andere Dienste auf dem Server
+    # die Datenbank nicht verdrängen können. shared_buffers (Cache der
+    # Datenbank) bewusst klein gehalten: reicht für Kundendaten dieser Größe.
+    mem_limit: 768m
+    mem_reservation: 512m
+    command: ["postgres", "-c", "shared_buffers=192MB"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -31,6 +44,7 @@ services:
         APP_NAME: ${APP_NAME}
     entrypoint: ["node", "/app/packages/core/fundament/backend/src/db/migrate.js"]
     restart: "no"
+    mem_limit: 256m
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -48,6 +62,9 @@ services:
       args:
         APP_NAME: ${APP_NAME}
     restart: unless-stopped
+    # Speicher: die App braucht im Betrieb wenig (Node + Express + Pool).
+    mem_limit: 384m
+    mem_reservation: 256m
     environment:
       NODE_ENV: production
       APP_NAME: ${APP_NAME}
@@ -57,17 +74,31 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    # "default" = internes Netz zur Datenbank, "edge" = Verbindung zu Traefik.
+    networks:
+      - default
+      - edge
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=edge"
+      - "traefik.http.routers.${INSTALLATION}-app.rule=Host(`${DOMAIN:?In der .env fehlt DOMAIN}`)"
+      - "traefik.http.routers.${INSTALLATION}-app.entrypoints=websecure"
+      - "traefik.http.routers.${INSTALLATION}-app.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${INSTALLATION}-app.loadbalancer.server.port=3001"
     depends_on:
       postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    volumes:
-      - frontend_dist:/srv
 
+  # Alternative zu Traefik, nur mit "--profile caddy" gestartet (README).
+  # Liefert keine Dateien mehr aus, sondern leitet nur weiter -- Frontend und
+  # Sicherheits-Header kommen jetzt aus der App selbst.
   caddy:
-    image: caddy:2-alpine
+    profiles: ["caddy"]
+    image: caddy:2.10-alpine
     restart: unless-stopped
+    mem_limit: 128m
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
@@ -76,7 +107,6 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - frontend_dist:/srv:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
@@ -87,6 +117,7 @@ services:
       context: .
       dockerfile: docker/backup.Dockerfile
     restart: unless-stopped
+    mem_limit: 192m
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -102,8 +133,13 @@ services:
     volumes:
       - ./backups:/backups
 
+networks:
+  # Gemeinsames Netz mit Traefik. Muss es schon geben (Traefik legt es an);
+  # Server ohne Traefik: einmal "docker network create edge" (README).
+  edge:
+    external: true
+
 volumes:
   postgres_data_prod:
-  frontend_dist:
   caddy_data:
   caddy_config:

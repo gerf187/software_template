@@ -5,10 +5,11 @@
 # Produktivbetrieb starten (siehe src/index.js).
 #
 # Ergebnis-Image enthält kein Entwicklungs-Werkzeug (kein vite, kein
-# Dev-Server) -- nur das gebaute Frontend (von Caddy ausgeliefert) und das
-# Backend mit seinen eigenen, schlanken Abhängigkeiten.
+# Dev-Server) -- nur das gebaute Frontend (wird vom Backend selbst ausgeliefert)
+# und das Backend mit seinen eigenen, schlanken Abhängigkeiten.
+# Basis-Image fest auf eine Version gepinnt (kein :latest), siehe README.
 
-FROM node:22-alpine AS frontend-build
+FROM node:22.20-alpine AS frontend-build
 ARG APP_NAME=werkstatt
 ENV VITE_APP=${APP_NAME}
 WORKDIR /app
@@ -22,10 +23,12 @@ RUN npm ci
 COPY . .
 RUN npm run build --workspace packages/core/fundament/frontend
 
-FROM node:22-alpine AS runtime
+FROM node:22.20-alpine AS runtime
 ARG APP_NAME=werkstatt
 ENV NODE_ENV=production
 ENV APP_NAME=${APP_NAME}
+# Ordner mit dem gebauten Frontend; das Backend liefert ihn selbst aus (app.js).
+ENV FRONTEND_ORDNER=/app/frontend-dist
 WORKDIR /app
 
 # Nur die eigenen, schlanken Backend-Abhängigkeiten (bcrypt, cookie, express,
