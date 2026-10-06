@@ -2,14 +2,20 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import GlobaleSuche from "../components/GlobaleSuche.jsx";
+import { IconMenu2, IconX } from "../icons/index.js";
 
 export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button className="sidebar-toggle" onClick={() => setOpen(!open)}>
-        Menü
+      <button
+        className="sidebar-toggle"
+        onClick={() => setOpen(!open)}
+        aria-label={open ? "Menü schließen" : "Menü öffnen"}
+        aria-expanded={open}
+      >
+        {open ? <IconX /> : <IconMenu2 />}
       </button>
       <aside className={`sidebar${open ? " sidebar-open" : ""}`}>
         <div className="sidebar-brand">

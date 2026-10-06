@@ -9,3 +9,5 @@ export { default as IconGripVertical } from "./IconGripVertical.jsx";
 export { default as IconArrowsMaximize } from "./IconArrowsMaximize.jsx";
 export { default as IconArrowsMinimize } from "./IconArrowsMinimize.jsx";
 export { default as IconDots } from "./IconDots.jsx";
+export { default as IconMenu2 } from "./IconMenu2.jsx";
+export { default as IconX } from "./IconX.jsx";
