@@ -380,6 +380,7 @@
 
 /* Seitenkopf */
 .page-header {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -413,21 +414,23 @@
 /* "⋯"-Menü für Nebenaktionen: auf breiten Bildschirmen versteckt */
 .page-header-mehr {
   display: none;
-  position: relative;
 }
 .page-header-mehr-knopf {
   min-height: 44px;
   min-width: 44px;
   justify-content: center;
 }
+/* Das Menü hängt am ganzen Seitenkopf (volle Breite), nicht am Knopf: der Knopf
+   sitzt auf dem Handy mal links, mal rechts, und ein Menü am Knopf würde aus dem
+   Bildschirm ragen. */
 .page-header-mehr-liste {
   position: absolute;
+  left: 0;
   right: 0;
-  top: calc(100% + 4px);
+  top: 100%;
   z-index: 20;
   display: flex;
   flex-direction: column;
-  min-width: 240px;
   padding: var(--space-2);
   background: var(--bg-card);
   border: 1px solid var(--line);
