@@ -1,5 +1,5 @@
 import { Router } from "express";
-import crypto from "node:crypto";
+import { erzeugeStartpasswort } from "../auth/startpasswort.js";
 import { requireAuth } from "../auth/middleware.js";
 import { erfordertRecht } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
@@ -15,10 +15,6 @@ pruefeIdsAusUrl(router, ["id"]);
 const ROLLEN = ["Admin", "User"];
 
 const MITARBEITER_SPALTEN = "id, email, name, rolle, aktiv, muss_passwort_aendern, erstellt_am";
-
-function erzeugeStartpasswort() {
-  return crypto.randomBytes(12).toString("base64url");
-}
 
 // Schützt davor, dass sich ein Admin selbst herabstuft/archiviert oder der
 // letzte aktive Admin einer Firma verschwindet (Abschnitt 7). Wird vor jeder

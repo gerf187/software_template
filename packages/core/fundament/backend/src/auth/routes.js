@@ -9,6 +9,9 @@ import { sitzungErstellen } from "./anmelden.js";
 
 const router = Router();
 
+// Leerzeichen am Rand (z. B. beim Einfügen aus einer Nachricht) gehören nicht zum Passwort.
+const bereinigt = (wert) => (typeof wert === "string" ? wert.trim() : wert);
+
 const GENERISCHER_FEHLER = "E-Mail oder Passwort falsch.";
 // Fester Dummy-Hash, damit ein Login mit unbekannter E-Mail genauso lange
 // dauert wie mit bekannter -- verrät sonst per Zeitmessung, ob es die
@@ -33,7 +36,8 @@ async function protokolliereVersuch(email, erfolgreich, ip) {
 }
 
 router.post("/login", async (req, res) => {
-  const { email, passwort } = req.body || {};
+  const { email } = req.body || {};
+  const passwort = bereinigt(req.body?.passwort);
   if (!email || !passwort) {
     return res.status(400).json({ error: "Bitte E-Mail und Passwort angeben." });
   }
@@ -84,7 +88,8 @@ router.post("/passwort-aendern", async (req, res) => {
     return res.status(401).json({ error: "Nicht angemeldet." });
   }
 
-  const { aktuellesPasswort, neuesPasswort } = req.body || {};
+  const aktuellesPasswort = bereinigt(req.body?.aktuellesPasswort);
+  const neuesPasswort = bereinigt(req.body?.neuesPasswort);
   // Erst-Passwortwechsel (Startpasswort): Mit der Anmeldung ist das Startpasswort
   // schon bewiesen, darum wird es hier nicht noch einmal abgefragt. Der freiwillige
   // Wechsel fragt das alte Passwort weiterhin ab.

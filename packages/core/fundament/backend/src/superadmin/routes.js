@@ -1,5 +1,5 @@
 import { Router } from "express";
-import crypto from "node:crypto";
+import { erzeugeStartpasswort } from "../auth/startpasswort.js";
 import { requireAuth, requireSuperadmin } from "../auth/middleware.js";
 import { pool } from "../db/pool.js";
 import { withFirma } from "../db/withFirma.js";
@@ -73,11 +73,6 @@ router.patch("/firmen/:id", async (req, res) => {
   res.json(geaendert);
 });
 
-function erzeugeStartpasswort() {
-  // Lang genug für Anhang A.4 (mind. 12 Zeichen), ohne verwechselbare
-  // Sonderzeichen -- muss beim ersten Login ohnehin geändert werden.
-  return crypto.randomBytes(12).toString("base64url");
-}
 
 // Ersten Firmen-Admin einladen (Abschnitt 8). Startpasswort kommt einmalig in
 // der Antwort zurück, Björn gibt es dem Kunden weiter; beim ersten Login

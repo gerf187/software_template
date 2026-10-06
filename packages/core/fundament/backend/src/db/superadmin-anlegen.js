@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { erzeugeStartpasswort } from "../auth/startpasswort.js";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -28,8 +28,7 @@ export async function legeSuperadminAn(verbindung, { email, name }) {
     throw new Error("Bitte einen Namen angeben.");
   }
 
-  // 18 Zufallsbytes ergeben 24 Zeichen -- weit über dem Mindestmaß von 12 (Anhang A.4).
-  const passwort = crypto.randomBytes(18).toString("base64url");
+  const passwort = erzeugeStartpasswort();
   const hash = await hashPassword(passwort);
 
   try {
