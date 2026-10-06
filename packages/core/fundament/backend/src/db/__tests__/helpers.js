@@ -46,9 +46,11 @@ export async function loescheTestfirma(firmaId) {
   await ownerPool.query("DELETE FROM users WHERE firma_id = $1", [firmaId]);
   // Das Löschen der Nutzer trägt selbst ins Protokoll ein (Trigger) -- diese
   // Zeilen müssen weg, bevor die Firma gelöscht werden kann.
-  await ownerPool.query("DELETE FROM aenderungsprotokoll WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM rechte WHERE firma_id = $1", [firmaId]);
+  // firma_module: auch das Löschen dort trägt ins Protokoll ein (Trigger), darum
+  // das Protokoll erst danach ein zweites Mal leeren.
   await ownerPool.query("DELETE FROM firma_module WHERE firma_id = $1", [firmaId]);
+  await ownerPool.query("DELETE FROM aenderungsprotokoll WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM firmen WHERE id = $1", [firmaId]);
 }
 

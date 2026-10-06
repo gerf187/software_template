@@ -107,9 +107,10 @@ export async function werkstattDatenZuruecksetzen() {
     await ownerPool.query("DELETE FROM users WHERE firma_id = $1", [id]);
     // Das Löschen der Nutzer trägt selbst ins Protokoll ein (Trigger) -- diese
     // Zeilen müssen weg, bevor die Firma gelöscht werden kann.
-    await ownerPool.query("DELETE FROM aenderungsprotokoll WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM rechte WHERE firma_id = $1", [id]);
+    // firma_module zuerst: dort erzeugt das Löschen selbst Protokoll-Einträge.
     await ownerPool.query("DELETE FROM firma_module WHERE firma_id = $1", [id]);
+    await ownerPool.query("DELETE FROM aenderungsprotokoll WHERE firma_id = $1", [id]);
   }
   await ownerPool.query("DELETE FROM firmen WHERE slug = ANY($1)", [[SLUG_A, SLUG_B]]);
 
