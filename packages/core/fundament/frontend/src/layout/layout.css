@@ -212,18 +212,19 @@
     text-align: left;
     padding: 0 var(--space-4);
   }
+  /* Handy: Menü klappt unter der Leiste auf und schiebt den Inhalt nach unten.
+     Kein Überlagern mehr -- so kann die Leiste nie den Produktnamen verdecken
+     (der Testbanner schiebt die Leiste je nach Umgebung nach unten). */
   .sidebar {
-    position: fixed;
-    inset: 0;
-    top: 44px;
-    z-index: 10;
+    position: relative;
     height: auto;
-    transform: translateX(-100%);
-    transition: transform 0.15s ease;
     width: 100%;
+    display: none;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
   }
   .sidebar-open {
-    transform: translateX(0);
+    display: flex;
   }
   .app-main {
     padding: var(--space-5);
