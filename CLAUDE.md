@@ -284,7 +284,7 @@ aussehen soll, das wird gemeinsam erarbeitet.
   Kontakt: Ein Kunde kann mehrere Objekte haben, die Objektadresse gehört zum
   Projekt bzw. Auftrag (Baustein „Projekte“ / „Objekte“).
 - Notizen und freie Aufgaben (Freitext + Fälligkeit) direkt am Kontakt.
-- "Empfohlen von" ist entfernt (Migration 0018); der Verlauf zeigt Namen statt Nummern.
+- Kein Feld "Empfohlen von" (Björns Entscheidung).
 
 **Projekt-Akte (Baustein „Projekte“):** Eine Seite pro Projekt, auf der alles liegt.
 Oben Phasen-Leiste (z. B. Anfrage → Angebot → Beauftragt → In Arbeit → Abgeschlossen),
