@@ -8,3 +8,4 @@ export { default as IconEyeOff } from "./IconEyeOff.jsx";
 export { default as IconGripVertical } from "./IconGripVertical.jsx";
 export { default as IconArrowsMaximize } from "./IconArrowsMaximize.jsx";
 export { default as IconArrowsMinimize } from "./IconArrowsMinimize.jsx";
+export { default as IconDots } from "./IconDots.jsx";

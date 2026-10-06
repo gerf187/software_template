@@ -119,6 +119,16 @@ export default function Start() {
       <PageHeader
         title="Start"
         meta={user?.firma?.name || undefined}
+        sekundaer={
+          layout !== undefined && !bearbeitenModus
+            ? [
+                { label: "Auf Standard zurücksetzen", onClick: zuruecksetzen },
+                ...(darfAlsStandardFestlegen
+                  ? [{ label: "Als Firmen-Standard festlegen", onClick: alsFirmenStandard }]
+                  : []),
+              ]
+            : []
+        }
         actions={
           layout !== undefined && (
             <>
@@ -132,19 +142,9 @@ export default function Start() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button variant="secondary" onClick={zuruecksetzen}>
-                    Auf Standard zurücksetzen
-                  </Button>
-                  {darfAlsStandardFestlegen && (
-                    <Button variant="secondary" onClick={alsFirmenStandard}>
-                      Als Firmen-Standard festlegen
-                    </Button>
-                  )}
-                  <Button variant="primary" onClick={anpassenStarten}>
-                    Anpassen
-                  </Button>
-                </>
+                <Button variant="primary" onClick={anpassenStarten}>
+                  Anpassen
+                </Button>
               )}
             </>
           )
