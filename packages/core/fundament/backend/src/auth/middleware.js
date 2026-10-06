@@ -6,6 +6,10 @@ import { holeRechteFuerRolle } from "../rechte/holeRechte.js";
 import { holeAktiveModule } from "../module/firmaModule.js";
 import { holeFirmaAnzeige } from "../firma/firmaAnzeige.js";
 
+// Erst-Wechsel ohne altes Passwort: nur in der Sitzung, die mit dem Startpasswort
+// angemeldet wurde, und nur so lange nach dem Login (Sitzungs-Erstellung).
+export const ERSTWECHSEL_FENSTER_MS = 60 * 60 * 1000;
+
 // Meldung, wenn die Firma gesperrt ist (Login mit richtigem Passwort und laufende Sitzung).
 export const SPERRE_MELDUNG = "Ihr Zugang ist gesperrt. Bitte wenden Sie sich an den Anbieter.";
 
@@ -17,7 +21,7 @@ export async function authenticate(req, res) {
 
   const hash = tokenHash(token);
   const { rows } = await pool.query(
-    "SELECT user_id, firma_id, expires_at FROM sessions WHERE id = $1",
+    "SELECT user_id, firma_id, expires_at, created_at FROM sessions WHERE id = $1",
     [hash]
   );
   const session = rows[0];
@@ -79,6 +83,9 @@ export async function authenticate(req, res) {
     rechte,
     module,
     mussPasswortAendern: !!user.muss_passwort_aendern,
+    erstwechselMoeglich:
+      !!user.muss_passwort_aendern &&
+      Date.now() - new Date(session.created_at).getTime() < ERSTWECHSEL_FENSTER_MS,
   };
 }
 

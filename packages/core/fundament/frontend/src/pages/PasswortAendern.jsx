@@ -6,9 +6,9 @@ import { useAuth } from "../auth/AuthContext.jsx";
 export default function PasswortAendern() {
   const { user, refresh, logout } = useAuth();
   const navigate = useNavigate();
-  // Erst-Wechsel nach Einladung: der Nutzer hat sich gerade mit dem Startpasswort
-  // angemeldet, daher kein altes Passwort abfragen, dafür das neue zweimal.
-  const erzwungen = !!user?.mussPasswortAendern;
+  // Erst-Wechsel nach Einladung (nur kurz nach dem Login mit dem Startpasswort, das
+  // entscheidet das Backend): kein altes Passwort abfragen, dafür das neue zweimal.
+  const erzwungen = !!user?.erstwechselMoeglich;
   const [aktuellesPasswort, setAktuelles] = useState("");
   const [neuesPasswort, setNeues] = useState("");
   const [wiederholung, setWiederholung] = useState("");
@@ -55,6 +55,7 @@ export default function PasswortAendern() {
                 <Input
                   id="pw-aktuell"
                   type="password"
+                  autoComplete="current-password"
                   value={aktuellesPasswort}
                   onChange={(e) => setAktuelles(e.target.value)}
                   required
@@ -65,6 +66,7 @@ export default function PasswortAendern() {
               <Input
                 id="pw-neu"
                 type="password"
+                autoComplete="new-password"
                 value={neuesPasswort}
                 onChange={(e) => setNeues(e.target.value)}
                 required
@@ -75,6 +77,7 @@ export default function PasswortAendern() {
                 <Input
                   id="pw-wiederholung"
                   type="password"
+                  autoComplete="new-password"
                   value={wiederholung}
                   onChange={(e) => setWiederholung(e.target.value)}
                   required

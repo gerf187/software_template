@@ -103,7 +103,7 @@ router.post("/passwort-aendern", async (req, res) => {
   // Erst-Passwortwechsel (Startpasswort): Mit der Anmeldung ist das Startpasswort
   // schon bewiesen, darum wird es hier nicht noch einmal abgefragt. Der freiwillige
   // Wechsel fragt das alte Passwort weiterhin ab.
-  const erzwungen = user.mussPasswortAendern;
+  const erzwungen = user.erstwechselMoeglich;
   if (!neuesPasswort || (!erzwungen && !aktuellesPasswort)) {
     return res.status(400).json({ error: "Bitte aktuelles und neues Passwort angeben." });
   }
