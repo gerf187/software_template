@@ -9,8 +9,10 @@ import { hashPassword } from "../auth/password.js";
 // Plattform-Rolle anzulegen (Abschnitt 7). Läuft mit dem Eigentümer-Zugang
 // (POSTGRES_USER), nicht über die App-Rolle -- wie die Migrationen.
 //
-// Aufruf auf dem Server:
-//   docker compose -f docker-compose.prod.yml exec -it app npm run superadmin:anlegen
+// Aufruf auf dem Server (Schritt in der README, "Ersten Superadmin anlegen"). Der
+// Dienst "app" hat bewusst kein Eigentümer-Passwort, darum läuft der Befehl im
+// Dienst "migrate":
+//   docker compose -f docker-compose.prod.yml run --rm -it --entrypoint npm -w /app/packages/core/fundament/backend migrate run superadmin:anlegen
 
 const EMAIL_MUSTER = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
