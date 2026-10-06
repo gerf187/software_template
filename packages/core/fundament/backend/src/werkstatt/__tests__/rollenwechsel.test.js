@@ -13,9 +13,13 @@ await werkstattDatenAnlegen();
 const server = createApp({ appName: "werkstatt", production: false }).listen(0);
 const basis = `http://localhost:${server.address().port}`;
 
+// Die Tests arbeiten auf der Entwicklungs-Datenbank und setzen die Werkstatt-Demo
+// zurück. Am Ende wird die Demo wieder angelegt, sonst wäre sie nach jedem
+// Testlauf weg (Werkstatt-Login, Klicktests).
 after(async () => {
   server.close();
   await werkstattDatenZuruecksetzen();
+  await werkstattDatenAnlegen();
   await pool.end();
 });
 
