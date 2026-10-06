@@ -97,18 +97,36 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
                 <img
                   src={werte.logo}
                   alt="Logo-Vorschau"
-                  style={{ height: 40, maxWidth: 160, objectFit: "contain" }}
+                  style={{
+                    height: 40,
+                    maxWidth: 160,
+                    objectFit: "contain",
+                    padding: 6,
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--radius-sm)",
+                    background: "var(--bg-card)",
+                  }}
                 />
               )}
               {darfBearbeiten && (
                 <>
+                  {/* Die Browser-Datei-Auswahl ist unschön und lässt sich nicht stylen:
+                      das verborgene Feld öffnet ein Knopf im Design. */}
                   <input
                     ref={dateiInputRef}
                     id="fe-logo"
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     onChange={logoAuswaehlen}
+                    style={{ display: "none" }}
                   />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => dateiInputRef.current?.click()}
+                  >
+                    {werte.logo ? "Logo ersetzen" : "Logo auswählen"}
+                  </Button>
                   {werte.logo && (
                     <Button type="button" variant="text" onClick={logoEntfernen}>
                       Logo entfernen
@@ -128,6 +146,7 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
                 disabled={!darfBearbeiten}
                 onChange={(e) => setWerte((w) => ({ ...w, akzentfarbe: e.target.value }))}
               />
+              <code>{werte.akzentfarbe.toUpperCase()}</code>
               {darfBearbeiten && werte.akzentfarbe !== STANDARD_AKZENTFARBE && (
                 <Button
                   type="button"
