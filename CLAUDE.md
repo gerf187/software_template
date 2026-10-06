@@ -68,7 +68,7 @@ Diese Datei ist die **einzige** Vorgabe – es gibt kein weiteres Dokument.
   7 Tage gleitend, Passwörter mit bcrypt (Cost 12) – Details in Anhang A.4
 - **Icons:** Tabler Icons, lokal als React-Komponenten (kein npm-Paket, kein CDN), MIT-Lizenz mitliefern
 - **Schriften:** Inter + Inter Tight, selbst gehostet (`/fonts/`), OFL-Lizenz mitliefern
-- **Betrieb:** Docker Compose, Caddy als Webserver (automatisches HTTPS)
+- **Betrieb:** Docker Compose, Traefik als Webserver mit automatischem HTTPS (läuft schon auf dem Server, Netz `edge`); Caddy nur als Alternative für Server ohne Traefik (Compose-Profil `caddy`)
 
 ---
 
@@ -130,6 +130,12 @@ auch für alle Bausteine. Anzeige im Tab „Verlauf“.
 
 - **Soft-Delete:** Löschen setzt `deleted_at`, endgültiges Löschen nur über eigene Funktion.
 - **Datenexport pro Kontakt:** alle Daten einer Person als Datei (Auskunftsrecht).
+
+### Datenbank-Änderungen bei Updates (von Anfang an)
+
+- **Nie im selben Update löschen:** Spalten oder Tabellen werden niemals in dem Update
+  gelöscht, in dem der Code aufhört, sie zu nutzen. Erst Update 1: Code stellt die Nutzung
+  ein. Löschen frühestens in Update 2. Ausnahme nur, wenn Björn es ausdrücklich freigibt.
 
 ---
 
@@ -332,16 +338,18 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
 **Phase 3 – Betrieb** ⏳ teilweise, Test auf echtem Server steht aus
 - ✅ Dockerfile + docker-compose.prod.yml: lokal gestartet und geprüft (Start,
   Migrationen, /api/health, Login, Werkstatt-Routen fehlen, Werkstatt-Start bricht
-  mit Fehler ab). Lokal nur über Caddy mit interner Zertifikatsstelle, nicht über
-  die echte Domain.
+  mit Fehler ab). Seit 06.10. Traefik statt Caddy (Standard), Caddy nur als Profil.
+  Lokal mit Traefik-Testcontainer (v3.6, gleiches Netz `edge`) geprüft: Startseite,
+  Health, Schriften, Header, Login, Datenbank nicht aus dem Netz `edge` erreichbar,
+  Werkstatt-Route 404. Nicht über die echte Domain.
 - ⚠️ Backup täglich (14 Tage), Wiederherstellung: lokal getestet mit
   `npm run backup:test` (Zeilen und Inhalt identisch, Schreibschutz des
   Änderungsprotokolls bleibt erhalten). Das Backup prüft sich selbst und meldet
   erst dann Erfolg. Mit age-Verschlüsselung ebenfalls getestet (06.10.). Nicht
   getestet: externes Ziel (`BACKUP_ZIEL`).
-- ⚠️ Update-Skript: bricht ab, wenn das Backup fehlschlägt. Nicht durchgeführt
-  (lokal nicht möglich, weil der Compose-Projektname und `APP_NAME` auf dem
-  Server anders sind).
+- ✅ Update-Skript (`scripts/update.sh`) lokal in einem Klon geprüft (06.10.): Normalfall
+  grün; kaputte Migration → neue App startet nicht, alte läuft weiter; Backup
+  fehlgeschlagen → kein `git pull`, nichts geändert. Nicht auf dem Server.
 - ✅ Sicherheit: Content-Security-Policy, Anfragen-Begrenzung (300/Minute, getestet),
   CSRF-Schutz (getestet), Cookie "secure" im Produktivbetrieb, Logo-Upload ohne SVG,
   `npm audit` ohne Lücken. Offen: unbekannte Adressen liefern Express-
@@ -367,8 +375,16 @@ Tagesaufgaben nur freigegebene Aufgaben zeigen.
 - ⚠️ Produktions-Image lokal geprüft (06.10.), im Host-Netz gegen eine
   Wegwerf-Datenbank: Migration, Superadmin-Befehl (zweiter Aufruf bricht ab),
   Login, Passwortwechsel, Firma anlegen, Admin einladen, Sperre und Entsperren,
-  Health. Nicht geprüft: der Compose-Netzwerkweg (im Codespace zwischen Containern
-  blockiert, `ETIMEDOUT`) und Caddy mit echter Domain.
+  Health. Compose-Netzweg (06.10.): Im Codespace blockiert die Firewall den Verkehr
+  zwischen Containern in eigenen Netzen (`ETIMEDOUT`); für den Test eine befristete
+  Freigabe je Test-Bridge gesetzt und danach wieder entfernt. Mit Traefik geprüft,
+  nicht mit echter Domain.
+- ⚠️ Offen vor dem ersten Server-Start (Björn): Traefik-Version und Docker-Version auf dem
+  Server prüfen (Traefik 3.5 scheitert mit Docker 29: „client version 1.24 is too old“,
+  3.6 funktioniert). Deploy-Key anlegen (README, Schritt 1). Speicher-Obergrenze für
+  Ollama festlegen (Vorschlag: 4 GB per eigener Compose-Grenze, Rest für System).
+  Migration 0018 löscht Spalten im selben Schritt, in dem der Code aufhört sie zu nutzen.
+  Vor der ersten Installation unkritisch (noch nie auf einem Server eingespielt), ab jetzt gilt die Regel in Abschnitt 6.
 ✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
 und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
 
