@@ -17,3 +17,4 @@ export { default as PhaseBar } from "./PhaseBar.jsx";
 export { default as RecordView } from "./RecordView.jsx";
 export { default as DeadlineBar } from "./DeadlineBar.jsx";
 export { default as GlobaleSuche } from "./GlobaleSuche.jsx";
+export { default as Zugangsdaten } from "./Zugangsdaten.jsx";

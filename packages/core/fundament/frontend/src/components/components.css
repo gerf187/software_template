@@ -557,6 +557,20 @@
   }
 }
 
+/* Zugangsdaten nach einer Einladung */
+.zugangsdaten pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: var(--space-2) 0;
+  user-select: all;
+}
+.zugangsdaten-aktionen {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* Verlauf: einzelne Änderungen unter einem Eintrag */
 .verlauf-eintrag {
   margin-bottom: var(--space-3);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Card from "../components/Card.jsx";
+import Zugangsdaten from "../components/Zugangsdaten.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import Dialog from "../components/Dialog.jsx";
@@ -102,13 +103,11 @@ export default function MitarbeiterListe() {
   return (
     <div>
       {startpasswort && (
-        <Message type="erfolg">
-          Angelegt: {startpasswort.email}. Startpasswort (einmalig, bitte sicher übermitteln):{" "}
-          <strong>{startpasswort.wert}</strong> — muss beim ersten Login geändert werden.{" "}
-          <Button variant="text" onClick={() => setStartpasswort(null)}>
-            Ausblenden
-          </Button>
-        </Message>
+        <Zugangsdaten
+          email={startpasswort.email}
+          startpasswort={startpasswort.wert}
+          onAusblenden={() => setStartpasswort(null)}
+        />
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

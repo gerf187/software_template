@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import Card from "../components/Card.jsx";
+import Zugangsdaten from "../components/Zugangsdaten.jsx";
 import Table from "../components/Table.jsx";
 import Button from "../components/Button.jsx";
 import Dialog from "../components/Dialog.jsx";
@@ -58,10 +59,11 @@ function EinladenKarte({ firmaId }) {
     <Card title="Firmen-Admin einladen">
       {fehler && <Message type="fehler">{fehler}</Message>}
       {ergebnis && (
-        <Message type="erfolg">
-          Angelegt: {ergebnis.email}. Startpasswort (einmalig, bitte sicher übermitteln):{" "}
-          <strong>{ergebnis.startpasswort}</strong> — muss beim ersten Login geändert werden.
-        </Message>
+        <Zugangsdaten
+          email={ergebnis.email}
+          startpasswort={ergebnis.startpasswort}
+          onAusblenden={() => setErgebnis(null)}
+        />
       )}
       <form onSubmit={absenden}>
         <FormField label="Name" htmlFor="einladen-name">
