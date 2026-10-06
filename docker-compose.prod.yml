@@ -1,3 +1,5 @@
+name: saas-prod
+
 # Produktivbetrieb (Phase 3, Abschnitt 4): App + PostgreSQL + Caddy, pro
 # Branche eine eigene Installation. APP_NAME legt beim Bauen fest, welche
 # Branche läuft (siehe .env.example) -- Werkstatt lässt sich hier absichtlich
