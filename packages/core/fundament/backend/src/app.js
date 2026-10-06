@@ -1,3 +1,5 @@
+import path from "node:path";
+import fs from "node:fs";
 import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -26,20 +28,27 @@ const geladeneModule = await ladeModule();
 export function createApp({
   appName = process.env.APP_NAME,
   production = process.env.NODE_ENV === "production",
+  // Ordner mit dem gebauten Frontend (im Produktions-Image /app/frontend-dist).
+  // Ohne Angabe wird nichts ausgeliefert -- im Dev-Betrieb übernimmt Vite das.
+  frontendOrdner = process.env.FRONTEND_ORDNER,
 } = {}) {
   const app = express();
 
-  // Genau ein Proxy davor (Caddy im Produktivbetrieb, Vite im Dev-Betrieb,
-  // Anhang A.3) -- damit X-Forwarded-For/-Proto für die echte Client-IP
-  // (Rate-Begrenzung, Login-Sperre) und "sicher"-Erkennung (CSRF) stimmen.
+  // Genau ein Proxy davor (Traefik im Standardbetrieb, Caddy als Alternative,
+  // Vite im Dev-Betrieb, Anhang A.3) -- damit X-Forwarded-For/-Proto für die
+  // echte Client-IP (Rate-Begrenzung, Login-Sperre) und "sicher"-Erkennung
+  // (CSRF, Cookie secure) stimmen.
   app.set("trust proxy", 1);
 
   // Sicherheits-Header (Phase 3). CSP erlaubt nur eigene Quellen -- "data:"
   // für Bilder (Firmen-Logo als Daten-URL, firma/routes.js), "unsafe-inline"
   // nur für style-src (Inline-Styles in der Oberfläche; Skripte bleiben
   // strikt auf die eigene Herkunft begrenzt). Keine externen CDNs (Abschnitt 4).
+  // HSTS (Strict-Transport-Security) setzt helmet standardmäßig mit ein.
   app.use(
     helmet({
+      frameguard: { action: "deny" },
+      referrerPolicy: { policy: "same-origin" },
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
@@ -108,6 +117,15 @@ export function createApp({
       res.status(503).json({ status: "fehler", datenbank: "fehler" });
     }
   });
+
+  // Gebautes Frontend ausliefern (ersetzt den früheren Caddy-Webserver).
+  // Alles, was nicht /api ist und keine Datei ist, bekommt index.html, damit
+  // die Seitenwechsel im Browser (React Router) funktionieren.
+  if (frontendOrdner && fs.existsSync(path.join(frontendOrdner, "index.html"))) {
+    const indexDatei = path.join(frontendOrdner, "index.html");
+    app.use(express.static(frontendOrdner, { index: false }));
+    app.get(/^\/(?!api(\/|$)).*/, (req, res) => res.sendFile(indexDatei));
+  }
 
   app.use(fehlerBehandlung);
 
