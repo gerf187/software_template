@@ -460,6 +460,9 @@
 .kachel-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  /* dense: kleine Kacheln rutschen in die Lücke neben einer großen, statt eine
+     leere Fläche zu lassen. Die gespeicherte Reihenfolge (Einstellung) bleibt. */
+  grid-auto-flow: dense;
   gap: var(--space-5);
 }
 .kachel-gross {
