@@ -281,6 +281,31 @@ router.patch(
 // Änderungsprotokoll (Abschnitt 6), nur für diesen Kontakt. Eigenes Recht
 // "protokoll" statt "kontakte" -- Änderungsprotokoll ist laut Abschnitt 7
 // nur für Admin sichtbar, unabhängig davon, ob der Nutzer den Kontakt sehen darf.
+// Lesbare Feldnamen für den Verlauf. Felder, die hier fehlen (id, firma_id,
+// Zeitstempel, ...), tauchen in der Anzeige nicht auf.
+const VERLAUF_FELDER = {
+  anrede: "Anrede",
+  vorname: "Vorname",
+  nachname: "Nachname",
+  organisation: "Organisation",
+  email: "E-Mail",
+  telefon: "Telefon",
+  mobil: "Mobil",
+  wohnadresse_strasse: "Straße",
+  wohnadresse_plz: "PLZ",
+  wohnadresse_ort: "Ort",
+  empfohlen_von_kontakt_id: "Empfohlen von (Kontakt)",
+  empfohlen_von_text: "Empfohlen von",
+};
+
+// Nur geänderte, bekannte Felder, mit altem und neuem Wert.
+function aenderungenAus(alt, neu) {
+  if (!alt || !neu) return [];
+  return Object.keys(VERLAUF_FELDER)
+    .filter((k) => JSON.stringify(alt[k] ?? null) !== JSON.stringify(neu[k] ?? null))
+    .map((k) => ({ feld: VERLAUF_FELDER[k], alt: alt[k] ?? "", neu: neu[k] ?? "" }));
+}
+
 router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res) => {
   const rows = await withFirma(req.user.firmaId, (client) =>
     client
@@ -294,7 +319,12 @@ router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res
       )
       .then((r) => r.rows)
   );
-  res.json(rows);
+  res.json(
+    rows.map(({ alte_werte, neue_werte, ...eintrag }) => ({
+      ...eintrag,
+      aenderungen: eintrag.aktion === "geaendert" ? aenderungenAus(alte_werte, neue_werte) : [],
+    }))
+  );
 });
 
 // Datenexport pro Kontakt (DSGVO-Auskunftsrecht, Abschnitt 6).

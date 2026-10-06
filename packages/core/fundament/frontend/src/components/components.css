@@ -557,6 +557,16 @@
   }
 }
 
+/* Verlauf: einzelne Änderungen unter einem Eintrag */
+.verlauf-eintrag {
+  margin-bottom: var(--space-3);
+}
+.verlauf-aenderung {
+  margin: 0 0 var(--space-1) var(--space-4);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
 /* Fristbalken */
 .deadline-bar {
   width: 100%;

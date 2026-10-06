@@ -210,11 +210,18 @@ function VerlaufTab({ kontaktId }) {
       {eintraege === undefined && <Spinner label="Verlauf wird geladen …" />}
       {eintraege?.length === 0 && <EmptyState>Noch keine Änderungen protokolliert.</EmptyState>}
       {eintraege?.map((e) => (
-        <p key={e.id}>
-          <strong>{AKTION_TEXT[e.aktion] || e.aktion}</strong> am{" "}
-          {new Date(e.zeitpunkt).toLocaleString("de-DE")}
-          {e.benutzer_name ? ` von ${e.benutzer_name}` : ""}
-        </p>
+        <div key={e.id} className="verlauf-eintrag">
+          <p>
+            <strong>{AKTION_TEXT[e.aktion] || e.aktion}</strong> am{" "}
+            {new Date(e.zeitpunkt).toLocaleString("de-DE")}
+            {e.benutzer_name ? ` von ${e.benutzer_name}` : ""}
+          </p>
+          {e.aenderungen?.map((a) => (
+            <p key={a.feld} className="verlauf-aenderung">
+              {a.feld}: {a.alt || "(leer)"} → {a.neu || "(leer)"}
+            </p>
+          ))}
+        </div>
       ))}
     </Card>
   );
