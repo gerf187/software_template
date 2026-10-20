@@ -335,58 +335,13 @@ vorbereitet (gesetzt = aus Vorlage, leer = manuell). Vorher eigener Plan mit Fre
 ✔ Fertig, wenn: ein Projekt aus einer Vorlage seine Aufgaben erzeugt und die
 Tagesaufgaben nur freigegebene Aufgaben zeigen.
 
-**Phase 3 – Betrieb** ⏳ teilweise, Test auf echtem Server steht aus
-- ✅ Dockerfile + docker-compose.prod.yml: lokal gestartet und geprüft (Start,
-  Migrationen, /api/health, Login, Werkstatt-Routen fehlen, Werkstatt-Start bricht
-  mit Fehler ab). Seit 06.10. Traefik statt Caddy (Standard), Caddy nur als Profil.
-  Lokal mit Traefik-Testcontainer (v3.6, gleiches Netz `edge`) geprüft: Startseite,
-  Health, Schriften, Header, Login, Datenbank nicht aus dem Netz `edge` erreichbar,
-  Werkstatt-Route 404. Nicht über die echte Domain.
-- ⚠️ Backup täglich (14 Tage), Wiederherstellung: lokal getestet mit
-  `npm run backup:test` (Zeilen und Inhalt identisch, Schreibschutz des
-  Änderungsprotokolls bleibt erhalten). Das Backup prüft sich selbst und meldet
-  erst dann Erfolg. Mit age-Verschlüsselung ebenfalls getestet (06.10.). Nicht
-  getestet: externes Ziel (`BACKUP_ZIEL`).
-- ✅ Update-Skript (`scripts/update.sh`) lokal in einem Klon geprüft (06.10.): Normalfall
-  grün; kaputte Migration → neue App startet nicht, alte läuft weiter; Backup
-  fehlgeschlagen → kein `git pull`, nichts geändert. Nicht auf dem Server.
-- ✅ Sicherheit: Content-Security-Policy, Anfragen-Begrenzung (300/Minute, getestet),
-  CSRF-Schutz (getestet), Cookie "secure" im Produktivbetrieb, Logo-Upload ohne SVG,
-  `npm audit` ohne Lücken. Offen: unbekannte Adressen liefern Express-
-  Standard-HTML statt JSON.
-- ✅ README.md Abschnitt "Betrieb": Schritt-für-Schritt-Anleitung.
-- ✅ Klicktest Werkstatt (06.10.): Erst-Passwortwechsel ohne altes Passwort, Startpasswörter
-  ohne verwechselbare Zeichen, Sperr-Meldung, Verlauf mit Feldänderungen, Handy-Menü
-  (⋯ und Hamburger), Logo-Knopf, Suche leert sich, Firmen-Protokoll (firma_module).
-  Tests laufen auf eigener Datenbank `saas_test` (Werkstatt wird nicht berührt, mit
-  Zählung belegt). Erst-Wechsel ohne altes Passwort nur 60 Minuten nach dem Login
-  mit dem Startpasswort. Leerzeichen am Rand bei neuen Passwörtern werden abgelehnt.
-  Testfirma und `db:seed` entfernt. Zweiter Klicktest (06.10.): Menü beim Öffnen nach
-  oben, Kopfkarte mit Mobil, Akzentfarbe-Vorschlag aus dem Logo, Verlauf mit Namen. F1 (Passwortwechsel mit Startpasswort): vermutlich
-  Browser-Autofill, Felder jetzt ohne gespeicherte Zugangsdaten; Nachtest durch Björn.
-- ✅ Externe Prüfung behoben (je Punkt mit Test): Server stürzt bei Fehlern und
-  bei DB-Neustart nicht mehr ab (Express 5, ID-Prüfung); Superadmin per Befehl
-  `superadmin:anlegen`; Superadmin kann Passwort ändern; gesperrte Firma beendet
-  Sitzungen sofort; Health-Check meldet Datenbankausfall, `update.sh` prüft das;
-  Startpasswort-Pflicht auch im Backend; Passwortwechsel beendet andere Sitzungen;
-  gemeinsame Bausteine aus `packages/modules/`; Protokoll für Mitarbeiter (ohne
-  Passwort-Hash); App ohne Eigentümer-Passwort (Dienst `migrate`); Backup mit
-  SSH-Werkzeugen und optionaler Verschlüsselung (age).
-- ⚠️ Produktions-Image lokal geprüft (06.10.), im Host-Netz gegen eine
-  Wegwerf-Datenbank: Migration, Superadmin-Befehl (zweiter Aufruf bricht ab),
-  Login, Passwortwechsel, Firma anlegen, Admin einladen, Sperre und Entsperren,
-  Health. Compose-Netzweg (06.10.): Im Codespace blockiert die Firewall den Verkehr
-  zwischen Containern in eigenen Netzen (`ETIMEDOUT`); für den Test eine befristete
-  Freigabe je Test-Bridge gesetzt und danach wieder entfernt. Mit Traefik geprüft,
-  nicht mit echter Domain.
-- ⚠️ Offen vor dem ersten Server-Start (Björn): Traefik-Version und Docker-Version auf dem
-  Server prüfen (Traefik 3.5 scheitert mit Docker 29: „client version 1.24 is too old“,
-  3.6 funktioniert). Deploy-Key anlegen (README, Schritt 1). Speicher-Obergrenze für
-  Ollama festlegen (Vorschlag: 4 GB per eigener Compose-Grenze, Rest für System).
-  Migration 0018 löscht Spalten im selben Schritt, in dem der Code aufhört sie zu nutzen.
-  Vor der ersten Installation unkritisch (noch nie auf einem Server eingespielt), ab jetzt gilt die Regel in Abschnitt 6.
-✔ Fertig, wenn: Björn mit der Anleitung die App auf dem eigenen VPS starten
-und aktualisieren kann. **Noch nicht auf einem echten Server geprüft.**
+**Phase 3 – Betrieb** ✅ auf echtem Server in Betrieb (seit 20.10.2026)
+Dockerfile, docker-compose.prod.yml, Backup/Wiederherstellung, Update-Skript,
+Sicherheit (CSP, Anfragen-Begrenzung, CSRF, sichere Cookies) und Klicktest sind
+fertig und laufen live auf dem VPS. Details zu den einzelnen Schritten stehen
+in den Commits, nicht hier.
+Offen: E-Mail-System, externes Backup-Ziel, Ausfall-Wächter einrichten,
+Impressum/Datenschutzerklärung, Löschkonzept, AV-Vertrag Hostinger.
 
 **Offen (Entscheidung Björn)**
 - DSGVO-Löschkonzept: Das Änderungsprotokoll speichert alte Werte dauerhaft. Ein
