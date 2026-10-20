@@ -388,32 +388,34 @@
   margin-bottom: var(--space-8);
   padding-bottom: var(--space-5);
   border-bottom: 1px solid var(--line);
-  flex-wrap: wrap;
 }
 .page-header h1 {
   font-size: 34px;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.05;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .page-header-right {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  flex: 0 0 auto;
 }
 .page-header-meta {
   font-size: 13px;
   color: var(--ink-mute);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .page-header-sekundaer {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-}
-/* "⋯"-Menü für Nebenaktionen: auf breiten Bildschirmen versteckt */
-.page-header-mehr {
-  display: none;
 }
 .page-header-mehr-knopf {
   min-height: 44px;
@@ -421,8 +423,8 @@
   justify-content: center;
 }
 /* Das Menü hängt am ganzen Seitenkopf (volle Breite), nicht am Knopf: der Knopf
-   sitzt auf dem Handy mal links, mal rechts, und ein Menü am Knopf würde aus dem
-   Bildschirm ragen. */
+   sitzt mal links, mal rechts, und ein Menü am Knopf würde aus dem Bildschirm
+   ragen. */
 .page-header-mehr-liste {
   position: absolute;
   left: 0;
@@ -440,13 +442,17 @@
   justify-content: flex-start;
   min-height: 44px;
 }
-@media (max-width: 640px) {
-  .page-header-sekundaer {
-    display: none;
-  }
-  .page-header-mehr {
-    display: block;
-  }
+/* Unsichtbare Messzeile (Abschnitt 9, Punkt 0.3): liefert PageHeader.jsx die
+   echten Breiten, ohne das Layout zu beeinflussen oder sichtbar zu sein. */
+.page-header-mess {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .record-view-subheader {
