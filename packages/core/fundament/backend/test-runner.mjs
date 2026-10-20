@@ -39,6 +39,7 @@ if (migrate.status !== 0) process.exit(migrate.status ?? 1);
 
 // 3. Alle Testdateien einsammeln (src/**/__tests__/*.test.js)
 function finde(ordner) {
+  if (!fs.existsSync(ordner)) return [];
   return fs.readdirSync(ordner, { withFileTypes: true }).flatMap((e) => {
     const pfad = path.join(ordner, e.name);
     if (e.isDirectory()) return finde(pfad);
@@ -46,6 +47,20 @@ function finde(ordner) {
   });
 }
 const dateien = finde(path.join(dirname, "src")).map((p) => path.relative(dirname, p));
+
+// Bausteine bringen ihre eigenen Tests mit (Abschnitt 12, Werkstatt: "Jeder
+// Baustein bekommt zusätzlich automatische Tests"). Gleiche Reihenfolge wie
+// die Datenbank-Migrationen eines Bausteins (migrate.js): app.config.js der
+// laufenden App legt fest, welche Bausteine das betrifft.
+const { default: appConfig, appName: laufendeApp } = await import("./src/appConfig.js");
+const { modulOrdner } = await import("./src/module/lade.js");
+for (const name of appConfig.module || []) {
+  const ordner = await modulOrdner(name, { app: laufendeApp });
+  const modulTests = finde(path.join(ordner, "backend/__tests__")).map((p) =>
+    path.relative(dirname, p)
+  );
+  dateien.push(...modulTests);
+}
 
 // 4. Tests laufen lassen
 const tests = spawnSync(process.execPath, ["--test", ...dateien], { env: umgebung, stdio: "inherit" });
