@@ -392,6 +392,28 @@ dauerhaft: Datenbank 768 MB, App 384 MB, Sicherung 192 MB). Damit kann z. B.
 Ollama (KI-Chatbot) die Datenbank nicht verdrängen. Die Werte begründen sich im
 Kommentar der Datei.
 
+### Was auf dem Server schon eingerichtet ist
+
+Diese Punkte sind einmalig beim ersten Server-Start erledigt worden, nicht
+Teil dieses Repositorys und müssen auf einem weiteren Server wiederholt werden:
+
+- **Traefik-Version ist festgelegt** (in `/opt/infra/edge/docker-compose.yml`
+  auf dem Server, nicht hier im Repository). Traefik aktualisiert sich dadurch
+  nicht von allein. Ein bewusstes Update: Version dort ändern, vorher einen
+  Snapshot des Servers anlegen.
+- **Docker-Pakete sind gegen automatische Updates gesperrt** (`apt-mark hold`
+  -- welche genau, zeigt `apt-mark showhold`). Für ein bewusstes Docker-Update:
+  1. Snapshot des Servers anlegen.
+  2. `apt-mark unhold <Pakete aus showhold>`
+  3. `apt update && apt upgrade`
+  4. Prüfen: alle Installationen laufen noch (`docker compose … ps`, `/api/health`).
+  5. `apt-mark hold <dieselben Pakete>`
+- **Firewall des Hosters** lässt nur die Ports 22 (SSH), 80 und 443 (HTTP/HTTPS) herein.
+
+**Wichtig:** `docker image prune -a` nie ohne Nachdenken ausführen. Es löscht
+auch das Bild der vorherigen Version (z. B. `eb-app:vorher`), das `update.sh`
+für ein Zurückrollen braucht (siehe Abschnitt „Update: neue Version einspielen“).
+
 ### Lokal testen (Entwicklungsrechner oder Codespace)
 
 Den Produktions-Stack ohne Server prüfen. Die Testdomain ist `localhost`, es
