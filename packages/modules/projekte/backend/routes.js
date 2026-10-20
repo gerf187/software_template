@@ -7,7 +7,7 @@ import { projektFelder, pruefeProjektFelder, pruefePhase } from "./validierung.j
 import { aenderungenAus } from "./verlauf.js";
 
 const router = Router();
-pruefeIdsAusUrl(router, ["id", "kontaktId"]);
+pruefeIdsAusUrl(router, ["id", "kontaktId", "aufgabeId"]);
 
 const PROJEKT_SPALTEN = `
   p.id, p.contact_id, p.name, p.arten, p.status, p.phase,
@@ -220,6 +220,104 @@ router.delete("/:id", erfordertRecht("projekte", "loeschen"), async (req, res) =
   if (!rows[0]) return res.status(404).json({ error: "Projekt nicht gefunden." });
   res.json({ status: "ok" });
 });
+
+// Notizen (Tab "Notizen" der Projekt-Akte, Teil 1, Punkt 6). notes/tasks
+// gehören dem Fundament -- contact_id kommt per Unterabfrage aus dem Projekt
+// selbst, nie aus der Anfrage (Abschnitt 6, Regel 3). Keine Treffer-Zeile
+// beim INSERT heißt: Projekt nicht gefunden (404), ohne zweite Abfrage.
+router.get("/:id/notizen", erfordertRecht("projekte", "sehen"), async (req, res) => {
+  const rows = await withFirma(req.user.firmaId, (client) =>
+    client
+      .query(
+        `SELECT id, text, erstellt_von, erstellt_am FROM notes
+         WHERE project_id = $1 AND deleted_at IS NULL ORDER BY erstellt_am DESC`,
+        [req.params.id]
+      )
+      .then((r) => r.rows)
+  );
+  res.json(rows);
+});
+
+router.post("/:id/notizen", erfordertRecht("projekte", "bearbeiten"), async (req, res) => {
+  const text = (req.body?.text || "").trim();
+  if (!text) return res.status(400).json({ error: "Bitte einen Text angeben." });
+
+  const rows = await withFirma(
+    req.user.firmaId,
+    (client) =>
+      client
+        .query(
+          `INSERT INTO notes (firma_id, contact_id, project_id, text, erstellt_von)
+           SELECT $1, p.contact_id, p.id, $3, $4 FROM projects p
+           WHERE p.id = $2 AND p.deleted_at IS NULL
+           RETURNING id, text, erstellt_von, erstellt_am`,
+          [req.user.firmaId, req.params.id, text, req.user.id]
+        )
+        .then((r) => r.rows),
+    { userId: req.user.id }
+  );
+  if (!rows[0]) return res.status(404).json({ error: "Projekt nicht gefunden." });
+  res.status(201).json(rows[0]);
+});
+
+// Aufgaben (Tab "Aufgaben" der Projekt-Akte): Freitext + Fälligkeit + erledigt.
+router.get("/:id/aufgaben", erfordertRecht("projekte", "sehen"), async (req, res) => {
+  const rows = await withFirma(req.user.firmaId, (client) =>
+    client
+      .query(
+        `SELECT id, text, faellig_am, status, erstellt_am FROM tasks
+         WHERE project_id = $1 AND deleted_at IS NULL ORDER BY faellig_am NULLS LAST, erstellt_am`,
+        [req.params.id]
+      )
+      .then((r) => r.rows)
+  );
+  res.json(rows);
+});
+
+router.post("/:id/aufgaben", erfordertRecht("projekte", "bearbeiten"), async (req, res) => {
+  const text = (req.body?.text || "").trim();
+  if (!text) return res.status(400).json({ error: "Bitte einen Text angeben." });
+
+  const rows = await withFirma(
+    req.user.firmaId,
+    (client) =>
+      client
+        .query(
+          `INSERT INTO tasks (firma_id, contact_id, project_id, text, faellig_am, status)
+           SELECT $1, p.contact_id, p.id, $3, $4, 'offen' FROM projects p
+           WHERE p.id = $2 AND p.deleted_at IS NULL
+           RETURNING id, text, faellig_am, status, erstellt_am`,
+          [req.user.firmaId, req.params.id, text, req.body?.faelligAm || null]
+        )
+        .then((r) => r.rows),
+    { userId: req.user.id }
+  );
+  if (!rows[0]) return res.status(404).json({ error: "Projekt nicht gefunden." });
+  res.status(201).json(rows[0]);
+});
+
+router.patch(
+  "/:id/aufgaben/:aufgabeId",
+  erfordertRecht("projekte", "bearbeiten"),
+  async (req, res) => {
+    const status = req.body?.erledigt ? "erledigt" : "offen";
+    const rows = await withFirma(
+      req.user.firmaId,
+      (client) =>
+        client
+          .query(
+            `UPDATE tasks SET status = $3
+             WHERE id = $1 AND project_id = $2 AND deleted_at IS NULL
+             RETURNING id, text, faellig_am, status, erstellt_am`,
+            [req.params.aufgabeId, req.params.id, status]
+          )
+          .then((r) => r.rows),
+      { userId: req.user.id }
+    );
+    if (!rows[0]) return res.status(404).json({ error: "Aufgabe nicht gefunden." });
+    res.json(rows[0]);
+  }
+);
 
 // Verlauf (Tab "Verlauf", nur Admin -- eigenes Recht "protokoll" wie bei
 // Kontakten, Abschnitt 7: Änderungsprotokoll ist Admin-only, unabhängig vom

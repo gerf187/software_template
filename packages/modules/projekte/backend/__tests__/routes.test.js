@@ -46,7 +46,11 @@ const basis = `http://localhost:${server.address().port}`;
 // Löschen der Kontakte leeren, sonst blockiert der zusammengesetzte
 // Fremdschlüssel (firma_id, contact_id) das Aufräumen.
 async function loescheProjekteDerFirma(firmaId) {
-  await withFirma(firmaId, (client) => client.query("DELETE FROM projects WHERE firma_id = $1", [firmaId]));
+  await withFirma(firmaId, async (client) => {
+    await client.query("UPDATE tasks SET project_id = NULL WHERE firma_id = $1", [firmaId]);
+    await client.query("UPDATE notes SET project_id = NULL WHERE firma_id = $1", [firmaId]);
+    await client.query("DELETE FROM projects WHERE firma_id = $1", [firmaId]);
+  });
 }
 
 after(async () => {
@@ -220,6 +224,50 @@ test("Projekte eines Kontakts (Tab auf der Kontakt-Akte) zeigt nur dessen Projek
   const daten = await res.json();
   assert.ok(daten.every((p) => p.contactId === kontaktA.id));
   assert.ok(!daten.some((p) => p.name === "Projekt von Andere Person"));
+});
+
+test("Notizen und Aufgaben am Projekt: anlegen, lesen, erledigt setzen", async () => {
+  const anlegen = await api(cookieAdminA, "POST", "/api/module/projekte/", projekt({ name: "Projekt mit Notizen" }));
+  const neu = await anlegen.json();
+
+  const notizAnlegen = await api(cookieAdminA, "POST", `/api/module/projekte/${neu.id}/notizen`, { text: "Erste Notiz" });
+  assert.equal(notizAnlegen.status, 201);
+  const notizenListe = await api(cookieAdminA, "GET", `/api/module/projekte/${neu.id}/notizen`);
+  const notizen = await notizenListe.json();
+  assert.equal(notizen.length, 1);
+  assert.equal(notizen[0].text, "Erste Notiz");
+
+  const aufgabeAnlegen = await api(cookieAdminA, "POST", `/api/module/projekte/${neu.id}/aufgaben`, {
+    text: "Erste Aufgabe",
+    faelligAm: "2026-12-01",
+  });
+  assert.equal(aufgabeAnlegen.status, 201);
+  const aufgabe = await aufgabeAnlegen.json();
+  assert.equal(aufgabe.status, "offen");
+
+  const erledigt = await api(cookieAdminA, "PATCH", `/api/module/projekte/${neu.id}/aufgaben/${aufgabe.id}`, {
+    erledigt: true,
+  });
+  assert.equal(erledigt.status, 200);
+  assert.equal((await erledigt.json()).status, "erledigt");
+
+  const fremdesProjekt = await api(cookieAdminA, "POST", "/api/module/projekte/", projekt({ name: "Anderes Projekt" }));
+  const fremd = await fremdesProjekt.json();
+  const ueberFremdesProjekt = await api(
+    cookieAdminA,
+    "PATCH",
+    `/api/module/projekte/${fremd.id}/aufgaben/${aufgabe.id}`,
+    { erledigt: false }
+  );
+  assert.equal(ueberFremdesProjekt.status, 404);
+});
+
+test("Notiz/Aufgabe an einem fremden oder unbekannten Projekt liefert 404", async () => {
+  const unbekannteId = 999999;
+  const notiz = await api(cookieAdminA, "POST", `/api/module/projekte/${unbekannteId}/notizen`, { text: "Text" });
+  assert.equal(notiz.status, 404);
+  const aufgabe = await api(cookieAdminA, "POST", `/api/module/projekte/${unbekannteId}/aufgaben`, { text: "Text" });
+  assert.equal(aufgabe.status, 404);
 });
 
 test("Phase per Klick setzen, ungültige Phase wird abgelehnt", async () => {

@@ -9,6 +9,7 @@ export default function RecordView({
   subheader,
   phases,
   activePhase,
+  onPhaseClick,
   tabs,
   activeTab,
   onTabChange,
@@ -18,7 +19,7 @@ export default function RecordView({
     <div className="record-view">
       <PageHeader title={title} meta={meta} actions={actions} />
       {subheader}
-      {phases && <PhaseBar phases={phases} active={activePhase} />}
+      {phases && <PhaseBar phases={phases} active={activePhase} onPhaseClick={onPhaseClick} />}
       <Tabs tabs={tabs} active={activeTab} onChange={onTabChange} />
       <div className="record-view-body">{children}</div>
     </div>
