@@ -22,14 +22,14 @@ import {
   setzeModulAktiv,
 } from "../superadmin/api.js";
 
-const LEER = { name: "", slug: "", aktiv: true };
+const LEER = { name: "", aktiv: true };
 
 function werteAusFirma(firma) {
-  return { name: firma.name, slug: firma.slug, aktiv: firma.aktiv };
+  return { name: firma.name, aktiv: firma.aktiv };
 }
 
 function istGleich(a, b) {
-  return a.name === b.name && a.slug === b.slug && a.aktiv === b.aktiv;
+  return a.name === b.name && a.aktiv === b.aktiv;
 }
 
 function EinladenKarte({ firmaId }) {
@@ -277,14 +277,6 @@ export default function SuperadminFirmen() {
                   id="firma-name"
                   value={werte.name}
                   onChange={(e) => setWerte((w) => ({ ...w, name: e.target.value }))}
-                  required
-                />
-              </FormField>
-              <FormField label="Kürzel (Slug)" htmlFor="firma-slug">
-                <Input
-                  id="firma-slug"
-                  value={werte.slug}
-                  onChange={(e) => setWerte((w) => ({ ...w, slug: e.target.value }))}
                   required
                 />
               </FormField>

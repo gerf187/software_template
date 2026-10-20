@@ -136,6 +136,31 @@ test("Superadmin kann Name und Kürzel einer Firma ändern, ohne den Status zu v
   assert.equal(nachSperren.aktiv, false);
 });
 
+test("Kürzel wird automatisch aus dem Namen erzeugt, bei Doppelung mit Zahl", async () => {
+  const eindeutig = crypto.randomUUID();
+
+  const erste = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Müller & Schön ${eindeutig}`,
+  });
+  assert.equal(erste.status, 201);
+  const ersteFirma = await erste.json();
+  angelegteFirmen.push(ersteFirma.id);
+  assert.equal(ersteFirma.slug, `mueller-schoen-${eindeutig}`.toLowerCase());
+
+  const zweite = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Müller & Schön ${eindeutig}`,
+  });
+  assert.equal(zweite.status, 201);
+  const zweiteFirma = await zweite.json();
+  angelegteFirmen.push(zweiteFirma.id);
+  assert.equal(zweiteFirma.slug, `${ersteFirma.slug}-2`);
+});
+
+test("Firma anlegen ohne Namen schlägt fehl, auch ohne Kürzel im Formular", async () => {
+  const res = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {});
+  assert.equal(res.status, 400);
+});
+
 test("Einladung legt einen Admin mit Startpasswort an, das beim ersten Login geändert werden muss", async () => {
   const eindeutig = crypto.randomUUID();
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {

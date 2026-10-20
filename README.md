@@ -254,7 +254,8 @@ Meldung ab und ändert nichts.
 
 1. Im Browser die Domain öffnen, mit E-Mail und Startpasswort anmelden.
 2. Die Seite verlangt ein neues Passwort. Mindestens 12 Zeichen, keine Leerzeichen am Rand.
-3. Im Menü **Firmen** öffnen → **Neue Firma**: Name und Kürzel (z. B. `esser`) eintragen → **Speichern**.
+3. Im Menü **Firmen** öffnen → **Neue Firma**: Namen eintragen → **Speichern**.
+   Das Kürzel (z. B. `esser`) wird automatisch aus dem Namen erzeugt.
 4. Bei der Firma die **Bausteine** prüfen (Häkchen setzen, was die Firma bekommt).
 5. Unter **Firmen-Admin einladen**: Name und E-Mail des Firmen-Admins eintragen, dann **Einladen**.
    Danach erscheinen **E-Mail und Startpasswort** einmal. Beides an den Admin weitergeben.

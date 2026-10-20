@@ -9,6 +9,7 @@ import { fehlendeAbhaengigkeiten } from "../module/abhaengigkeiten.js";
 import appConfig from "../appConfig.js";
 import { ladeModule } from "../module/lade.js";
 import { pruefeIdsAusUrl } from "../db/ids.js";
+import { erzeugeSlugAusName } from "./slug.js";
 
 const router = Router();
 pruefeIdsAusUrl(router, ["id"]);
@@ -23,20 +24,36 @@ router.get("/firmen", async (req, res) => {
   res.json(rows);
 });
 
+// Kürzel (Slug) kommt nicht aus dem Formular, sondern wird aus dem Namen
+// erzeugt (Abschnitt 7). Bei Doppelung hängt eine Zahl an -- die Schleife
+// verlässt sich auf die UNIQUE-Regel der Datenbank (Migration 0001), damit
+// zwei gleichzeitige Anlagen nie denselben Slug bekommen.
 router.post("/firmen", async (req, res) => {
-  const { name, slug } = req.body || {};
-  if (!name || !slug) {
-    return res.status(400).json({ error: "Bitte Name und Kürzel (Slug) angeben." });
+  const { name } = req.body || {};
+  if (!name) {
+    return res.status(400).json({ error: "Bitte Name angeben." });
   }
-  try {
-    const { rows } = await pool.query(
-      "INSERT INTO firmen (name, slug) VALUES ($1, $2) RETURNING id, name, slug, aktiv, erstellt_am",
-      [name, slug]
-    );
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    res.status(400).json({ error: "Firma konnte nicht angelegt werden (Kürzel schon vergeben?)." });
+  const basisSlug = erzeugeSlugAusName(name);
+  if (!basisSlug) {
+    return res.status(400).json({ error: "Aus diesem Namen kann kein Kürzel erzeugt werden." });
   }
+
+  for (let versuch = 0; versuch < 50; versuch++) {
+    const slug = versuch === 0 ? basisSlug : `${basisSlug}-${versuch + 1}`;
+    try {
+      const { rows } = await pool.query(
+        "INSERT INTO firmen (name, slug) VALUES ($1, $2) RETURNING id, name, slug, aktiv, erstellt_am",
+        [name, slug]
+      );
+      return res.status(201).json(rows[0]);
+    } catch (err) {
+      if (err.code !== "23505") {
+        return res.status(400).json({ error: "Firma konnte nicht angelegt werden." });
+      }
+      // Kürzel schon vergeben -- nächste Zahl versuchen.
+    }
+  }
+  res.status(400).json({ error: "Firma konnte nicht angelegt werden (kein freies Kürzel gefunden)." });
 });
 
 // Teilweise Änderungen (z. B. nur "aktiv" beim Sperren/Entsperren) behalten die
