@@ -20,3 +20,5 @@ export const ladeFirmaEinladen = (id, daten) =>
 export const listeModule = (firmaId) => anfrage("GET", `/api/superadmin/firmen/${firmaId}/module`);
 export const setzeModulAktiv = (firmaId, modul, aktiv) =>
   anfrage("PATCH", `/api/superadmin/firmen/${firmaId}/module/${modul}`, { aktiv });
+export const loescheFirmaEndgueltig = (id, nameBestaetigung) =>
+  anfrage("DELETE", `/api/superadmin/firmen/${id}`, { nameBestaetigung });

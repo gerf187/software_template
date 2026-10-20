@@ -20,6 +20,7 @@ import {
   ladeFirmaEinladen,
   listeModule,
   setzeModulAktiv,
+  loescheFirmaEndgueltig,
 } from "../superadmin/api.js";
 
 const LEER = { name: "", aktiv: true };
@@ -143,6 +144,10 @@ export default function SuperadminFirmen() {
   const [ursprung, setUrsprung] = useState(LEER);
   const [speichert, setSpeichert] = useState(false);
   const [wechselZiel, setWechselZiel] = useState(undefined);
+  const [loeschZiel, setLoeschZiel] = useState(null);
+  const [loeschEingabe, setLoeschEingabe] = useState("");
+  const [loeschFehler, setLoeschFehler] = useState(null);
+  const [loescht, setLoescht] = useState(false);
 
   function laden() {
     listeFirmen().then(setFirmen).catch((err) => setFehler(err.message));
@@ -214,6 +219,31 @@ export default function SuperadminFirmen() {
     }
   }
 
+  function loeschenOeffnen(firma) {
+    setLoeschZiel(firma);
+    setLoeschEingabe("");
+    setLoeschFehler(null);
+  }
+
+  function loeschenSchliessen() {
+    setLoeschZiel(null);
+  }
+
+  async function endgueltigLoeschen() {
+    setLoescht(true);
+    setLoeschFehler(null);
+    try {
+      await loescheFirmaEndgueltig(loeschZiel.id, loeschEingabe);
+      if (loeschZiel.id === ausgewaehlteId) wirklichWechseln(null);
+      loeschenSchliessen();
+      laden();
+    } catch (err) {
+      setLoeschFehler(err.message);
+    } finally {
+      setLoescht(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -248,15 +278,28 @@ export default function SuperadminFirmen() {
                   key: "aktionen",
                   label: "",
                   render: (f) => (
-                    <Button
-                      variant="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sperrenUmschalten(f);
-                      }}
-                    >
-                      {f.aktiv ? "Sperren" : "Entsperren"}
-                    </Button>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                      <Button
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sperrenUmschalten(f);
+                        }}
+                      >
+                        {f.aktiv ? "Sperren" : "Entsperren"}
+                      </Button>
+                      {!f.aktiv && (
+                        <Button
+                          variant="danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loeschenOeffnen(f);
+                          }}
+                        >
+                          Endgültig löschen
+                        </Button>
+                      )}
+                    </div>
                   ),
                 },
               ]}
@@ -327,6 +370,46 @@ export default function SuperadminFirmen() {
       >
         Diese Firma hat noch ungespeicherte Änderungen im Formular. Wenn du wechselst,
         gehen sie verloren.
+      </Dialog>
+
+      <Dialog
+        open={loeschZiel !== null}
+        title="Firma endgültig löschen"
+        onClose={loeschenSchliessen}
+        actions={
+          <>
+            <Button variant="text" onClick={loeschenSchliessen}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="danger"
+              loading={loescht}
+              disabled={loeschEingabe !== loeschZiel?.name}
+              onClick={endgueltigLoeschen}
+            >
+              Endgültig löschen
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Löscht <strong>alle</strong> Daten von <strong>{loeschZiel?.name}</strong> unwiderruflich:
+          Kontakte, Notizen, Aufgaben, Projekte, Mitarbeiter, Sitzungen, Rechte, Bausteine,
+          Dashboard und das Änderungsprotokoll. Das kann nicht zurückgenommen werden.
+        </p>
+        <p className="farb-hinweis">Vorher ein Backup anlegen.</p>
+        {loeschFehler && <Message type="fehler">{loeschFehler}</Message>}
+        <FormField
+          label={`Zur Bestätigung den Firmennamen eintippen: "${loeschZiel?.name}"`}
+          htmlFor="firma-loeschen-bestaetigung"
+        >
+          <Input
+            id="firma-loeschen-bestaetigung"
+            value={loeschEingabe}
+            onChange={(e) => setLoeschEingabe(e.target.value)}
+            autoComplete="off"
+          />
+        </FormField>
       </Dialog>
     </div>
   );

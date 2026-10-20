@@ -91,6 +91,25 @@ router.patch("/firmen/:id", async (req, res) => {
 });
 
 
+// Firma endgültig löschen (Punkt 0.4): nur gesperrt, nur mit exakt eingetipptem
+// Namen. Die eigentliche Löschung läuft in einer eng begrenzten Datenbank-
+// Funktion (SECURITY DEFINER, Migration 0019) -- die App-Rolle darf das
+// Änderungsprotokoll sonst nicht löschen.
+router.delete("/firmen/:id", async (req, res) => {
+  const firmaId = Number(req.params.id);
+  const nameBestaetigung = req.body?.nameBestaetigung || "";
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT firma_endgueltig_loeschen($1, $2, $3) AS bereiche",
+      [firmaId, nameBestaetigung, req.user.id]
+    );
+    res.json({ bereiche: rows[0].bereiche });
+  } catch (err) {
+    res.status(400).json({ error: err.message || "Firma konnte nicht gelöscht werden." });
+  }
+});
+
 // Ersten Firmen-Admin einladen (Abschnitt 8). Startpasswort kommt einmalig in
 // der Antwort zurück, Björn gibt es dem Kunden weiter; beim ersten Login
 // erzwingt muss_passwort_aendern den Wechsel.
