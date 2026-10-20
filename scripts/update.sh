@@ -50,19 +50,23 @@ if ! $COMPOSE run --rm migrate; then
   exit 1
 fi
 
-echo "5/6 App wird neu gestartet..."
-$COMPOSE up -d --no-deps app
+echo "5/6 App und Sicherung werden neu gestartet..."
+# Beide Dienste neu erzeugen, nicht nur "app": sonst läuft der
+# Backup-Container mit dem alten Image weiter -- Änderungen an backup.sh
+# oder neue .env-Werte (z. B. BACKUP_MELDUNG_URL) kämen nie an.
+$COMPOSE up -d --no-deps app backup
 
 echo "6/6 Health-Check..."
 VERSUCH=0
 while [ "$VERSUCH" -lt 15 ]; do
-  # Gesund = HTTP 200 UND status "ok" UND Datenbank "ok" (sonst z. B. 503 bei Datenbankausfall).
+  # Gesund = HTTP 200 UND status "ok" UND Datenbank "ok" (sonst z. B. 503 bei Datenbankausfall)
+  # UND der Backup-Container läuft.
   if $COMPOSE exec -T app node -e "
     fetch('http://localhost:3001/api/health')
       .then((r) => r.json().then((d) => process.exit(r.ok && d.status === 'ok' && d.datenbank === 'ok' ? 0 : 1)))
       .catch(() => process.exit(1));
-  "; then
-    echo "Update erfolgreich, Backend ist gesund."
+  " && $COMPOSE ps --status running --services | grep -qx backup; then
+    echo "Update erfolgreich, Backend ist gesund, Sicherung läuft."
     exit 0
   fi
   VERSUCH=$((VERSUCH + 1))

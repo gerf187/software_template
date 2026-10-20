@@ -270,13 +270,21 @@ cd /opt/projects/eb
 ```
 
 Das Skript macht der Reihe nach: **Backup** (muss gelingen) → neue Version holen
-→ Images bauen → Datenbank-Migrationen → App neu starten → Gesundheitsprüfung.
-Dabei gibt es eine kurze Unterbrechung der App.
+→ Images bauen → Datenbank-Migrationen → App **und Sicherung** neu starten →
+Gesundheitsprüfung. Dabei gibt es eine kurze Unterbrechung der App.
 
-Erwartet am Ende: `Update erfolgreich, Backend ist gesund.`
+Erwartet am Ende: `Update erfolgreich, Backend ist gesund, Sicherung läuft.`
 
 Bricht das Skript ab, läuft die **alte Version weiter**. Die Ausgabe nennt
 die Ursache. Eine Migration, die fehlschlägt, startet die neue App nicht.
+
+**Nach einer Änderung an der `.env`** (z. B. ein neuer Wert wie
+`BACKUP_MELDUNG_URL`) reicht `./scripts/update.sh` allein nicht, wenn sich der
+Code nicht geändert hat -- dann muss zusätzlich einmal
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+ausgeführt werden, damit alle Dienste den neuen Wert bekommen.
 
 Falls die neue Version nach dem Update nicht gesund ist, zurück auf die alte
 Version (die Ausgabe nennt die Befehle):
