@@ -98,3 +98,14 @@ if [ -n "${BACKUP_ZIEL:-}" ]; then
 else
   echo "[$(date)] Kein BACKUP_ZIEL gesetzt (.env) -- Backup bleibt nur lokal in ./backups. Für eine echte externe Sicherung dort ein Ziel eintragen."
 fi
+
+# Ausfall-Wächter (z. B. healthchecks.io, Uptime Kuma): meldet nur, dass das
+# Backup erfolgreich war -- NUR nach dem geprüften Erfolg oben, einmal. Ein
+# fehlgeschlagener Aufruf ändert nichts am Ergebnis des Backups (nur Warnung).
+if [ -n "${BACKUP_MELDUNG_URL:-}" ]; then
+  if curl -fsS --max-time 10 "${BACKUP_MELDUNG_URL}" >/dev/null 2>&1; then
+    echo "[$(date)] Ausfall-Wächter benachrichtigt."
+  else
+    echo "[$(date)] WARNUNG: Ausfall-Wächter (BACKUP_MELDUNG_URL) war nicht erreichbar. Backup gilt trotzdem als erfolgreich."
+  fi
+fi

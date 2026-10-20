@@ -333,6 +333,14 @@ nicht auf den Server (z. B. im Passwort-Manager). Anleitung dazu im Abschnitt
 **Externe Sicherung:** Der Hosting-Anbieter sichert den ganzen Server täglich.
 Ein eigener externer Speicherort (`BACKUP_ZIEL`) ist noch offen.
 
+**Ausfall-Wächter (optional):** Ist in der `.env` die Adresse
+`BACKUP_MELDUNG_URL` eines Diensts wie healthchecks.io oder Uptime Kuma
+eingetragen, ruft das Backup diese Adresse nach einem erfolgreichen, geprüften
+Backup einmal auf. So merkt der Wächter, wenn das tägliche Backup ausbleibt.
+Ist die Adresse nicht erreichbar, gilt das Backup trotzdem als erfolgreich
+(nur eine Warnung im Log). Leer lassen = keine Meldung. Die Einrichtung des
+Dienstes selbst ist noch offen (siehe CLAUDE.md, Abschnitt 12).
+
 ### Verschlüsselte Backups (optional)
 
 Ist in der `.env` der öffentliche Schlüssel `BACKUP_VERSCHLUESSELUNG_SCHLUESSEL`

@@ -200,6 +200,54 @@ else
   echo "   Schreibschutz Protokoll nach Wiederherstellung: NICHT gesperrt"; FEHLER=1
 fi
 
+echo "== 8. Ausfall-Wächter (BACKUP_MELDUNG_URL)"
+# Eigener, winziger HTTP-Server auf dem Host: prüft, dass backup.sh die
+# Adresse nach einem erfolgreichen Backup genau einmal aufruft. --network
+# host beim Backup-Lauf (s.o.) teilt sich das Netz mit dem Host, daher ist
+# 127.0.0.1 von innen erreichbar.
+MELDUNG_DATEI="$ARBEITSORDNER/meldung_empfangen"
+rm -f "$MELDUNG_DATEI"
+python3 -c "
+import http.server, socketserver
+class H(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        open('$MELDUNG_DATEI', 'w').close()
+        self.send_response(200); self.end_headers()
+    def log_message(self, *a): pass
+with socketserver.TCPServer(('127.0.0.1', 8999), H) as s:
+    s.timeout = 5
+    s.handle_request()
+" &
+MELDUNG_PID=$!
+sleep 1
+rm -f "$ARBEITSORDNER"/datenbank_*.sql.gz*
+docker run --rm $DB_CONTAINER_NETZ \
+  -e POSTGRES_HOST="$POSTGRES_HOST" -e POSTGRES_PORT="$POSTGRES_PORT" \
+  -e POSTGRES_DB="$POSTGRES_DB" -e POSTGRES_USER="$POSTGRES_USER" \
+  -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" -e BACKUP_AUFBEWAHRUNG_TAGE=14 \
+  -e BACKUP_MELDUNG_URL="http://127.0.0.1:8999/" \
+  -v "$ARBEITSORDNER:/backups" -v "$PWD/scripts:/skripte:ro" \
+  "$BACKUP_BILD" sh /skripte/backup.sh >/dev/null
+wait "$MELDUNG_PID" 2>/dev/null || true
+if [ -f "$MELDUNG_DATEI" ]; then
+  echo "   Wächter wurde nach erfolgreichem Backup aufgerufen: ja"
+else
+  echo "   Wächter wurde nach erfolgreichem Backup aufgerufen: NEIN"; FEHLER=1
+fi
+
+rm -f "$ARBEITSORDNER"/datenbank_*.sql.gz*
+if docker run --rm $DB_CONTAINER_NETZ \
+  -e POSTGRES_HOST="$POSTGRES_HOST" -e POSTGRES_PORT="$POSTGRES_PORT" \
+  -e POSTGRES_DB="$POSTGRES_DB" -e POSTGRES_USER="$POSTGRES_USER" \
+  -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" -e BACKUP_AUFBEWAHRUNG_TAGE=14 \
+  -e BACKUP_MELDUNG_URL="http://127.0.0.1:1/nicht-erreichbar" \
+  -v "$ARBEITSORDNER:/backups" -v "$PWD/scripts:/skripte:ro" \
+  "$BACKUP_BILD" sh /skripte/backup.sh >/dev/null 2>&1; then
+  echo "   Backup bleibt erfolgreich, wenn die Meldungs-Adresse nicht erreichbar ist: ja"
+else
+  echo "   Backup bleibt erfolgreich, wenn die Meldungs-Adresse nicht erreichbar ist: NEIN"; FEHLER=1
+fi
+
 if [ "$FEHLER" -eq 0 ]; then
   echo "ERGEBNIS: Sicherung und Wiederherstellung erfolgreich."
 else
