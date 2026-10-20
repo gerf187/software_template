@@ -85,7 +85,7 @@ software_template/
         backend/src/       ← Auth, Mandanten-Schutz, Rechte, Module, Superadmin,
                              Basis-Routen; backend/db/migrations/ = DB-Schema Fundament
     modules/              ← gemeinsame Bausteine, branchenneutral, je ein Ordner
-      projekte/           ← noch nicht gebaut (Abschnitt 12)
+      projekte/           ← gebaut (Abschnitt 12)
         modul.config.js
         frontend/
         backend/
@@ -295,7 +295,14 @@ aussehen soll, das wird gemeinsam erarbeitet.
 **Projekt-Akte (Baustein „Projekte“):** Eine Seite pro Projekt, auf der alles liegt.
 Oben Phasen-Leiste (z. B. Anfrage → Angebot → Beauftragt → In Arbeit → Abgeschlossen),
 darunter Tabs. Der Baustein liefert den Rahmen, App und andere Bausteine liefern Tabs.
-Tabs in Phase 1: Übersicht, Kontakt, Notizen, Aufgaben, Verlauf.
+Tabs in Phase 1: Übersicht, Notizen, Aufgaben, Verlauf (Kontakt steht in der
+Kopfkarte, kein eigener Tab). Kein Honorar/Stundensatz am Projekt (Björns
+Entscheidung) – Geld kommt später in einen eigenen, nur für Admin sichtbaren
+Baustein.
+
+**Energieberater-Hinweis für Phase 4:** TPB/TPN laufen künftig nicht als eigene
+Anträge, sondern als normale Aufgaben mit Frist (Gültigkeit 2 Monate, Wert in
+den Firmen-Einstellungen).
 
 ---
 
@@ -319,13 +326,17 @@ Schriften + Icons, `README.md`.
 - ✅ Einstellungen pro Firma (Name, Logo, Akzentfarbe; Fristen bewusst offen,
   kommen erst mit Phase 2)
 - ✅ Kontakte (inkl. Notizen, freie Aufgaben, Verlauf nur für Admin)
-- ✅ Globale Suche (bisher nur Kontakte, erweiterbar pro Baustein)
+- ✅ Globale Suche (Kontakte + Projekte, erweiterbar pro Baustein)
 - ✅ Start-Dashboard (Kacheln: pro Benutzer an-/abwählbar, sortierbar, Größe
   klein/groß; Admin kann Firmen-Standard festlegen; Bausteine bringen eigene
   Kacheln mit)
-- ⏳ Baustein „Projekte“ – kommt mit Phase 4. Rahmen (Projekt-Akte, Phasen-Leiste,
-  Tabs-Mechanik) ist branchenneutral und gehört nach `packages/modules/projekte/`
-  (Abschnitt 5); Inhalte (Phasen-Namen, Tabs, Fachbausteine) kommen pro App.
+- ✅ Baustein „Projekte“ (vorgezogen, 2026-10-20) – `packages/modules/projekte/`
+  (Abschnitt 5): Projekt-Akte mit Phasen-Leiste (Klick vor/zurück), Tabs
+  Übersicht/Notizen/Aufgaben/Verlauf, Tab „Projekte“ auf der Kontakt-Akte,
+  zwei Dashboard-Kacheln, eigene Suchquelle. Phasen-Namen, Status, Projektarten
+  pro App (`app.config.js`). Freigeschaltet in Werkstatt und Energieberater.
+  Fach-Inhalte (z. B. EB-Anträge/Maßnahmen als eigene Tabs) kommen erst mit
+  Phase 4.
 
 **Phase 2 – Baustein „Ablaufpläne“ (Tagesaufgaben)** ⏳ offen
 Nach „Prinzip C“ (Anhang A.5): Abläufe als Daten, harte/weiche Voraussetzungen,
