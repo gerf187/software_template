@@ -16,6 +16,32 @@ async function existiert(datei) {
   }
 }
 
+// Ordner eines Bausteins (Abschnitt 5): zuerst apps/<app>/modules/<name>, dann
+// packages/modules/<name>. Eigene Funktion, weil migrate.js (Datenbank-Migrationen
+// eines Bausteins, siehe db/migrations darin) denselben Ordner braucht wie
+// ladeModule() -- ohne dafür auch Konfiguration und Backend-Route zu laden.
+export async function modulOrdner(
+  name,
+  { app = appName, appsOrdner = appsRoot, gemeinsamerOrdner: gemeinsamerPfad = gemeinsamerOrdner } = {}
+) {
+  const inApp = path.join(appsOrdner, app, "modules", name);
+  const gemeinsam = path.join(gemeinsamerPfad, name);
+  const inAppVorhanden = await existiert(path.join(inApp, "modul.config.js"));
+  const gemeinsamVorhanden = await existiert(path.join(gemeinsam, "modul.config.js"));
+
+  if (inAppVorhanden && gemeinsamVorhanden) {
+    throw new Error(
+      `Namenskonflikt: Baustein "${name}" gibt es in apps/${app}/modules und in packages/modules. Bitte einen der beiden umbenennen.`
+    );
+  }
+  if (!inAppVorhanden && !gemeinsamVorhanden) {
+    throw new Error(
+      `Baustein "${name}" nicht gefunden (weder in apps/${app}/modules noch in packages/modules).`
+    );
+  }
+  return inAppVorhanden ? inApp : gemeinsam;
+}
+
 // Lädt die Bausteine, die diese App laut app.config.js anbietet (Abschnitt 8,
 // erste Ebene der Auswahl). Ob eine Firma einen Baustein tatsächlich bekommt,
 // entscheidet firma_module (zweite Ebene, siehe module/firmaModule.js).
@@ -32,23 +58,7 @@ export async function ladeModule({
   const ergebnis = [];
 
   for (const name of namen) {
-    const inApp = path.join(appsOrdner, app, "modules", name);
-    const gemeinsam = path.join(gemeinsamerPfad, name);
-    const inAppVorhanden = await existiert(path.join(inApp, "modul.config.js"));
-    const gemeinsamVorhanden = await existiert(path.join(gemeinsam, "modul.config.js"));
-
-    if (inAppVorhanden && gemeinsamVorhanden) {
-      throw new Error(
-        `Namenskonflikt: Baustein "${name}" gibt es in apps/${app}/modules und in packages/modules. Bitte einen der beiden umbenennen.`
-      );
-    }
-    if (!inAppVorhanden && !gemeinsamVorhanden) {
-      throw new Error(
-        `Baustein "${name}" nicht gefunden (weder in apps/${app}/modules noch in packages/modules).`
-      );
-    }
-
-    const basis = inAppVorhanden ? inApp : gemeinsam;
+    const basis = await modulOrdner(name, { app, appsOrdner, gemeinsamerOrdner: gemeinsamerPfad });
     const { default: config } = await import(
       pathToFileURL(path.join(basis, "modul.config.js")).href
     );
