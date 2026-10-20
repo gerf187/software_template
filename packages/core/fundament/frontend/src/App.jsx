@@ -84,8 +84,7 @@ function AppLayout({ children }) {
       {appConfig.testumgebung && <TestBanner />}
       <div className="app-layout">
         <Sidebar
-          brand={appConfig.produktname}
-          subtitle="Fundament"
+          brand={user?.firma?.name || appConfig.produktname}
           logo={user?.firma?.logo}
           groups={groups}
           user={user ? { name: user.name, role: user.rolle } : null}

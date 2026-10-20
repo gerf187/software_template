@@ -4,7 +4,7 @@ import Button from "../components/Button.jsx";
 import GlobaleSuche from "../components/GlobaleSuche.jsx";
 import { IconMenu2, IconX } from "../icons/index.js";
 
-export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout }) {
+export default function Sidebar({ brand, logo, groups, user, onLogout }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,7 +29,6 @@ export default function Sidebar({ brand, subtitle, logo, groups, user, onLogout 
           ) : (
             <div className="sidebar-brand-name">{brand}</div>
           )}
-          {subtitle && <div className="sidebar-brand-subtitle">{subtitle}</div>}
         </div>
 
         <GlobaleSuche />

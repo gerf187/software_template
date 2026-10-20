@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { Button, Input, FormField, Message, Card } from "../components/index.js";
+import appConfig from "~app-config";
 
 export default function Login() {
   const { login, hinweis } = useAuth();
@@ -30,7 +31,7 @@ export default function Login() {
       <div className="login-card">
         <Card>
           <div className="login-brand">
-            <div className="login-brand-name">SaaS-Grundgerüst</div>
+            <div className="login-brand-name">{appConfig.produktname}</div>
           </div>
           <form onSubmit={absenden}>
             {(fehler || hinweis) && <Message type="fehler">{fehler || hinweis}</Message>}

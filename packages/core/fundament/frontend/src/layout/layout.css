@@ -58,14 +58,6 @@
   object-fit: contain;
   display: block;
 }
-.sidebar-brand-subtitle {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ink-mute);
-  margin-top: 2px;
-}
-
 .globale-suche {
   position: relative;
 }
