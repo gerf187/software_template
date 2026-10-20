@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../auth/middleware.js";
 import { darf } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
+import { geladeneModule } from "../module/geladen.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -13,9 +14,11 @@ function kontaktName(k) {
   return [k.vorname, k.nachname].filter(Boolean).join(" ") || "(ohne Namen)";
 }
 
-// Globale Suche (Abschnitt 2, Fundament). Durchsucht bisher nur Kontakte --
-// das Fundament kennt noch keinen Baustein mit eigener Suchquelle (Abschnitt 8,
-// Regel 1 sieht das für künftige Bausteine vor, aktuell gibt es keinen).
+// Globale Suche (Abschnitt 2, Fundament) plus Suchquellen aktiver Bausteine
+// (Abschnitt 8, Regel 1: backend/suche.js, optional, siehe module/lade.js).
+// req.user.module kommt aus der Sitzungsprüfung schon aktuell (middleware.js
+// liest es bei jeder Anfrage neu) -- kein zweiter Datenbank-Zugriff nötig, um
+// zu wissen, welche Bausteine diese Firma gerade freigeschaltet hat.
 router.get("/", async (req, res) => {
   const suche = (req.query.q || "").trim();
   if (suche.length < MINDESTLAENGE) return res.json([]);
@@ -47,6 +50,13 @@ router.get("/", async (req, res) => {
         to: `/kontakte/${k.id}`,
       });
     }
+  }
+
+  for (const { name, suche: sucheFn } of geladeneModule) {
+    if (!sucheFn) continue;
+    if (!req.user.module?.includes(name)) continue;
+    const treffer = await sucheFn({ user: req.user, suche, limit: TREFFER_PRO_QUELLE, darf, withFirma });
+    ergebnisse.push(...(treffer || []));
   }
 
   res.json(ergebnisse);

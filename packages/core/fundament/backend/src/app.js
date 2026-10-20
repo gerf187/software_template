@@ -16,12 +16,8 @@ import sucheRoutes from "./suche/routes.js";
 import dashboardRoutes from "./dashboard/routes.js";
 import superadminRoutes from "./superadmin/routes.js";
 import { requireAuth } from "./auth/middleware.js";
-import { ladeModule } from "./module/lade.js";
+import { geladeneModule } from "./module/geladen.js";
 import { erfordertModul } from "./module/firmaModule.js";
-
-// Einmal pro Prozess geladen (welche Bausteine diese App anbietet, Abschnitt 8) --
-// nicht abhängig vom appName-Override unten, der nur für den Werkstatt-Test-Gate gilt.
-const geladeneModule = await ladeModule();
 
 // Als Funktion statt fester Instanz, damit Tests mehrere Varianten (andere
 // App, Produktivbetrieb ja/nein) im selben Lauf vergleichen können.

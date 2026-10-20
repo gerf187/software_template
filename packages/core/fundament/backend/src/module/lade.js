@@ -71,7 +71,17 @@ export async function ladeModule({
       if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
     }
 
-    ergebnis.push({ name, config, router });
+    // Suchquelle (Abschnitt 8, Regel 1): optionale zweite Datei, ein Baustein
+    // ohne eigene Suchquelle (wie "beispiel") braucht sie nicht anzulegen.
+    let suche = null;
+    try {
+      const modul = await import(pathToFileURL(path.join(basis, "backend/suche.js")).href);
+      suche = modul.default;
+    } catch (err) {
+      if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
+    }
+
+    ergebnis.push({ name, config, router, suche });
   }
 
   return ergebnis;
