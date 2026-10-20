@@ -11,6 +11,7 @@ import Checkbox from "../components/Checkbox.jsx";
 import Textarea from "../components/Textarea.jsx";
 import Input from "../components/Input.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
+import { erweiterungsTabs, erweiterungsKomponente } from "../module/registry.js";
 import KontaktFormular from "../kontakte/KontaktFormular.jsx";
 import {
   holeKontakt,
@@ -268,6 +269,9 @@ export default function KontaktAkte() {
   const darfBearbeiten = !!user?.rechte?.kontakte?.bearbeiten;
   const darfLoeschen = !!user?.rechte?.kontakte?.loeschen;
   const darfVerlaufSehen = !!user?.rechte?.protokoll?.sehen;
+  // Bausteine melden eigene Tabs auf der Kontakt-Akte an (Abschnitt 8/11,
+  // z. B. "Projekte") -- Baustein aus, Tab weg, Daten bleiben erhalten.
+  const zusatzTabs = erweiterungsTabs("kontaktTabs", user?.module);
 
   async function speichern(daten) {
     const aktualisiert = await speichereKontakt(id, daten);
@@ -314,6 +318,7 @@ export default function KontaktAkte() {
           { key: "notizen", label: "Notizen" },
           { key: "aufgaben", label: "Aufgaben" },
           ...(darfVerlaufSehen ? [{ key: "verlauf", label: "Verlauf" }] : []),
+          ...zusatzTabs.map((t) => ({ key: `modul-${t.modul}-${t.key}`, label: t.label })),
         ]}
         activeTab={tab}
         onTabChange={setTab}
@@ -322,6 +327,12 @@ export default function KontaktAkte() {
         {tab === "notizen" && <NotizenTab kontaktId={id} darfBearbeiten={darfBearbeiten} />}
         {tab === "aufgaben" && <AufgabenTab kontaktId={id} darfBearbeiten={darfBearbeiten} />}
         {tab === "verlauf" && darfVerlaufSehen && <VerlaufTab kontaktId={id} />}
+        {zusatzTabs.map((t) => {
+          const key = `modul-${t.modul}-${t.key}`;
+          if (tab !== key) return null;
+          const Komponente = erweiterungsKomponente("kontaktTabs", t.modul, t.key);
+          return Komponente ? <Komponente key={key} kontaktId={id} kontakt={kontakt} /> : null;
+        })}
       </RecordView>
 
       <Dialog

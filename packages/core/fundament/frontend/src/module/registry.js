@@ -17,6 +17,22 @@ const alleSeiten = import.meta.glob([
   "../../../../../../apps/*/modules/*/frontend/Seite.jsx",
   "../../../../../../packages/modules/*/frontend/Seite.jsx",
 ]);
+// Zusätzliche Detailseite eines Bausteins, z. B. die Projekt-Akte neben der
+// Projekt-Liste (wie /kontakte/:id im Fundament) -- modul.config.js meldet
+// den Pfad über "akteRoute" an (Abschnitt 8).
+const alleAkten = import.meta.glob([
+  "../../../../../../apps/*/modules/*/frontend/Akte.jsx",
+  "../../../../../../packages/modules/*/frontend/Akte.jsx",
+]);
+// Tabs, die ein Baustein auf der Akte eines ANDEREN Bausteins anmeldet (z. B.
+// der Tab "Projekte" auf der Kontakt-Akte, oder künftig "Anträge" auf der
+// Projekt-Akte) -- modul.config.js meldet Schlüssel+Beschriftung unter einem
+// Erweiterungspunkt an (z. B. "kontaktTabs"), die Komponente liegt in
+// frontend/Erweiterungen.jsx, keyed wie Kacheln.jsx.
+const alleErweiterungen = import.meta.glob([
+  "../../../../../../apps/*/modules/*/frontend/Erweiterungen.jsx",
+  "../../../../../../packages/modules/*/frontend/Erweiterungen.jsx",
+], { eager: true });
 
 function modulNameAusPfad(pfad) {
   const teile = pfad.split("/");
@@ -57,6 +73,35 @@ export function modulConfig(name) {
 export function modulSeitenLader(name) {
   for (const [pfad, lader] of Object.entries(alleSeiten)) {
     if (gehoertDazu(pfad) && modulNameAusPfad(pfad) === name) return lader;
+  }
+  return null;
+}
+
+export function modulAkteLader(name) {
+  for (const [pfad, lader] of Object.entries(alleAkten)) {
+    if (gehoertDazu(pfad) && modulNameAusPfad(pfad) === name) return lader;
+  }
+  return null;
+}
+
+// Alle angemeldeten Tabs eines Erweiterungspunkts (z. B. "kontaktTabs") über
+// die aktiven Bausteine eines Benutzers hinweg, in deren Reihenfolge.
+export function erweiterungsTabs(punkt, aktiveModule) {
+  const tabs = [];
+  for (const name of aktiveModule || []) {
+    const config = modulConfig(name);
+    for (const tab of config?.[punkt] || []) {
+      tabs.push({ modul: name, ...tab });
+    }
+  }
+  return tabs;
+}
+
+export function erweiterungsKomponente(punkt, modulName, tabKey) {
+  for (const [pfad, modul] of Object.entries(alleErweiterungen)) {
+    if (gehoertDazu(pfad) && modulNameAusPfad(pfad) === modulName) {
+      return modul.default?.[punkt]?.[tabKey] || null;
+    }
   }
   return null;
 }

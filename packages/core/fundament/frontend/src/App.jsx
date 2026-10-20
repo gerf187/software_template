@@ -13,7 +13,7 @@ import { useAuth } from "./auth/AuthContext.jsx";
 import { IconHome, IconSettings, IconUsers } from "./icons/index.js";
 import TestBanner from "./layout/TestBanner.jsx";
 import ModulSeite from "./module/ModulSeite.jsx";
-import { modulConfig, modulSeitenLader } from "./module/registry.js";
+import { modulConfig, modulSeitenLader, modulAkteLader } from "./module/registry.js";
 import { wendeAkzentfarbeAn } from "./theme/akzentfarbe.js";
 import appConfig from "~app-config";
 
@@ -35,9 +35,18 @@ function modulRouten(user) {
   for (const name of user?.module || []) {
     const config = modulConfig(name);
     const lader = modulSeitenLader(name);
-    if (!lader) continue;
-    for (const mp of config?.menuepunkte || []) {
-      routen.push({ key: `${name}-${mp.key}`, path: mp.to, lader });
+    if (lader) {
+      for (const mp of config?.menuepunkte || []) {
+        routen.push({ key: `${name}-${mp.key}`, path: mp.to, lader });
+      }
+    }
+    // Zusätzliche Detailseite (Abschnitt 8), z. B. die Projekt-Akte neben
+    // der Projekt-Liste -- wie /kontakte/:id im Fundament.
+    if (config?.akteRoute) {
+      const akteLader = modulAkteLader(name);
+      if (akteLader) {
+        routen.push({ key: `${name}-akte`, path: config.akteRoute, lader: akteLader });
+      }
     }
   }
   return routen;
