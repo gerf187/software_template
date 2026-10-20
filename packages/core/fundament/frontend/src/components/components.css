@@ -535,6 +535,14 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* Mindestgröße für Finger-Bedienung nur am Handy (Anhang A.3) -- am
+   Desktop bleibt die Phasen-Leiste kompakt. */
+@media (max-width: 640px) {
+  .phase-bar-step-klickbar {
+    min-height: 44px;
+    padding: 0 var(--space-4);
+  }
+}
 
 /* Dashboard-Kacheln (Abschnitt 8/10) */
 .kachel-grid {

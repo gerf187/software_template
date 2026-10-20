@@ -365,6 +365,9 @@ Impressum/Datenschutzerklärung, Löschkonzept, AV-Vertrag Hostinger.
   Einstellungen). Entscheidung Mail-Dienst: Björn.
 - Einrichtungs-Assistent beim ersten Login des Firmen-Admins (Logo, Farbe,
   Antwort-E-Mail, erste Mitarbeiter).
+- Seite für das Plattform-Protokoll (Tabelle `plattform_protokoll`, Migration
+  0019: wer hat wann welche Firma endgültig gelöscht). Bisher nur in der
+  Datenbank, keine Oberfläche dafür -- kommt später.
 
 **Phase 4 – Energieberater umziehen** ⏳ offen
 Fachliches aus der bestehenden EB-Software als EB-Bausteine auf das Fundament setzen.
