@@ -52,6 +52,70 @@ const KONTAKTE_FIRMA_B = [
   { vorname: "Tina", nachname: "Albrecht", email: "tina.albrecht@kontrolle.test" },
 ];
 
+// Demo-Projekte (Baustein "Projekte", Teil 1, Punkt 10): verschiedene Arten,
+// Phasen, Status, inkl. Kombi (beide Arten) und Pausiert (manuell) mit Grund.
+// "Pausiert (Eskalation)" fehlt bewusst -- kommt erst mit den Ablaufplänen
+// (Phase 2) automatisch, nicht von Hand.
+function projektDaten(kontaktIndex, werte) {
+  return { kontaktIndex, ...werte };
+}
+
+const PROJEKTE_FIRMA_A = [
+  projektDaten(0, { name: "Schmidt – Typ A", arten: ["Typ A"], status: "Aktiv", phase: "In Arbeit", ort: "Köln" }),
+  projektDaten(1, { name: "Fischer – Typ B", arten: ["Typ B"], status: "Aktiv", phase: "Start" }),
+  projektDaten(2, { name: "Weber – Typ A + Typ B", arten: ["Typ A", "Typ B"], status: "Aktiv", phase: "In Arbeit" }),
+  projektDaten(3, {
+    name: "Hoffmann Bau GmbH – Typ A",
+    arten: ["Typ A"],
+    status: "Pausiert (manuell)",
+    phase: "In Arbeit",
+    pausiertGrund: "Wartet auf Rückmeldung des Kunden",
+  }),
+  projektDaten(4, { name: "Wagner – Typ B", arten: ["Typ B"], status: "Abgeschlossen", phase: "Abschluss" }),
+  projektDaten(5, { name: "Becker – Typ A", arten: ["Typ A"], status: "Storniert", phase: "Start" }),
+  projektDaten(6, { name: "Schulz – Typ B", arten: ["Typ B"], status: "Aktiv", phase: "Abschluss" }),
+  projektDaten(7, { name: "Koch Dachdecker – Typ A + Typ B", arten: ["Typ A", "Typ B"], status: "Aktiv", phase: "Start" }),
+  projektDaten(8, { name: "Richter – Typ A", arten: ["Typ A"], status: "Aktiv", phase: "In Arbeit" }),
+  projektDaten(9, {
+    name: "Klein – Typ B",
+    arten: ["Typ B"],
+    status: "Pausiert (manuell)",
+    phase: "Start",
+    pausiertGrund: "Material noch nicht geliefert",
+  }),
+];
+
+const PROJEKTE_FIRMA_B = [
+  projektDaten(0, { name: "Krüger – Typ A", arten: ["Typ A"], status: "Aktiv", phase: "Start" }),
+  projektDaten(1, { name: "Lorenz – Typ B", arten: ["Typ B"], status: "Aktiv", phase: "In Arbeit" }),
+  projektDaten(2, {
+    name: "Vogel – Typ A + Typ B",
+    arten: ["Typ A", "Typ B"],
+    status: "Pausiert (manuell)",
+    phase: "Start",
+    pausiertGrund: "Warten auf Unterlagen",
+  }),
+];
+
+async function projekteAnlegen(client, firmaId, kontaktIds, liste) {
+  for (const p of liste) {
+    await client.query(
+      `INSERT INTO projects (firma_id, contact_id, name, arten, status, phase, objektadresse_ort, pausiert_grund)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        firmaId,
+        kontaktIds[p.kontaktIndex],
+        p.name,
+        p.arten,
+        p.status,
+        p.phase,
+        p.ort || null,
+        p.pausiertGrund || null,
+      ]
+    );
+  }
+}
+
 async function kontakteAnlegen(client, firmaId, liste) {
   const ids = [];
   for (const k of liste) {
@@ -87,6 +151,9 @@ export async function werkstattDatenZuruecksetzen() {
   for (const { id } of rows) {
     await ownerPool.query("DELETE FROM notes WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM tasks WHERE firma_id = $1", [id]);
+    // Vor "contacts": projects verweist per zusammengesetztem Fremdschlüssel
+    // darauf (Baustein "Projekte", Teil 1).
+    await ownerPool.query("DELETE FROM projects WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM benutzer_dashboard WHERE firma_id = $1", [id]);
     await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [id]);
     // Erst nach den Fachtabellen: deren Löschen trägt selbst noch ins
@@ -158,16 +225,19 @@ export async function werkstattDatenAnlegen() {
       [firmaA, idsA[1], idsA[4], idsA[9], idsA[2]]
     );
 
-    // Baustein "beispiel" für Firma A schon freigeschaltet, damit die
-    // Dashboard-Kachel eines Bausteins (Abschnitt 8/10) sofort zu sehen ist,
+    // Bausteine "beispiel" und "projekte" für Firma A schon freigeschaltet,
+    // damit auch ihre Dashboard-Kacheln (Abschnitt 8/10) sofort zu sehen sind,
     // ohne erst über die Superadmin-Seite "Bausteine" gehen zu müssen.
     const module = await ladeModule();
-    const beispielConfig = module.find((m) => m.name === "beispiel")?.config;
-    await client.query(
-      "INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, 'beispiel', true)",
-      [firmaA]
-    );
-    await rechteFuerBausteinAnlegen(client, firmaA, beispielConfig?.rechteBereiche);
+    for (const name of ["beispiel", "projekte"]) {
+      const config = module.find((m) => m.name === name)?.config;
+      await client.query("INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, $2, true)", [
+        firmaA,
+        name,
+      ]);
+      await rechteFuerBausteinAnlegen(client, firmaA, config?.rechteBereiche);
+    }
+    await projekteAnlegen(client, firmaA, idsA, PROJEKTE_FIRMA_A);
   });
 
   await withFirma(firmaB, async (client) => {
@@ -182,6 +252,16 @@ export async function werkstattDatenAnlegen() {
       "INSERT INTO notes (firma_id, contact_id, text) VALUES ($1, $2, 'Nur für den Trennungstest -- darf Firma A nie sehen.')",
       [firmaB, idsB[0]]
     );
+
+    // Zweite Demo-Firma bekommt "projekte" ebenfalls (Abschnitt 12: dient dem
+    // Trennungstest -- eigene Projekte, die Firma A nie sehen darf).
+    const module = await ladeModule();
+    const projekteConfig = module.find((m) => m.name === "projekte")?.config;
+    await client.query("INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, 'projekte', true)", [
+      firmaB,
+    ]);
+    await rechteFuerBausteinAnlegen(client, firmaB, projekteConfig?.rechteBereiche);
+    await projekteAnlegen(client, firmaB, idsB, PROJEKTE_FIRMA_B);
   });
 
   await ownerPool.query(
