@@ -13,6 +13,15 @@ function paeth(a, b, c) {
 }
 
 export function ladePng(pfad) {
+  return decodePng(pfad).pixel;
+}
+
+// Wie ladePng, aber mit Breite/Höhe -- für Tests, die einen Ausschnitt berechnen.
+export function ladePngMitGroesse(pfad) {
+  return decodePng(pfad);
+}
+
+function decodePng(pfad) {
   const d = fs.readFileSync(pfad);
   let p = 8;
   let breite;
@@ -63,5 +72,5 @@ export function ladePng(pfad) {
     pixel[i * 4 + 2] = bild[i * kanaele + 2];
     pixel[i * 4 + 3] = kanaele === 4 ? bild[i * kanaele + 3] : 255;
   }
-  return pixel;
+  return { pixel, breite, hoehe };
 }

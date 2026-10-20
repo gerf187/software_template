@@ -8,6 +8,7 @@ import Spinner from "../components/Spinner.jsx";
 import { ladeFirmaEinstellungen, speichereFirmaEinstellungen } from "./api.js";
 import { wendeAkzentfarbeAn } from "../theme/akzentfarbe.js";
 import { farbeAusBild, lesbareAkzentfarbe, kontrastVerhaeltnis, istZuHell } from "../theme/logoFarbe.js";
+import { schneideLogoZu } from "../theme/logoZuschnitt.js";
 
 const STANDARD_AKZENTFARBE = "#2f7d5c";
 const LOGO_MAX_BYTES = 200 * 1024;
@@ -41,9 +42,15 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
     }
     setFehler(null);
     const leser = new FileReader();
-    leser.onload = () => {
-      setWerte((w) => ({ ...w, logo: leser.result }));
-      farbeVorschlagLaden(leser.result);
+    leser.onload = async () => {
+      let logo = leser.result;
+      try {
+        logo = await schneideLogoZu(logo);
+      } catch {
+        // Zuschnitt ist nur Komfort -- klappt er nicht, einfach das Original nehmen.
+      }
+      setWerte((w) => ({ ...w, logo }));
+      farbeVorschlagLaden(logo);
     };
     leser.readAsDataURL(datei);
   }
@@ -113,19 +120,9 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
           <FormField label="Logo" htmlFor="fe-logo">
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               {werte.logo && (
-                <img
-                  src={werte.logo}
-                  alt="Logo-Vorschau"
-                  style={{
-                    height: 40,
-                    maxWidth: 160,
-                    objectFit: "contain",
-                    padding: 6,
-                    border: "1px solid var(--line)",
-                    borderRadius: "var(--radius-sm)",
-                    background: "var(--bg-card)",
-                  }}
-                />
+                <div className="logo-vorschau" title="So erscheint das Logo in der Sidebar">
+                  <img className="logo-vorschau-bild" src={werte.logo} alt="Logo-Vorschau" />
+                </div>
               )}
               {darfBearbeiten && (
                 <>
@@ -154,6 +151,12 @@ export default function FirmaEinstellungenFormular({ darfBearbeiten }) {
                 </>
               )}
             </div>
+            {darfBearbeiten && (
+              <p className="logo-hinweis">
+                Ideal ist ein Querformat-Logo (breiter als hoch). Leere Ränder werden beim
+                Hochladen automatisch abgeschnitten.
+              </p>
+            )}
           </FormField>
 
           <FormField label="Akzentfarbe" htmlFor="fe-akzentfarbe">

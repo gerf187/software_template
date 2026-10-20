@@ -610,6 +610,30 @@
   color: var(--warn);
 }
 
+/* Logo-Vorschau: gleiche Maße wie der Logo-Bereich in der Sidebar (Abschnitt 9,
+   Punkt 0.2), damit die Vorschau zeigt, wie das Logo dort wirklich aussieht. */
+.logo-vorschau {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  max-width: 208px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sidebar);
+}
+.logo-vorschau-bild {
+  max-height: 40px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+.logo-hinweis {
+  margin: var(--space-2) 0 0;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
 /* Zugangsdaten nach einer Einladung */
 .zugangsdaten pre {
   white-space: pre-wrap;
