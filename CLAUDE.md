@@ -197,6 +197,9 @@ und freie Aufgaben am Kontakt).
    Nicht freigeschaltet = Menüpunkte, Seiten und API-Routen gibt es für diese Firma nicht.
 4. **Ausschalten = ausblenden.** Daten bleiben erhalten und sind beim Wiedereinschalten da.
 5. Bausteine greifen nie direkt in Tabellen anderer Bausteine, sondern über deren Funktionen.
+6. Die Frontend-Registrierung eines Bausteins (Menüpunkt, Seite, Akte, Tabs, Kacheln) ist
+   durch Vitest-Tests abgesichert (`src/**/__vitest__/`) – auch für Bausteine aus
+   `packages/modules`, nicht nur aus `apps/<app>/modules`.
 
 ### Zwei Ebenen der Auswahl
 - **`app.config.js`** (pro Branche): welche Bausteine diese Software **anbietet**.

@@ -19,7 +19,10 @@ const FUNDAMENT_KACHELN = {
 // "modulname:kachelKey" (Rechte-Prüfung übernimmt der Server, hier wird nur
 // die passende Komponente gesucht).
 const modulKachelModule = import.meta.glob(
-  "../../../../../../apps/*/modules/*/frontend/Kacheln.jsx",
+  [
+    "../../../../../../apps/*/modules/*/frontend/Kacheln.jsx",
+    "../../../../../../packages/modules/*/frontend/Kacheln.jsx",
+  ],
   { eager: true }
 );
 

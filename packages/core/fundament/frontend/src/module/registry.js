@@ -41,8 +41,14 @@ function modulNameAusPfad(pfad) {
 }
 
 // Nur Bausteine der laufenden App und die gemeinsamen Bausteine zählen.
+// Vite kürzt den Glob-Schlüssel auf den kürzesten relativen Pfad -- bei
+// "packages/modules/..." fällt "packages" dabei oft weg (gemeinsamer
+// Vorfahr mit diesem Ordner selbst), "/packages/modules/" steht also nicht
+// zuverlässig im Schlüssel. Alles, was nicht aus "apps/" kommt, kommt aber
+// zwangsläufig aus dem zweiten Glob-Muster, also aus packages/modules.
 function gehoertDazu(pfad) {
-  return pfad.includes(`/apps/${AKTUELLE_APP}/modules/`) || pfad.includes("/packages/modules/");
+  if (pfad.includes("/apps/")) return pfad.includes(`/apps/${AKTUELLE_APP}/modules/`);
+  return true;
 }
 
 // Namenskonflikt zwischen App und gemeinsamen Bausteinen: harter Abbruch, damit
@@ -52,7 +58,7 @@ function pruefeKonflikte(pfade) {
     pfade.filter((p) => p.includes(`/apps/${AKTUELLE_APP}/modules/`)).map(modulNameAusPfad)
   );
   for (const pfad of pfade) {
-    if (pfad.includes("/packages/modules/") && appNamen.has(modulNameAusPfad(pfad))) {
+    if (!pfad.includes("/apps/") && appNamen.has(modulNameAusPfad(pfad))) {
       throw new Error(
         `Namenskonflikt: Baustein "${modulNameAusPfad(pfad)}" gibt es in apps/${AKTUELLE_APP}/modules und in packages/modules.`
       );
