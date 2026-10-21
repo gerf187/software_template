@@ -260,6 +260,24 @@ Verbesserungen gegenüber dem Original:
   - b) **Datensätze mit Tabs** (Kontakte, später Projekte): Liste → eigene
     Detailseite (Akte) mit Tabs. Beispiel: Kontakte.
 
+### Regeln für Arbeitsoberflächen
+
+1. Farbe nur für Bedeutung: auf Daten und Zuständen (überfällig, erledigt),
+   nicht auf Rahmen, Menüs oder Deko.
+2. Rot/Grün heißt schlecht/gut, nicht steigt/fällt.
+   Mehr überfällige Aufgaben = rot, auch wenn die Zahl steigt.
+3. Kennzahlen als große Zahl. Kein Symbol im bunten Kreis,
+   keine Mini-Diagramme in jeder Kachel.
+4. Ehrliche Werte: Null zeigt „0“, fehlende Werte zeigen „–“.
+   Nie eine erfundene oder leere Zahl.
+5. Leere Bereiche behalten ihren Rahmen und sagen, was hier erscheint und
+   wie man startet (z. B. „Noch keine Projekte – Projekt anlegen“).
+6. Das Wichtigste ohne Scrollen: Auf einem normalen Bildschirm ist von jedem
+   Bereich mindestens die Überschrift mit den ersten Zeilen sichtbar.
+7. Die häufigste Aufgabe ist einen Klick entfernt.
+8. Tabellen schlicht: Zahlen rechtsbündig, keine Zebrastreifen,
+   keine farbigen Kopfzeilen, Trennlinien statt Kästen.
+
 ---
 
 ## 10. Komponenten (im Fundament)
