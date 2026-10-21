@@ -146,6 +146,32 @@ test("Gesperrte Firma mit exaktem Namen wird komplett gelöscht, andere Firma bl
     aktiv: true,
   });
 
+  // Projekt (Baustein "Projekte") mit eigener Aufgabe und Notiz am Projekt --
+  // das ist genau der Fall, an dem firma_endgueltig_loeschen() bisher scheiterte
+  // (Fremdschlüssel projects -> contacts, "projects" wurde nicht gelöscht).
+  const projektRows = await withFirma(zuLoeschen.id, (client) =>
+    client
+      .query(
+        `INSERT INTO projects (firma_id, contact_id, name, status, phase)
+         VALUES ($1, $2, 'Testprojekt', 'offen', 'Anfrage') RETURNING id`,
+        [zuLoeschen.id, kontaktId]
+      )
+      .then((r) => r.rows)
+  );
+  const projektId = projektRows[0].id;
+  await withFirma(zuLoeschen.id, (client) =>
+    client.query(
+      "INSERT INTO notes (firma_id, contact_id, project_id, text) VALUES ($1, $2, $3, 'Projekt-Notiz')",
+      [zuLoeschen.id, kontaktId, projektId]
+    )
+  );
+  await withFirma(zuLoeschen.id, (client) =>
+    client.query(
+      "INSERT INTO tasks (firma_id, contact_id, project_id, text) VALUES ($1, $2, $3, 'Projekt-Aufgabe')",
+      [zuLoeschen.id, kontaktId, projektId]
+    )
+  );
+
   // Gleichnamiger Kontakt auch in der anderen Firma, damit der Trennungs-Test
   // wirklich prüft, dass deren Daten unberührt bleiben.
   await withFirma(andereFirma.id, (client) =>
@@ -156,30 +182,45 @@ test("Gesperrte Firma mit exaktem Namen wird komplett gelöscht, andere Firma bl
 
   await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${zuLoeschen.id}`, { aktiv: false });
 
+  // Wächter (Teil A, Punkt 3): alle Tabellen mit Spalte firma_id selbst
+  // ermitteln, nicht fest eintragen -- ein künftiger Baustein, der beim
+  // Löschen vergessen wird, fällt damit automatisch auf.
+  const { rows: firmaTabellen } = await pool.query(
+    `SELECT table_name FROM information_schema.columns
+     WHERE table_schema = 'public' AND column_name = 'firma_id'
+       AND table_name NOT IN ('firmen', 'plattform_protokoll')
+     ORDER BY table_name`
+  );
+  assert.ok(
+    firmaTabellen.some((r) => r.table_name === "projects"),
+    "Baustein 'Projekte' muss in der Tabellen-Liste auftauchen, sonst testet dieser Wächter nichts."
+  );
+
   const res = await api(cookieSuperadmin, "DELETE", `/api/superadmin/firmen/${zuLoeschen.id}`, {
     nameBestaetigung: zuLoeschen.name,
   });
   assert.equal(res.status, 200);
   const { bereiche } = await res.json();
-  assert.equal(bereiche.kontakte, 1);
-  assert.equal(bereiche.notizen, 1);
-  assert.equal(bereiche.aufgaben, 1);
-  assert.equal(bereiche.mitarbeiter, 1);
-  assert.equal(bereiche.bausteine, 1);
+  assert.equal(bereiche.contacts, 1);
+  assert.equal(bereiche.notes, 2);
+  assert.equal(bereiche.tasks, 2);
+  assert.equal(bereiche.projects, 1);
+  assert.equal(bereiche.users, 1);
+  assert.equal(bereiche.firma_module, 1);
   assert.ok(bereiche.aenderungsprotokoll >= 1);
 
   const firmaWeg = await pool.query("SELECT 1 FROM firmen WHERE id = $1", [zuLoeschen.id]);
   assert.equal(firmaWeg.rowCount, 0);
-  const keineKontakte = await pool.query(
-    "SELECT 1 FROM contacts WHERE firma_id = $1",
-    [zuLoeschen.id]
-  );
-  assert.equal(keineKontakte.rowCount, 0);
-  const keinProtokoll = await pool.query(
-    "SELECT 1 FROM aenderungsprotokoll WHERE firma_id = $1",
-    [zuLoeschen.id]
-  );
-  assert.equal(keinProtokoll.rowCount, 0);
+
+  // Wächter: in KEINER der gefundenen Tabellen darf noch eine Zeile dieser
+  // Firma übrig sein.
+  for (const { table_name } of firmaTabellen) {
+    const uebrig = await pool.query(
+      `SELECT 1 FROM ${table_name} WHERE firma_id = $1`,
+      [zuLoeschen.id]
+    );
+    assert.equal(uebrig.rowCount, 0, `Tabelle "${table_name}" hat noch Zeilen der gelöschten Firma.`);
+  }
 
   // Plattform-Protokoll (ohne Firmenbezug) hat einen Eintrag bekommen.
   const protokollEintrag = await pool.query(
@@ -187,7 +228,7 @@ test("Gesperrte Firma mit exaktem Namen wird komplett gelöscht, andere Firma bl
     [zuLoeschen.name]
   );
   assert.equal(protokollEintrag.rowCount, 1);
-  assert.equal(protokollEintrag.rows[0].bereiche.kontakte, 1);
+  assert.equal(protokollEintrag.rows[0].bereiche.contacts, 1);
 
   // Andere Firma: unberührt.
   const andereNochDa = await pool.query("SELECT 1 FROM firmen WHERE id = $1", [andereFirma.id]);
