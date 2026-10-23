@@ -4,3 +4,7 @@ dist/
 .env.local
 backups/
 pruefung.zip
+pruefung_*.zip
+software_template.zip
+screenshots_*.zip
+klicktest-screenshots/

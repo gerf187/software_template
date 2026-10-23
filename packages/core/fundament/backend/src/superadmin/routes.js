@@ -7,6 +7,7 @@ import { hashPassword, pruefePasswort } from "../auth/password.js";
 import { rechteStandardAnlegen, rechteFuerBausteinAnlegen } from "../rechte/standardAnlegen.js";
 import { fehlendeAbhaengigkeiten } from "../module/abhaengigkeiten.js";
 import { pruefePlz } from "../validierung/plz.js";
+import { pruefeUstIdNr } from "../validierung/ustIdNr.js";
 import appConfig from "../appConfig.js";
 import { ladeModule } from "../module/lade.js";
 import { pruefeIdsAusUrl } from "../db/ids.js";
@@ -24,19 +25,35 @@ const FIRMA_SPALTEN = `
 `;
 
 // Firmen anlegen/sperren (Abschnitt 7). "firmen" hat kein RLS -- wird nur
-// über diese Superadmin-Routen verwaltet (siehe Migration 0001). Die
-// Bausteine-Anzahl kommt aus firma_module dazu (Liste "Firmen", Spalte
-// "Bausteine"), ohne pro Zeile eine eigene Anfrage zu brauchen.
+// über diese Superadmin-Routen verwaltet (siehe Migration 0001). "firma_module"
+// hat aber RLS wie jede Fachtabelle (Abschnitt 6) -- ein einfacher JOIN ohne
+// gesetzte firma_id liefert deshalb für jede Firma null Zeilen zurück (Bug,
+// Teil A). Die Namen der aktiven Bausteine kommen daher Firma für Firma über
+// withFirma(), genau wie es die Baustein-Seite einer einzelnen Firma schon
+// richtig macht (Abschnitt 6, Regel 4: zentrale Hilfsfunktion statt Handarbeit
+// pro Route).
 router.get("/firmen", async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT ${FIRMA_SPALTEN}, coalesce(m.anzahl, 0) AS bausteine_anzahl
-     FROM firmen
-     LEFT JOIN (
-       SELECT firma_id, count(*)::int AS anzahl FROM firma_module WHERE aktiv = true GROUP BY firma_id
-     ) m ON m.firma_id = firmen.id
-     ORDER BY name`
+  const { rows } = await pool.query(`SELECT ${FIRMA_SPALTEN} FROM firmen ORDER BY name`);
+  const module = await ladeModule();
+  const titelNachModul = Object.fromEntries(module.map((m) => [m.name, m.config.titel || m.name]));
+  const katalogReihenfolge = Object.fromEntries(module.map((m, i) => [m.name, i]));
+
+  const firmen = await Promise.all(
+    rows.map(async (firma) => {
+      const aktive = await withFirma(firma.id, (client) =>
+        client
+          .query("SELECT modul FROM firma_module WHERE firma_id = $1 AND aktiv = true", [firma.id])
+          .then((r) => r.rows)
+      );
+      const bausteine = aktive
+        .map((r) => r.modul)
+        .filter((modul) => titelNachModul[modul] !== undefined)
+        .sort((a, b) => katalogReihenfolge[a] - katalogReihenfolge[b])
+        .map((modul) => titelNachModul[modul]);
+      return { ...firma, bausteine };
+    })
   );
-  res.json(rows);
+  res.json(firmen);
 });
 
 // Kürzel (Slug) kommt nicht aus dem Formular, sondern wird aus dem Namen
@@ -70,6 +87,8 @@ router.post("/firmen", async (req, res) => {
   if (!EMAIL_MUSTER.test(rechnungsEmail)) {
     return res.status(400).json({ error: "Bitte eine gültige Rechnungs-E-Mail angeben." });
   }
+  const ustIdNrFehler = pruefeUstIdNr(ustIdNr);
+  if (ustIdNrFehler) return res.status(400).json({ error: ustIdNrFehler });
 
   const basisSlug = erzeugeSlugAusName(name);
   if (!basisSlug) {
@@ -210,6 +229,10 @@ router.patch("/firmen/:id", async (req, res) => {
     if (!EMAIL_MUSTER.test(rechnungsEmail)) {
       return res.status(400).json({ error: "Bitte eine gültige Rechnungs-E-Mail angeben." });
     }
+  }
+  if (req.body?.ustIdNr !== undefined) {
+    const ustIdNrFehler = pruefeUstIdNr(ustIdNr);
+    if (ustIdNrFehler) return res.status(400).json({ error: ustIdNrFehler });
   }
 
   let geaendert;

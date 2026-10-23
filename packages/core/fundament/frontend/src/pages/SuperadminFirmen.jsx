@@ -55,6 +55,19 @@ function istUnvollstaendig(firma) {
   return !firma.strasse || !firma.plz || !firma.ort || !firma.ansprechpartner || !firma.rechnungs_email;
 }
 
+// Namensdubletten (Teil A, Punkt 3): Groß-/Kleinschreibung und Leerzeichen am
+// Anfang/Ende spielen keine Rolle -- doppelte Namen bleiben erlaubt (nur das
+// Kürzel ist eindeutig, Abschnitt 7), es gibt nur einen Hinweis.
+export function normalisierterName(name) {
+  return (name || "").trim().toLowerCase();
+}
+
+export function findeNamensdublette(name, firmen, ausserId) {
+  const gesucht = normalisierterName(name);
+  if (!gesucht) return null;
+  return firmen.find((f) => f.id !== ausserId && normalisierterName(f.name) === gesucht) || null;
+}
+
 // Bausteine-Abschnitt beim Anlegen: reine Checkbox-Auswahl, noch nichts
 // gespeichert -- geht erst beim Anlegen-Klick mit in die eine Transaktion.
 function BausteineAuswahl({ alleModule, ausgewaehlt, onUmschalten }) {
@@ -334,10 +347,16 @@ export default function SuperadminFirmen() {
                         <Badge status="warn">Daten unvollständig</Badge>
                       </span>
                     )}
+                    {findeNamensdublette(f.name, firmen, f.id) && (
+                      <span style={{ marginLeft: 8 }}>
+                        <Badge status="warn">Namensdublette</Badge>
+                      </span>
+                    )}
                   </>
                 ),
               },
               { key: "ort", label: "Ort", render: (f) => f.ort || "–" },
+              { key: "ansprechpartner", label: "Ansprechpartner", render: (f) => f.ansprechpartner || "–" },
               {
                 key: "aktiv",
                 label: "Status",
@@ -348,7 +367,7 @@ export default function SuperadminFirmen() {
               {
                 key: "bausteine",
                 label: "Bausteine",
-                render: (f) => (f.bausteine_anzahl > 0 ? f.bausteine_anzahl : "–"),
+                render: (f) => (f.bausteine?.length ? f.bausteine.join(", ") : "–"),
               },
             ]}
             rows={firmen}
@@ -388,6 +407,14 @@ export default function SuperadminFirmen() {
                 required
               />
             </FormField>
+            {(() => {
+              const dublette = findeNamensdublette(dialog.werte.name, firmen || [], dialog.id);
+              return dublette ? (
+                <Message type="warnung">
+                  Es gibt bereits eine Firma mit diesem Namen: {dublette.kundennummer}, {dublette.ort || "–"}
+                </Message>
+              ) : null;
+            })()}
             <FormField label="Straße und Hausnummer" htmlFor="firma-strasse">
               <Input
                 id="firma-strasse"

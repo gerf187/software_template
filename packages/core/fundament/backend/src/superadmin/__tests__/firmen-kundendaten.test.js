@@ -133,6 +133,59 @@ test("Anlegen mit Bausteinen und erstem Admin funktioniert in einem Schritt", as
   const { daten: loginDaten } = await login(adminEmail, firma.admin.startpasswort);
   assert.equal(loginDaten.mussPasswortAendern, true);
   assert.equal(loginDaten.rolle, "Admin");
+
+  // Teil A, Punkt 1 (Bugfix): die Firmenliste zeigt die Namen der aktiven
+  // Bausteine -- vorher immer leer, weil die Zählung ohne Mandanten-Bezug
+  // lief und die Mandanten-Trennung (RLS) sich selbst aussperrte.
+  const liste = await api(cookieSuperadmin, "GET", "/api/superadmin/firmen");
+  const eigeneZeile = (await liste.json()).find((f) => f.id === firma.id);
+  assert.deepEqual(eigeneZeile.bausteine, ["Beispiel"]);
+});
+
+test("Firmenliste zeigt 'keine Bausteine' als leere Liste, nicht als Fehler", async () => {
+  const eindeutig = crypto.randomUUID();
+  const res = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Ohne-Bausteine-Firma ${eindeutig}`,
+    ...KUNDENDATEN,
+  });
+  const firma = await res.json();
+  angelegteFirmen.push(firma.id);
+
+  const liste = await api(cookieSuperadmin, "GET", "/api/superadmin/firmen");
+  const eigeneZeile = (await liste.json()).find((f) => f.id === firma.id);
+  assert.deepEqual(eigeneZeile.bausteine, []);
+});
+
+test("Firma mit ungültiger USt-IdNr. schlägt fehl, leer bleibt erlaubt", async () => {
+  const eindeutig = crypto.randomUUID();
+  const falsch = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Falsche USt-IdNr ${eindeutig}`,
+    ...KUNDENDATEN,
+    ustIdNr: "ATU12345678",
+  });
+  assert.equal(falsch.status, 400);
+  assert.match((await falsch.json()).error, /USt-IdNr/);
+
+  const leer = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name: `Leere USt-IdNr ${eindeutig}`,
+    ...KUNDENDATEN,
+    ustIdNr: "",
+  });
+  assert.equal(leer.status, 201);
+  const firma = await leer.json();
+  angelegteFirmen.push(firma.id);
+
+  const bearbeiten = await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${firma.id}`, {
+    ustIdNr: "falsch",
+  });
+  assert.equal(bearbeiten.status, 400);
+  assert.match((await bearbeiten.json()).error, /USt-IdNr/);
+
+  const korrekt = await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${firma.id}`, {
+    ustIdNr: "DE123456789",
+  });
+  assert.equal(korrekt.status, 200);
+  assert.equal((await korrekt.json()).ust_id_nr, "DE123456789");
 });
 
 test("Erster Admin ist optional -- ohne Admin entsteht nur die Firma mit Bausteinen", async () => {

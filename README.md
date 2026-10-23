@@ -60,6 +60,27 @@ npm test --workspace packages/core/fundament/frontend
 
 Braucht eine laufende Datenbank (`docker compose up -d` + Migration).
 
+### Klicktest (automatisch, gegen die Werkstatt)
+
+Einmalig einrichten (Playwright/Chromium, bewusst kein npm-Workspace -- landet
+nie im Produktiv-Image):
+
+```bash
+cd scripts/klicktest && npm install && npx playwright install chromium
+```
+
+Danach jederzeit:
+
+```bash
+npm run klicktest
+```
+
+Nutzt eine eigene Datenbank (`saas_klicktest`, wird bei jedem Lauf neu
+angelegt) und einen eigenen Port (3099) -- ein parallel laufendes `npm run dev`
+bleibt unberührt. Klickt sich als Superadmin, Admin und User durch die
+Werkstatt und legt Screenshots in `klicktest-screenshots/` ab (nicht
+versioniert).
+
 ## Beenden
 
 ```bash

@@ -6,10 +6,10 @@
     "dev": "node --env-file=../../../../.env --watch src/index.js",
     "db:migrate": "node --env-file=../../../../.env src/db/migrate.js",
     "db:seed:werkstatt": "node --env-file=../../../../.env src/db/seed-werkstatt.js",
-    "superadmin:anlegen": "node src/db/superadmin-anlegen.js",
-    "superadmin:passwort-zuruecksetzen": "node src/db/superadmin-passwort-zuruecksetzen.js",
-    "superadmin:liste": "node src/db/superadmin-liste.js",
-    "superadmin:deaktivieren": "node src/db/superadmin-deaktivieren.js",
+    "superadmin:anlegen": "node --env-file-if-exists=../../../../.env src/db/superadmin-anlegen.js",
+    "superadmin:passwort-zuruecksetzen": "node --env-file-if-exists=../../../../.env src/db/superadmin-passwort-zuruecksetzen.js",
+    "superadmin:liste": "node --env-file-if-exists=../../../../.env src/db/superadmin-liste.js",
+    "superadmin:deaktivieren": "node --env-file-if-exists=../../../../.env src/db/superadmin-deaktivieren.js",
     "test": "node --env-file=../../../../.env test-runner.mjs"
   },
   "dependencies": {

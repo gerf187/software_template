@@ -1,0 +1,9 @@
+{
+  "name": "klicktest",
+  "private": true,
+  "type": "module",
+  "description": "Eigenständig, kein npm-Workspace: Playwright + Chromium dürfen nie ins Produktiv-Image (Dockerfile kopiert diesen Ordner nicht).",
+  "dependencies": {
+    "playwright": "1.56.0"
+  }
+}
