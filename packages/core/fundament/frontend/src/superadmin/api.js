@@ -17,6 +17,7 @@ export const speichereFirma = (id, daten) =>
   anfrage("PATCH", `/api/superadmin/firmen/${id}`, daten);
 export const ladeFirmaEinladen = (id, daten) =>
   anfrage("POST", `/api/superadmin/firmen/${id}/einladen`, daten);
+export const listeAlleModule = () => anfrage("GET", "/api/superadmin/module");
 export const listeModule = (firmaId) => anfrage("GET", `/api/superadmin/firmen/${firmaId}/module`);
 export const setzeModulAktiv = (firmaId, modul, aktiv) =>
   anfrage("PATCH", `/api/superadmin/firmen/${firmaId}/module/${modul}`, { aktiv });

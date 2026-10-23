@@ -6,6 +6,7 @@ import { withFirma } from "../db/withFirma.js";
 import { hashPassword, pruefePasswort } from "../auth/password.js";
 import { rechteStandardAnlegen, rechteFuerBausteinAnlegen } from "../rechte/standardAnlegen.js";
 import { fehlendeAbhaengigkeiten } from "../module/abhaengigkeiten.js";
+import { pruefePlz } from "../validierung/plz.js";
 import appConfig from "../appConfig.js";
 import { ladeModule } from "../module/lade.js";
 import { pruefeIdsAusUrl } from "../db/ids.js";
@@ -15,11 +16,25 @@ const router = Router();
 pruefeIdsAusUrl(router, ["id"]);
 router.use(requireAuth, requireSuperadmin);
 
+const EMAIL_MUSTER = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const FIRMA_SPALTEN = `
+  id, kundennummer, name, slug, aktiv, erstellt_am,
+  strasse, plz, ort, ansprechpartner, rechnungs_email, telefon, ust_id_nr, notiz
+`;
+
 // Firmen anlegen/sperren (Abschnitt 7). "firmen" hat kein RLS -- wird nur
-// über diese Superadmin-Routen verwaltet (siehe Migration 0001).
+// über diese Superadmin-Routen verwaltet (siehe Migration 0001). Die
+// Bausteine-Anzahl kommt aus firma_module dazu (Liste "Firmen", Spalte
+// "Bausteine"), ohne pro Zeile eine eigene Anfrage zu brauchen.
 router.get("/firmen", async (req, res) => {
   const { rows } = await pool.query(
-    "SELECT id, name, slug, aktiv, erstellt_am FROM firmen ORDER BY name"
+    `SELECT ${FIRMA_SPALTEN}, coalesce(m.anzahl, 0) AS bausteine_anzahl
+     FROM firmen
+     LEFT JOIN (
+       SELECT firma_id, count(*)::int AS anzahl FROM firma_module WHERE aktiv = true GROUP BY firma_id
+     ) m ON m.firma_id = firmen.id
+     ORDER BY name`
   );
   res.json(rows);
 });
@@ -28,53 +43,183 @@ router.get("/firmen", async (req, res) => {
 // erzeugt (Abschnitt 7). Bei Doppelung hängt eine Zahl an -- die Schleife
 // verlässt sich auf die UNIQUE-Regel der Datenbank (Migration 0001), damit
 // zwei gleichzeitige Anlagen nie denselben Slug bekommen.
+//
+// Alles in einer Transaktion (Teil B, Björns Vorgabe): Kundendaten, gewählte
+// Bausteine (inkl. deren Rechte-Bereiche) und optional der erste Admin
+// entstehen zusammen -- schlägt ein Teil fehl, wird nichts angelegt.
 router.post("/firmen", async (req, res) => {
-  const { name } = req.body || {};
-  if (!name) {
-    return res.status(400).json({ error: "Bitte Name angeben." });
+  const body = req.body || {};
+  const name = (body.name || "").trim();
+  const strasse = (body.strasse || "").trim();
+  const plz = String(body.plz ?? "").trim();
+  const ort = (body.ort || "").trim();
+  const ansprechpartner = (body.ansprechpartner || "").trim();
+  const rechnungsEmail = (body.rechnungsEmail || "").trim();
+  const telefon = body.telefon || null;
+  const ustIdNr = body.ustIdNr || null;
+  const notiz = body.notiz || null;
+  const moduleNamen = Array.isArray(body.module) ? body.module : [];
+  const admin = body.admin?.email && body.admin?.name ? body.admin : null;
+
+  if (!name) return res.status(400).json({ error: "Bitte Name angeben." });
+  if (!strasse) return res.status(400).json({ error: "Bitte Straße angeben." });
+  const plzFehler = pruefePlz(plz);
+  if (!plz || plzFehler) return res.status(400).json({ error: plzFehler || "Bitte PLZ angeben." });
+  if (!ort) return res.status(400).json({ error: "Bitte Ort angeben." });
+  if (!ansprechpartner) return res.status(400).json({ error: "Bitte Ansprechpartner angeben." });
+  if (!EMAIL_MUSTER.test(rechnungsEmail)) {
+    return res.status(400).json({ error: "Bitte eine gültige Rechnungs-E-Mail angeben." });
   }
+
   const basisSlug = erzeugeSlugAusName(name);
   if (!basisSlug) {
     return res.status(400).json({ error: "Aus diesem Namen kann kein Kürzel erzeugt werden." });
   }
 
-  for (let versuch = 0; versuch < 50; versuch++) {
-    const slug = versuch === 0 ? basisSlug : `${basisSlug}-${versuch + 1}`;
-    try {
-      const { rows } = await pool.query(
-        "INSERT INTO firmen (name, slug) VALUES ($1, $2) RETURNING id, name, slug, aktiv, erstellt_am",
-        [name, slug]
-      );
-      return res.status(201).json(rows[0]);
-    } catch (err) {
-      if (err.code !== "23505") {
-        return res.status(400).json({ error: "Firma konnte nicht angelegt werden." });
-      }
-      // Kürzel schon vergeben -- nächste Zahl versuchen.
+  // Bausteine + Abhängigkeiten innerhalb der gewählten Menge prüfen, bevor
+  // überhaupt etwas angelegt wird (Abschnitt 8: "Zeiterfassung braucht Projekte").
+  const alleModule = await ladeModule();
+  const gewaehlt = new Set(moduleNamen);
+  for (const modulName of gewaehlt) {
+    const eintrag = alleModule.find((m) => m.name === modulName);
+    if (!eintrag) return res.status(400).json({ error: `Baustein "${modulName}" nicht gefunden.` });
+    const fehlend = fehlendeAbhaengigkeiten(eintrag.config.braucht, gewaehlt);
+    if (fehlend.length > 0) {
+      return res
+        .status(400)
+        .json({ error: `Baustein "${eintrag.config.titel || modulName}" braucht zuerst: ${fehlend.join(", ")}.` });
     }
   }
-  res.status(400).json({ error: "Firma konnte nicht angelegt werden (kein freies Kürzel gefunden)." });
+
+  let startpasswort;
+  if (admin) {
+    startpasswort = erzeugeStartpasswort();
+    if (pruefePasswort(startpasswort, admin.email).length > 0) {
+      return res.status(500).json({ error: "Startpasswort ungültig erzeugt, bitte erneut versuchen." });
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Ein fehlgeschlagenes INSERT würde sonst die ganze Transaktion vergiften
+    // (Postgres: "current transaction is aborted") -- jeder Versuch läuft
+    // deshalb bis zu einem eigenen Savepoint, auf den ein Fehlschlag
+    // zurückrollt, ohne die restliche Transaktion zu verlieren.
+    let firmaRow;
+    for (let versuch = 0; versuch < 50; versuch++) {
+      const slug = versuch === 0 ? basisSlug : `${basisSlug}-${versuch + 1}`;
+      await client.query("SAVEPOINT vor_firma_insert");
+      try {
+        const { rows } = await client.query(
+          `INSERT INTO firmen (name, slug, strasse, plz, ort, ansprechpartner, rechnungs_email, telefon, ust_id_nr, notiz)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING ${FIRMA_SPALTEN}`,
+          [name, slug, strasse, plz, ort, ansprechpartner, rechnungsEmail, telefon, ustIdNr, notiz]
+        );
+        firmaRow = rows[0];
+        break;
+      } catch (err) {
+        if (err.code !== "23505") throw err;
+        // Kürzel schon vergeben -- nächste Zahl versuchen.
+        await client.query("ROLLBACK TO SAVEPOINT vor_firma_insert");
+      }
+    }
+    if (!firmaRow) {
+      throw new Error("Firma konnte nicht angelegt werden (kein freies Kürzel gefunden).");
+    }
+
+    // Ab hier greift RLS (firma_module, rechte, users) -- wie withFirma(),
+    // hier manuell auf demselben Client, weil die ganze Anlage eine
+    // Transaktion sein muss.
+    await client.query("SELECT set_config('app.current_firma_id', $1, true)", [String(firmaRow.id)]);
+    await rechteStandardAnlegen(client, firmaRow.id, appConfig.standardRechte);
+
+    for (const modulName of gewaehlt) {
+      const eintrag = alleModule.find((m) => m.name === modulName);
+      await client.query("INSERT INTO firma_module (firma_id, modul, aktiv) VALUES ($1, $2, true)", [
+        firmaRow.id,
+        modulName,
+      ]);
+      await rechteFuerBausteinAnlegen(client, firmaRow.id, eintrag.config.rechteBereiche);
+    }
+
+    let adminErgebnis = null;
+    if (admin) {
+      const hash = await hashPassword(startpasswort);
+      const { rows } = await client.query(
+        `INSERT INTO users (firma_id, email, passwort_hash, name, rolle, muss_passwort_aendern)
+         VALUES ($1, $2, $3, $4, 'Admin', true)
+         RETURNING id, email, name`,
+        [firmaRow.id, admin.email, hash, admin.name]
+      );
+      adminErgebnis = { ...rows[0], startpasswort };
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json({ ...firmaRow, admin: adminErgebnis });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    if (err.code === "23505") {
+      return res.status(400).json({ error: "Firma konnte nicht angelegt werden (E-Mail des Admins schon vergeben?)." });
+    }
+    res.status(400).json({ error: err.message || "Firma konnte nicht angelegt werden." });
+  } finally {
+    client.release();
+  }
 });
 
-// Teilweise Änderungen (z. B. nur "aktiv" beim Sperren/Entsperren) behalten die
-// übrigen Felder bei -- deshalb zuerst die bestehende Zeile lesen und fehlende
-// Felder daraus auffüllen, statt sie unbeabsichtigt zu überschreiben.
+// Teilweise Änderungen behalten die übrigen Felder bei -- deshalb zuerst die
+// bestehende Zeile lesen und fehlende Felder daraus auffüllen, statt sie
+// unbeabsichtigt zu überschreiben. Die Kundendaten-Pflichtfelder werden nur
+// geprüft, wenn mindestens eines davon im Formular steht (Bestandsfirmen vor
+// dem ersten Bearbeiten haben sie noch leer, Abschnitt 6: nichts wird in
+// diesem Zug erzwungen, was vorher nicht da war).
 router.patch("/firmen/:id", async (req, res) => {
-  const { rows: bestehend } = await pool.query(
-    "SELECT name, slug, aktiv FROM firmen WHERE id = $1",
-    [req.params.id]
-  );
+  const { rows: bestehend } = await pool.query(`SELECT ${FIRMA_SPALTEN} FROM firmen WHERE id = $1`, [
+    req.params.id,
+  ]);
   if (!bestehend[0]) return res.status(404).json({ error: "Firma nicht gefunden." });
+  const alt = bestehend[0];
 
-  const name = req.body?.name ?? bestehend[0].name;
-  const slug = req.body?.slug ?? bestehend[0].slug;
-  const aktiv = req.body?.aktiv !== undefined ? !!req.body.aktiv : bestehend[0].aktiv;
+  // Nur prüfen, wenn das Bearbeiten-Fenster tatsächlich Kundendaten mitschickt
+  // -- ein einzelner Sperren/Entsperren-Klick (nur "aktiv" im Body) lässt eine
+  // Bestandsfirma mit noch leeren Pflichtfeldern unverändert in Ruhe.
+  const kundendatenImFormular = enthaeltKundendatenFeld(req.body);
+
+  const name = String(req.body?.name ?? alt.name).trim();
+  const slug = req.body?.slug ?? alt.slug;
+  const aktiv = req.body?.aktiv !== undefined ? !!req.body.aktiv : alt.aktiv;
+  const strasse = String(req.body?.strasse ?? alt.strasse ?? "").trim();
+  const plz = String(req.body?.plz ?? alt.plz ?? "").trim();
+  const ort = String(req.body?.ort ?? alt.ort ?? "").trim();
+  const ansprechpartner = String(req.body?.ansprechpartner ?? alt.ansprechpartner ?? "").trim();
+  const rechnungsEmail = String(req.body?.rechnungsEmail ?? alt.rechnungs_email ?? "").trim();
+  const telefon = req.body?.telefon ?? alt.telefon;
+  const ustIdNr = req.body?.ustIdNr ?? alt.ust_id_nr;
+  const notiz = req.body?.notiz ?? alt.notiz;
+
+  if (kundendatenImFormular) {
+    if (!name) return res.status(400).json({ error: "Bitte Name angeben." });
+    if (!strasse) return res.status(400).json({ error: "Bitte Straße angeben." });
+    const plzFehler = pruefePlz(plz);
+    if (!plz || plzFehler) return res.status(400).json({ error: plzFehler || "Bitte PLZ angeben." });
+    if (!ort) return res.status(400).json({ error: "Bitte Ort angeben." });
+    if (!ansprechpartner) return res.status(400).json({ error: "Bitte Ansprechpartner angeben." });
+    if (!EMAIL_MUSTER.test(rechnungsEmail)) {
+      return res.status(400).json({ error: "Bitte eine gültige Rechnungs-E-Mail angeben." });
+    }
+  }
 
   let geaendert;
   try {
     const { rows } = await pool.query(
-      "UPDATE firmen SET name = $2, slug = $3, aktiv = $4 WHERE id = $1 RETURNING id, name, slug, aktiv, erstellt_am",
-      [req.params.id, name, slug, aktiv]
+      `UPDATE firmen SET name = $2, slug = $3, aktiv = $4, strasse = $5, plz = $6, ort = $7,
+              ansprechpartner = $8, rechnungs_email = $9, telefon = $10, ust_id_nr = $11, notiz = $12
+       WHERE id = $1 RETURNING ${FIRMA_SPALTEN}`,
+      [req.params.id, name, slug, aktiv, strasse || null, plz || null, ort || null, ansprechpartner || null,
+        rechnungsEmail || null, telefon, ustIdNr, notiz]
     );
     geaendert = rows[0];
   } catch (err) {
@@ -90,6 +235,11 @@ router.patch("/firmen/:id", async (req, res) => {
   res.json(geaendert);
 });
 
+function enthaeltKundendatenFeld(body) {
+  return ["strasse", "plz", "ort", "ansprechpartner", "rechnungsEmail"].some(
+    (feld) => body?.[feld] !== undefined
+  );
+}
 
 // Firma endgültig löschen (Punkt 0.4): nur gesperrt, nur mit exakt eingetipptem
 // Namen. Die eigentliche Löschung läuft in einer eng begrenzten Datenbank-
@@ -144,6 +294,21 @@ router.post("/firmen/:id/einladen", async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: "Einladung fehlgeschlagen (E-Mail schon vergeben?)." });
   }
+});
+
+// Baustein-Katalog dieser App, ohne Firmenbezug (Teil B): für den
+// "Neue Firma"-Dialog, bevor die Firma überhaupt existiert -- danach zeigt
+// "/firmen/:id/module" zusätzlich, was davon schon freigeschaltet ist.
+router.get("/module", async (req, res) => {
+  const module = await ladeModule();
+  res.json(
+    module.map(({ name, config }) => ({
+      name,
+      titel: config.titel || name,
+      beschreibung: config.beschreibung || "",
+      braucht: config.braucht || [],
+    }))
+  );
 });
 
 // Seite "Bausteine" pro Firma (Abschnitt 8): zeigt, was diese App anbietet,

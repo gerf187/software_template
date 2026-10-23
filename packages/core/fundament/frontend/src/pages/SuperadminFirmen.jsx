@@ -7,6 +7,7 @@ import Button from "../components/Button.jsx";
 import Dialog from "../components/Dialog.jsx";
 import FormField from "../components/FormField.jsx";
 import Input from "../components/Input.jsx";
+import Textarea from "../components/Textarea.jsx";
 import Checkbox from "../components/Checkbox.jsx";
 import Message from "../components/Message.jsx";
 import Badge from "../components/Badge.jsx";
@@ -18,83 +19,75 @@ import {
   speichereFirma,
   setzeFirmaAktiv,
   ladeFirmaEinladen,
+  listeAlleModule,
   listeModule,
   setzeModulAktiv,
   loescheFirmaEndgueltig,
 } from "../superadmin/api.js";
 
-const LEER = { name: "", aktiv: true };
+const LEER_KUNDENDATEN = {
+  name: "",
+  strasse: "",
+  plz: "",
+  ort: "",
+  ansprechpartner: "",
+  rechnungsEmail: "",
+  telefon: "",
+  ustIdNr: "",
+  notiz: "",
+};
 
-function werteAusFirma(firma) {
-  return { name: firma.name, aktiv: firma.aktiv };
+function kundendatenAusFirma(firma) {
+  return {
+    name: firma.name,
+    strasse: firma.strasse || "",
+    plz: firma.plz || "",
+    ort: firma.ort || "",
+    ansprechpartner: firma.ansprechpartner || "",
+    rechnungsEmail: firma.rechnungs_email || "",
+    telefon: firma.telefon || "",
+    ustIdNr: firma.ust_id_nr || "",
+    notiz: firma.notiz || "",
+  };
 }
 
-function istGleich(a, b) {
-  return a.name === b.name && a.aktiv === b.aktiv;
+function istUnvollstaendig(firma) {
+  return !firma.strasse || !firma.plz || !firma.ort || !firma.ansprechpartner || !firma.rechnungs_email;
 }
 
-function EinladenKarte({ firmaId }) {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [ergebnis, setErgebnis] = useState(null);
-  const [fehler, setFehler] = useState(null);
-  const [speichert, setSpeichert] = useState(false);
-
-  async function absenden(e) {
-    e.preventDefault();
-    setSpeichert(true);
-    setFehler(null);
-    try {
-      const daten = await ladeFirmaEinladen(firmaId, { email, name });
-      setErgebnis(daten);
-      setEmail("");
-      setName("");
-    } catch (err) {
-      setFehler(err.message);
-    } finally {
-      setSpeichert(false);
-    }
-  }
-
+// Bausteine-Abschnitt beim Anlegen: reine Checkbox-Auswahl, noch nichts
+// gespeichert -- geht erst beim Anlegen-Klick mit in die eine Transaktion.
+function BausteineAuswahl({ alleModule, ausgewaehlt, onUmschalten }) {
+  if (alleModule === undefined) return <Spinner label="Bausteine werden geladen …" />;
+  if (alleModule.length === 0) return <EmptyState>Diese App bietet noch keine Bausteine an.</EmptyState>;
   return (
-    <Card title="Firmen-Admin einladen">
-      {fehler && <Message type="fehler">{fehler}</Message>}
-      {ergebnis && (
-        <Zugangsdaten
-          email={ergebnis.email}
-          startpasswort={ergebnis.startpasswort}
-          onAusblenden={() => setErgebnis(null)}
-        />
-      )}
-      <form onSubmit={absenden}>
-        <FormField label="Name" htmlFor="einladen-name">
-          <Input id="einladen-name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </FormField>
-        <FormField label="E-Mail" htmlFor="einladen-email">
-          <Input
-            id="einladen-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+    <>
+      {alleModule.map((m) => (
+        <p key={m.name}>
+          <Checkbox
+            label={`${m.titel}${m.braucht.length ? ` (braucht: ${m.braucht.join(", ")})` : ""}`}
+            checked={ausgewaehlt.has(m.name)}
+            onChange={() => onUmschalten(m.name)}
           />
-        </FormField>
-        <Button type="submit" variant="primary" loading={speichert}>
-          Einladen
-        </Button>
-      </form>
-    </Card>
+          {m.beschreibung && (
+            <small style={{ display: "block", marginLeft: 28, color: "var(--ink-mute)" }}>
+              {m.beschreibung}
+            </small>
+          )}
+        </p>
+      ))}
+    </>
   );
 }
 
+// Bausteine-Abschnitt beim Bearbeiten: sofortiges Ein-/Ausschalten wie bisher
+// (jeder Klick ist ein eigener Speichervorgang, Abschnitt 8).
 function BausteineKarte({ firmaId }) {
   const [module, setModule] = useState(undefined);
   const [fehler, setFehler] = useState(null);
 
   function laden() {
-    listeModule(firmaId)
-      .then(setModule)
-      .catch((err) => setFehler(err.message));
+    listeModule(firmaId).then(setModule).catch((err) => setFehler(err.message));
   }
 
   useEffect(laden, [firmaId]);
@@ -111,11 +104,8 @@ function BausteineKarte({ firmaId }) {
   }
 
   return (
-    <Card title="Bausteine">
+    <>
       {fehler && <Message type="fehler">{fehler}</Message>}
-      <p>
-        <Checkbox label="Fundament (immer dabei)" checked disabled />
-      </p>
       {module === undefined && <Spinner label="Bausteine werden geladen …" />}
       {module?.length === 0 && <EmptyState>Diese App bietet noch keine Bausteine an.</EmptyState>}
       {module?.map((m) => (
@@ -132,18 +122,80 @@ function BausteineKarte({ firmaId }) {
           )}
         </p>
       ))}
-    </Card>
+    </>
+  );
+}
+
+// Admin einladen -- sowohl beim Anlegen (Felder im selben Fenster, die
+// Einladung läuft mit in die eine Transaktion) als auch später beim
+// Bearbeiten (eigener Speichervorgang, z. B. für einen zweiten Admin).
+function AdminEinladenFelder({ werte, onAendern }) {
+  return (
+    <>
+      <FormField label="Name" htmlFor="admin-name">
+        <Input id="admin-name" value={werte.name} onChange={(e) => onAendern({ ...werte, name: e.target.value })} />
+      </FormField>
+      <FormField label="E-Mail" htmlFor="admin-email">
+        <Input
+          id="admin-email"
+          type="email"
+          value={werte.email}
+          onChange={(e) => onAendern({ ...werte, email: e.target.value })}
+        />
+      </FormField>
+    </>
+  );
+}
+
+function AdminEinladenKarte({ firmaId }) {
+  const [werte, setWerte] = useState({ name: "", email: "" });
+  const [ergebnis, setErgebnis] = useState(null);
+  const [fehler, setFehler] = useState(null);
+  const [speichert, setSpeichert] = useState(false);
+
+  async function absenden(e) {
+    e.preventDefault();
+    setSpeichert(true);
+    setFehler(null);
+    try {
+      const daten = await ladeFirmaEinladen(firmaId, werte);
+      setErgebnis(daten);
+      setWerte({ name: "", email: "" });
+    } catch (err) {
+      setFehler(err.message);
+    } finally {
+      setSpeichert(false);
+    }
+  }
+
+  return (
+    <>
+      {fehler && <Message type="fehler">{fehler}</Message>}
+      {ergebnis && (
+        <Zugangsdaten
+          email={ergebnis.email}
+          startpasswort={ergebnis.startpasswort}
+          onAusblenden={() => setErgebnis(null)}
+        />
+      )}
+      <form onSubmit={absenden}>
+        <AdminEinladenFelder werte={werte} onAendern={setWerte} />
+        <Button type="submit" variant="primary" loading={speichert}>
+          Einladen
+        </Button>
+      </form>
+    </>
   );
 }
 
 export default function SuperadminFirmen() {
   const [firmen, setFirmen] = useState(undefined);
   const [fehler, setFehler] = useState(null);
-  const [ausgewaehlteId, setAusgewaehlteId] = useState(null);
-  const [werte, setWerte] = useState(LEER);
-  const [ursprung, setUrsprung] = useState(LEER);
+  const [alleModule, setAlleModule] = useState(undefined);
+  const [dialog, setDialog] = useState(null); // null | { id, werte, moduleNeu, admin }
+  const [formFehler, setFormFehler] = useState(null);
   const [speichert, setSpeichert] = useState(false);
-  const [wechselZiel, setWechselZiel] = useState(undefined);
+  const [zugangsdaten, setZugangsdaten] = useState(null);
   const [loeschZiel, setLoeschZiel] = useState(null);
   const [loeschEingabe, setLoeschEingabe] = useState("");
   const [loeschFehler, setLoeschFehler] = useState(null);
@@ -154,72 +206,69 @@ export default function SuperadminFirmen() {
   }
 
   useEffect(laden, []);
+  useEffect(() => {
+    listeAlleModule().then(setAlleModule).catch((err) => setFehler(err.message));
+  }, []);
 
-  const istSchmutzig = !istGleich(werte, ursprung);
-  const ausgewaehlteFirma = firmen?.find((f) => f.id === ausgewaehlteId);
-
-  function wirklichWechseln(ziel) {
-    if (ziel === null) {
-      setAusgewaehlteId(null);
-      setWerte(LEER);
-      setUrsprung(LEER);
-    } else {
-      setAusgewaehlteId(ziel.id);
-      setWerte(werteAusFirma(ziel));
-      setUrsprung(werteAusFirma(ziel));
-    }
-    setFehler(null);
+  function oeffneNeu() {
+    setFormFehler(null);
+    setDialog({ id: null, werte: LEER_KUNDENDATEN, moduleNeu: new Set(), admin: { name: "", email: "" } });
   }
 
-  function zeileKlick(firma) {
-    if (firma.id === ausgewaehlteId) return;
-    if (istSchmutzig) {
-      setWechselZiel(firma);
-    } else {
-      wirklichWechseln(firma);
-    }
+  function oeffneBearbeiten(firma) {
+    setFormFehler(null);
+    setDialog({ id: firma.id, werte: kundendatenAusFirma(firma), moduleNeu: null, admin: null });
   }
 
-  function neueFirma() {
-    if (ausgewaehlteId === null) return;
-    if (istSchmutzig) {
-      setWechselZiel(null);
-    } else {
-      wirklichWechseln(null);
-    }
+  function schliessen() {
+    setDialog(null);
+  }
+
+  function moduleNeuUmschalten(name) {
+    setDialog((d) => {
+      const kopie = new Set(d.moduleNeu);
+      if (kopie.has(name)) kopie.delete(name);
+      else kopie.add(name);
+      return { ...d, moduleNeu: kopie };
+    });
   }
 
   async function speichern(e) {
     e.preventDefault();
     setSpeichert(true);
-    setFehler(null);
+    setFormFehler(null);
     try {
-      if (ausgewaehlteId === null) {
-        const neu = await legeFirmaAn(werte);
+      if (dialog.id === null) {
+        const admin = dialog.admin.name && dialog.admin.email ? dialog.admin : undefined;
+        const neu = await legeFirmaAn({
+          ...dialog.werte,
+          module: [...dialog.moduleNeu],
+          admin,
+        });
         laden();
-        wirklichWechseln(neu);
+        schliessen();
+        if (neu.admin) setZugangsdaten({ email: neu.admin.email, startpasswort: neu.admin.startpasswort });
       } else {
-        const aktualisiert = await speichereFirma(ausgewaehlteId, werte);
+        await speichereFirma(dialog.id, dialog.werte);
         laden();
-        wirklichWechseln(aktualisiert);
+        schliessen();
       }
     } catch (err) {
-      setFehler(err.message);
+      setFormFehler(err.message);
     } finally {
       setSpeichert(false);
     }
   }
 
-  async function sperrenUmschalten(firma) {
-    await setzeFirmaAktiv(firma.id, !firma.aktiv);
+  async function sperrenUmschalten() {
+    const firma = firmen.find((f) => f.id === dialog.id);
+    await setzeFirmaAktiv(dialog.id, !firma.aktiv);
     laden();
-    if (firma.id === ausgewaehlteId) {
-      setWerte((w) => ({ ...w, aktiv: !firma.aktiv }));
-      setUrsprung((u) => ({ ...u, aktiv: !firma.aktiv }));
-    }
+    schliessen();
   }
 
-  function loeschenOeffnen(firma) {
+  function loeschenOeffnen() {
+    const firma = firmen.find((f) => f.id === dialog.id);
     setLoeschZiel(firma);
     setLoeschEingabe("");
     setLoeschFehler(null);
@@ -234,8 +283,8 @@ export default function SuperadminFirmen() {
     setLoeschFehler(null);
     try {
       await loescheFirmaEndgueltig(loeschZiel.id, loeschEingabe);
-      if (loeschZiel.id === ausgewaehlteId) wirklichWechseln(null);
       loeschenSchliessen();
+      schliessen();
       laden();
     } catch (err) {
       setLoeschFehler(err.message);
@@ -244,132 +293,210 @@ export default function SuperadminFirmen() {
     }
   }
 
+  const bearbeiteteFirma = dialog?.id != null ? firmen?.find((f) => f.id === dialog.id) : null;
+
   return (
     <div>
       <PageHeader
         title="Firmen"
         meta="Superadmin"
         actions={
-          <Button variant="primary" onClick={neueFirma}>
+          <Button variant="primary" onClick={oeffneNeu}>
             Neue Firma
           </Button>
         }
       />
 
-      <div className="list-form-split">
-        <Card>
-          {fehler && <Message type="fehler">{fehler}</Message>}
-          {firmen === undefined && <Spinner label="Firmen werden geladen …" />}
-          {firmen && (
-            <Table
-              columns={[
-                { key: "name", label: "Name", sortable: true },
-                { key: "slug", label: "Kürzel" },
-                {
-                  key: "aktiv",
-                  label: "Status",
-                  render: (f) => (
-                    <Badge status={f.aktiv ? "success" : "danger"}>
-                      {f.aktiv ? "Aktiv" : "Gesperrt"}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: "aktionen",
-                  label: "",
-                  render: (f) => (
-                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                      <Button
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          sperrenUmschalten(f);
-                        }}
-                      >
-                        {f.aktiv ? "Sperren" : "Entsperren"}
-                      </Button>
-                      {!f.aktiv && (
-                        <Button
-                          variant="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            loeschenOeffnen(f);
-                          }}
-                        >
-                          Endgültig löschen
-                        </Button>
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
-              rows={firmen}
-              rowKey={(f) => f.id}
-              emptyText="Noch keine Firmen angelegt."
-              onRowClick={zeileKlick}
-              selectedRowKey={ausgewaehlteId}
-            />
-          )}
-        </Card>
+      {zugangsdaten && (
+        <Zugangsdaten
+          email={zugangsdaten.email}
+          startpasswort={zugangsdaten.startpasswort}
+          onAusblenden={() => setZugangsdaten(null)}
+        />
+      )}
 
-        <div>
-          <Card title={ausgewaehlteId === null ? "Neue Firma" : "Firma bearbeiten"}>
-            <form onSubmit={speichern}>
-              <FormField label="Name" htmlFor="firma-name">
-                <Input
-                  id="firma-name"
-                  value={werte.name}
-                  onChange={(e) => setWerte((w) => ({ ...w, name: e.target.value }))}
-                  required
-                />
-              </FormField>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-                {ausgewaehlteId !== null && (
-                  <Button type="button" variant="text" onClick={neueFirma}>
-                    Abbrechen
-                  </Button>
-                )}
-                <Button type="submit" variant="primary" loading={speichert}>
-                  Speichern
-                </Button>
-              </div>
-            </form>
-          </Card>
-
-          {ausgewaehlteFirma && (
-            <>
-              <div style={{ height: 24 }} />
-              <EinladenKarte firmaId={ausgewaehlteFirma.id} />
-              <div style={{ height: 24 }} />
-              <BausteineKarte firmaId={ausgewaehlteFirma.id} />
-            </>
-          )}
-        </div>
-      </div>
+      <Card>
+        {fehler && <Message type="fehler">{fehler}</Message>}
+        {firmen === undefined && <Spinner label="Firmen werden geladen …" />}
+        {firmen && (
+          <Table
+            columns={[
+              { key: "kundennummer", label: "Kundennummer", sortable: true },
+              {
+                key: "name",
+                label: "Name",
+                sortable: true,
+                render: (f) => (
+                  <>
+                    {f.name}
+                    {istUnvollstaendig(f) && (
+                      <span style={{ marginLeft: 8 }}>
+                        <Badge status="warn">Daten unvollständig</Badge>
+                      </span>
+                    )}
+                  </>
+                ),
+              },
+              { key: "ort", label: "Ort", render: (f) => f.ort || "–" },
+              {
+                key: "aktiv",
+                label: "Status",
+                render: (f) => (
+                  <Badge status={f.aktiv ? "success" : "danger"}>{f.aktiv ? "Aktiv" : "Gesperrt"}</Badge>
+                ),
+              },
+              {
+                key: "bausteine",
+                label: "Bausteine",
+                render: (f) => (f.bausteine_anzahl > 0 ? f.bausteine_anzahl : "–"),
+              },
+            ]}
+            rows={firmen}
+            rowKey={(f) => f.id}
+            emptyText="Noch keine Firmen angelegt."
+            onRowClick={oeffneBearbeiten}
+          />
+        )}
+      </Card>
 
       <Dialog
-        open={wechselZiel !== undefined}
-        title="Ungespeicherte Änderungen verwerfen?"
-        onClose={() => setWechselZiel(undefined)}
+        open={dialog !== null}
+        wide
+        title={dialog?.id === null ? "Neue Firma" : "Firma bearbeiten"}
+        onClose={schliessen}
         actions={
           <>
-            <Button variant="text" onClick={() => setWechselZiel(undefined)}>
+            <Button variant="text" onClick={schliessen}>
               Abbrechen
             </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                wirklichWechseln(wechselZiel);
-                setWechselZiel(undefined);
-              }}
-            >
-              Verwerfen
+            <Button type="submit" form="firma-formular" variant="primary" loading={speichert}>
+              {dialog?.id === null ? "Anlegen" : "Speichern"}
             </Button>
           </>
         }
       >
-        Diese Firma hat noch ungespeicherte Änderungen im Formular. Wenn du wechselst,
-        gehen sie verloren.
+        {dialog && (
+          <form id="firma-formular" onSubmit={speichern}>
+            {formFehler && <Message type="fehler">{formFehler}</Message>}
+
+            <p className="form-section-label">Kundendaten</p>
+            <FormField label="Firmenname" htmlFor="firma-name">
+              <Input
+                id="firma-name"
+                value={dialog.werte.name}
+                onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, name: e.target.value } }))}
+                required
+              />
+            </FormField>
+            <FormField label="Straße und Hausnummer" htmlFor="firma-strasse">
+              <Input
+                id="firma-strasse"
+                value={dialog.werte.strasse}
+                onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, strasse: e.target.value } }))}
+                required
+              />
+            </FormField>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
+              <FormField label="PLZ" htmlFor="firma-plz">
+                <Input
+                  id="firma-plz"
+                  value={dialog.werte.plz}
+                  onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, plz: e.target.value } }))}
+                  required
+                />
+              </FormField>
+              <FormField label="Ort" htmlFor="firma-ort">
+                <Input
+                  id="firma-ort"
+                  value={dialog.werte.ort}
+                  onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, ort: e.target.value } }))}
+                  required
+                />
+              </FormField>
+            </div>
+            <FormField label="Ansprechpartner" htmlFor="firma-ansprechpartner">
+              <Input
+                id="firma-ansprechpartner"
+                value={dialog.werte.ansprechpartner}
+                onChange={(e) =>
+                  setDialog((d) => ({ ...d, werte: { ...d.werte, ansprechpartner: e.target.value } }))
+                }
+                required
+              />
+            </FormField>
+            <FormField label="Rechnungs-E-Mail" htmlFor="firma-rechnungs-email">
+              <Input
+                id="firma-rechnungs-email"
+                type="email"
+                value={dialog.werte.rechnungsEmail}
+                onChange={(e) =>
+                  setDialog((d) => ({ ...d, werte: { ...d.werte, rechnungsEmail: e.target.value } }))
+                }
+                required
+              />
+            </FormField>
+            <FormField label="Telefon" htmlFor="firma-telefon">
+              <Input
+                id="firma-telefon"
+                value={dialog.werte.telefon}
+                onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, telefon: e.target.value } }))}
+              />
+            </FormField>
+            <FormField label="USt-IdNr." htmlFor="firma-ust-id-nr">
+              <Input
+                id="firma-ust-id-nr"
+                value={dialog.werte.ustIdNr}
+                onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, ustIdNr: e.target.value } }))}
+              />
+            </FormField>
+            <FormField label="Notiz (nur für Superadmin sichtbar)" htmlFor="firma-notiz">
+              <Textarea
+                id="firma-notiz"
+                value={dialog.werte.notiz}
+                onChange={(e) => setDialog((d) => ({ ...d, werte: { ...d.werte, notiz: e.target.value } }))}
+              />
+            </FormField>
+
+            <p className="form-section-label">Bausteine</p>
+            {dialog.id === null ? (
+              <BausteineAuswahl
+                alleModule={alleModule}
+                ausgewaehlt={dialog.moduleNeu}
+                onUmschalten={moduleNeuUmschalten}
+              />
+            ) : (
+              <BausteineKarte firmaId={dialog.id} />
+            )}
+
+            {dialog.id === null ? (
+              <>
+                <p className="form-section-label">Erster Admin (optional)</p>
+                <AdminEinladenFelder werte={dialog.admin} onAendern={(admin) => setDialog((d) => ({ ...d, admin }))} />
+              </>
+            ) : (
+              <>
+                <p className="form-section-label">Admin einladen</p>
+                <AdminEinladenKarte firmaId={dialog.id} />
+              </>
+            )}
+
+            {dialog.id !== null && bearbeiteteFirma && (
+              <>
+                <p className="form-section-label">Gefahrenbereich</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Button type="button" variant="secondary" onClick={sperrenUmschalten}>
+                    {bearbeiteteFirma.aktiv ? "Sperren" : "Entsperren"}
+                  </Button>
+                  {!bearbeiteteFirma.aktiv && (
+                    <Button type="button" variant="danger" onClick={loeschenOeffnen}>
+                      Endgültig löschen
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+          </form>
+        )}
       </Dialog>
 
       <Dialog

@@ -63,8 +63,17 @@ function api(cookie, method, path, body) {
 const { cookie: cookieSuperadmin } = await login(emailSuperadmin, PASSWORT);
 const { cookie: cookieAdmin } = await login(emailAdmin, PASSWORT);
 
+// Pflicht-Kundendaten (Teil B) für POST /firmen -- für diese Tests immer
+// dieselben Werte, nur der Name unterscheidet die Firmen.
 async function legeFirmaAn(name) {
-  const res = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", { name });
+  const res = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
+    name,
+    strasse: "Teststraße 1",
+    plz: "12345",
+    ort: "Teststadt",
+    ansprechpartner: "Ansprechpartner Test",
+    rechnungsEmail: "rechnung@example.test",
+  });
   const daten = await res.json();
   return daten;
 }

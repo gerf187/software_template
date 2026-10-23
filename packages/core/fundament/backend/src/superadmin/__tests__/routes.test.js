@@ -14,6 +14,17 @@ import {
 } from "../../db/__tests__/helpers.js";
 
 const PASSWORT = "Ein-Sicheres-Passwort-12";
+
+// Pflicht-Kundendaten (Teil B) für POST /firmen -- in jedem Testaufruf gleich,
+// nur Name/Kürzel variieren pro Test.
+const KUNDENDATEN = {
+  strasse: "Teststraße 1",
+  plz: "12345",
+  ort: "Teststadt",
+  ansprechpartner: "Ansprechpartner Test",
+  rechnungsEmail: "rechnung@example.test",
+};
+
 const firma = await erstelleTestfirmaMitRechten("Superadmin-Routen Test");
 
 async function erstelleBenutzer(email, rolle) {
@@ -92,6 +103,7 @@ test("Superadmin kann eine Firma anlegen, sperren und entsperren", async () => {
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Test-Firma ${eindeutig}`,
     slug: `test-firma-${eindeutig}`,
+    ...KUNDENDATEN,
   });
   assert.equal(anlegen.status, 201);
   const neueFirma = await anlegen.json();
@@ -114,6 +126,7 @@ test("Superadmin kann Name und Kürzel einer Firma ändern, ohne den Status zu v
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Alter Name ${eindeutig}`,
     slug: `alter-slug-${eindeutig}`,
+    ...KUNDENDATEN,
   });
   const neueFirma = await anlegen.json();
   angelegteFirmen.push(neueFirma.id);
@@ -141,6 +154,7 @@ test("Kürzel wird automatisch aus dem Namen erzeugt, bei Doppelung mit Zahl", a
 
   const erste = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Müller & Schön ${eindeutig}`,
+    ...KUNDENDATEN,
   });
   assert.equal(erste.status, 201);
   const ersteFirma = await erste.json();
@@ -149,6 +163,7 @@ test("Kürzel wird automatisch aus dem Namen erzeugt, bei Doppelung mit Zahl", a
 
   const zweite = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Müller & Schön ${eindeutig}`,
+    ...KUNDENDATEN,
   });
   assert.equal(zweite.status, 201);
   const zweiteFirma = await zweite.json();
@@ -166,6 +181,7 @@ test("Einladung legt einen Admin mit Startpasswort an, das beim ersten Login ge�
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Einladungs-Firma ${eindeutig}`,
     slug: `einladung-${eindeutig}`,
+    ...KUNDENDATEN,
   });
   const neueFirma = await anlegen.json();
   angelegteFirmen.push(neueFirma.id);
@@ -198,6 +214,7 @@ test("Eine gesperrte Firma kann sich nicht mehr anmelden", async () => {
   const anlegen = await api(cookieSuperadmin, "POST", "/api/superadmin/firmen", {
     name: `Sperr-Firma ${eindeutig}`,
     slug: `sperr-firma-${eindeutig}`,
+    ...KUNDENDATEN,
   });
   const neueFirma = await anlegen.json();
   angelegteFirmen.push(neueFirma.id);
@@ -249,6 +266,14 @@ test("Nach dem Freischalten ist der Baustein erreichbar, nach dem Ausschalten wi
 
   const nichtMehrErreichbar = await api(cookieAdmin, "GET", "/api/module/beispiel");
   assert.equal(nichtMehrErreichbar.status, 404);
+});
+
+test("Baustein-Katalog ohne Firmenbezug zeigt, was diese App anbietet (für den 'Neue Firma'-Dialog)", async () => {
+  const res = await api(cookieSuperadmin, "GET", "/api/superadmin/module");
+  assert.equal(res.status, 200);
+  const module = await res.json();
+  assert.ok(module.find((m) => m.name === "beispiel"));
+  assert.ok(!("aktiv" in module[0]), "Ohne Firma gibt es keinen Aktiv-Status");
 });
 
 test("Abhängigkeit verhindert Einschalten", async () => {
