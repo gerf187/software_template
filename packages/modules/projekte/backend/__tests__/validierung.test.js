@@ -77,3 +77,15 @@ test("pruefePhase: nur konfigurierte Phasen sind gültig", () => {
   assert.equal(pruefePhase("Bearbeitung", CONFIG), null);
   assert.match(pruefePhase("Erfunden", CONFIG), /Phase/);
 });
+
+test("Ohne Projektart gibt es eine Fehlermeldung (mindestens eine ist Pflicht)", () => {
+  assert.match(pruefeProjektFelder(gueltig({ arten: [] }), CONFIG), /mindestens eine Projektart/);
+});
+
+test("PLZ der Objektadresse: genau 5 Ziffern, leer bleibt erlaubt", () => {
+  for (const plz of ["1234", "123456", "12a45"]) {
+    assert.match(pruefeProjektFelder(gueltig({ objektadressePlz: plz }), CONFIG), /PLZ/);
+  }
+  assert.equal(pruefeProjektFelder(gueltig({ objektadressePlz: "" }), CONFIG), null);
+  assert.equal(pruefeProjektFelder(gueltig({ objektadressePlz: "26122" }), CONFIG), null);
+});

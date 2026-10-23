@@ -1,6 +1,7 @@
 // Geschäftsregeln rund ums Projekt (Teil 1, Punkt 2), geprüft gegen die
 // App-Konfiguration (app.config.js, Feld "projekte") -- der Baustein selbst
 // kennt keine festen Projektarten/Status/Phasen (Abschnitt 8).
+import { pruefePlz } from "@fundament/backend/src/validierung/plz.js";
 
 export function projektFelder(body) {
   return {
@@ -9,7 +10,7 @@ export function projektFelder(body) {
     status: body.status || "",
     phase: body.phase || "",
     objektadresse_strasse: body.objektadresseStrasse || null,
-    objektadresse_plz: body.objektadressePlz || null,
+    objektadresse_plz: String(body.objektadressePlz ?? "").trim() || null,
     objektadresse_ort: body.objektadresseOrt || null,
     auftragsdatum: body.auftragsdatum || null,
     ablage_link: body.ablageLink || null,
@@ -21,6 +22,7 @@ export function projektFelder(body) {
 export function pruefeProjektFelder(felder, config) {
   if (!felder.name) return "Bitte einen Projektnamen angeben.";
 
+  if (felder.arten.length === 0) return "Bitte mindestens eine Projektart auswählen.";
   const projektarten = config?.projektarten || [];
   for (const art of felder.arten) {
     if (!projektarten.includes(art)) return `Unbekannte Projektart: "${art}".`;
@@ -37,6 +39,9 @@ export function pruefeProjektFelder(felder, config) {
 
   const phasen = config?.phasen || [];
   if (!phasen.includes(felder.phase)) return "Bitte eine gültige Phase angeben.";
+
+  const plzFehler = pruefePlz(felder.objektadresse_plz);
+  if (plzFehler) return plzFehler;
 
   if (felder.ablage_link && !/^https?:\/\//i.test(felder.ablage_link)) {
     return "Der Ablage-Link muss mit http:// oder https:// beginnen.";

@@ -4,13 +4,17 @@ import viteConfig from "./vite.config.js";
 // Eigene Test-Dateien in __vitest__ statt __tests__ (Abschnitt 5/8): die
 // bestehenden __tests__-Dateien laufen über node --test (test-runner.mjs)
 // und verstehen import.meta.glob nicht -- Vitest braucht dafür Vites echte
-// Bundler-Transformation, deshalb hier getrennt.
+// Bundler-Transformation, deshalb hier getrennt. Bausteine aus
+// packages/modules legen ihre Vitest-Tests genauso in frontend/__vitest__ ab.
 export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
       environment: "node",
-      include: ["src/**/__vitest__/**/*.test.js"],
+      include: [
+        "src/**/__vitest__/**/*.test.{js,jsx}",
+        "../../../modules/*/frontend/__vitest__/**/*.test.{js,jsx}",
+      ],
     },
   })
 );

@@ -92,6 +92,26 @@ test("Kontakt ohne Nachname wird abgelehnt", async () => {
   assert.equal(res.status, 400);
 });
 
+test("PLZ: genau 5 Ziffern beim Anlegen, leer bleibt erlaubt", async () => {
+  for (const plz of ["1234", "123456", "12a45"]) {
+    const res = await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "PLZ-Test", wohnadressePlz: plz });
+    assert.equal(res.status, 400, `PLZ "${plz}" muss abgelehnt werden`);
+    assert.match((await res.json()).error, /PLZ/);
+  }
+  const leer = await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "PLZ-Test", wohnadressePlz: "" });
+  assert.equal(leer.status, 201);
+});
+
+test("PLZ: genau 5 Ziffern auch beim Bearbeiten", async () => {
+  const anlegen = await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "PLZ-Bearbeiten" });
+  const kontakt = await anlegen.json();
+  const falsch = await api(cookieAdminA, "PUT", `/api/kontakte/${kontakt.id}`, { nachname: "PLZ-Bearbeiten", wohnadressePlz: "999" });
+  assert.equal(falsch.status, 400);
+  const richtig = await api(cookieAdminA, "PUT", `/api/kontakte/${kontakt.id}`, { nachname: "PLZ-Bearbeiten", wohnadressePlz: "26122" });
+  assert.equal(richtig.status, 200);
+  assert.equal((await richtig.json()).wohnadresse_plz, "26122");
+});
+
 test("User kann einen Kontakt anlegen, aber nicht löschen", async () => {
   const anlegen = await api(cookieUserA, "POST", "/api/kontakte", {
     nachname: "User-Kontakt",

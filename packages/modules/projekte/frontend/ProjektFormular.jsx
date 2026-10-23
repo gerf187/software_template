@@ -5,6 +5,7 @@ import Select from "@fundament/frontend/src/components/Select.jsx";
 import Checkbox from "@fundament/frontend/src/components/Checkbox.jsx";
 import Button from "@fundament/frontend/src/components/Button.jsx";
 import Message from "@fundament/frontend/src/components/Message.jsx";
+import { pruefePlz } from "@fundament/backend/src/validierung/plz.js";
 import appConfig from "~app-config";
 import { vorschlagProjektname } from "./namensvorschlag.js";
 
@@ -82,6 +83,16 @@ export default function ProjektFormular({ kontakt, projekt, onSpeichern, onAbbre
 
   async function absenden(e) {
     e.preventDefault();
+    // Gleiche Regeln wie im Backend (validierung.js) -- dort wird zusätzlich geprüft.
+    if (werte.arten.length === 0) {
+      setFehler("Bitte mindestens eine Projektart auswählen.");
+      return;
+    }
+    const plzFehler = pruefePlz(werte.plz);
+    if (plzFehler) {
+      setFehler(plzFehler);
+      return;
+    }
     if (!werte.name.trim()) {
       setFehler("Bitte einen Projektnamen angeben.");
       return;

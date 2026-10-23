@@ -90,6 +90,18 @@ export function modulAkteLader(name) {
   return null;
 }
 
+// Bezeichnung einer Baustein-Tabelle im Änderungsprotokoll (modul.config.js,
+// Feld "protokollTabellen", z. B. { projects: "Projekt" }). Über alle
+// Bausteine der App, nicht nur die aktiven: alte Einträge eines inzwischen
+// ausgeschalteten Bausteins bleiben im Protokoll und sollen lesbar bleiben.
+export function protokollTabellenText(tabelle) {
+  for (const pfad of passendeConfigs) {
+    const text = alleConfigs[pfad].default?.protokollTabellen?.[tabelle];
+    if (text) return text;
+  }
+  return null;
+}
+
 // Alle angemeldeten Tabs eines Erweiterungspunkts (z. B. "kontaktTabs") über
 // die aktiven Bausteine eines Benutzers hinweg, in deren Reihenfolge.
 export function erweiterungsTabs(punkt, aktiveModule) {

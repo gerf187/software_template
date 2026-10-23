@@ -4,6 +4,7 @@ import Input from "../components/Input.jsx";
 import Select from "../components/Select.jsx";
 import Button from "../components/Button.jsx";
 import Message from "../components/Message.jsx";
+import { pruefePlz } from "@fundament/backend/src/validierung/plz.js";
 
 const LEER = {
   anrede: "",
@@ -53,6 +54,11 @@ export default function KontaktFormular({ kontakt, onSpeichern, onAbbrechen }) {
     e.preventDefault();
     if (!werte.nachname.trim()) {
       setFehler("Bitte einen Nachnamen angeben.");
+      return;
+    }
+    const plzFehler = pruefePlz(werte.plz);
+    if (plzFehler) {
+      setFehler(plzFehler);
       return;
     }
     setSpeichert(true);

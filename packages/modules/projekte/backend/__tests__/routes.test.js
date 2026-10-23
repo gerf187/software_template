@@ -132,6 +132,18 @@ test("Projekt anlegen und lesen", async () => {
   assert.equal((await lesen.json()).contactId, kontaktA.id);
 });
 
+test("Projekt ohne Projektart wird abgelehnt (400)", async () => {
+  const res = await api(cookieAdminA, "POST", "/api/module/projekte/", projekt({ arten: [] }));
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /mindestens eine Projektart/);
+});
+
+test("Projekt mit ungültiger PLZ wird abgelehnt (400)", async () => {
+  const res = await api(cookieAdminA, "POST", "/api/module/projekte/", projekt({ objektadressePlz: "1234" }));
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /PLZ/);
+});
+
 test("Mandanten-Trennung: Kontakt einer fremden Firma kann nicht verknüpft werden (404)", async () => {
   const res = await api(cookieAdminA, "POST", "/api/module/projekte/", projekt({ contactId: kontaktB.id }));
   assert.equal(res.status, 404);

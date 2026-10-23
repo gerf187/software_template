@@ -4,6 +4,7 @@ import { erfordertRecht } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
 import { pruefeIdsAusUrl, istFremdschluesselFehler } from "../db/ids.js";
 import { aenderungenAus, loeseVerweiseAuf } from "./verlauf.js";
+import { pruefePlz } from "../validierung/plz.js";
 
 const router = Router();
 pruefeIdsAusUrl(router, ["id", "aufgabeId"]);
@@ -24,7 +25,7 @@ function kontaktFelder(body) {
     telefon: body.telefon || null,
     mobil: body.mobil || null,
     wohnadresse_strasse: body.wohnadresseStrasse || null,
-    wohnadresse_plz: body.wohnadressePlz || null,
+    wohnadresse_plz: String(body.wohnadressePlz ?? "").trim() || null,
     wohnadresse_ort: body.wohnadresseOrt || null,
   };
 }
@@ -68,6 +69,8 @@ router.post("/", erfordertRecht("kontakte", "bearbeiten"), async (req, res) => {
   if (!felder.nachname) {
     return res.status(400).json({ error: "Bitte einen Nachnamen angeben." });
   }
+  const plzFehler = pruefePlz(felder.wohnadresse_plz);
+  if (plzFehler) return res.status(400).json({ error: plzFehler });
 
   try {
     const rows = await withFirma(
@@ -108,6 +111,8 @@ router.put("/:id", erfordertRecht("kontakte", "bearbeiten"), async (req, res) =>
   if (!felder.nachname) {
     return res.status(400).json({ error: "Bitte einen Nachnamen angeben." });
   }
+  const plzFehler = pruefePlz(felder.wohnadresse_plz);
+  if (plzFehler) return res.status(400).json({ error: plzFehler });
 
   try {
     const rows = await withFirma(

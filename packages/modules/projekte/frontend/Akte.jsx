@@ -91,7 +91,7 @@ function Kopfkarte({ projekt, kontakt }) {
   );
 }
 
-function UebersichtTab({ projekt }) {
+export function UebersichtTab({ projekt }) {
   const zeilen = [
     ["Projektname", projekt.name],
     ["Projektart(en)", projekt.arten.join(", ")],
@@ -99,6 +99,23 @@ function UebersichtTab({ projekt }) {
     ["Status", projekt.status],
     ["Objektadresse", adresseText(projekt)],
   ].filter(([, wert]) => wert);
+  // Immer sichtbar, leer als "–" (Abschnitt 9: ehrliche Werte).
+  zeilen.push(
+    [
+      PROJEKTE_CONFIG.auftragsdatumLabel || "Auftragsdatum",
+      projekt.auftragsdatum ? new Date(projekt.auftragsdatum).toLocaleDateString("de-DE") : "–",
+    ],
+    [
+      "Ablage-Link",
+      projekt.ablageLink ? (
+        <a href={projekt.ablageLink} target="_blank" rel="noopener noreferrer">
+          {projekt.ablageLink}
+        </a>
+      ) : (
+        "–"
+      ),
+    ]
+  );
 
   return (
     <Card title="Übersicht">

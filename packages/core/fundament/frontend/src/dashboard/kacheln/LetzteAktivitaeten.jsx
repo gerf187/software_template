@@ -1,6 +1,20 @@
 import EmptyState from "../../components/EmptyState.jsx";
+import { protokollTabellenText } from "../../module/registry.js";
 
-const TABELLE_TEXT = { contacts: "Kontakt", notes: "Notiz", tasks: "Aufgabe" };
+// Nur Fundament-Tabellen -- Bausteine melden ihre eigenen über
+// modul.config.js an (protokollTabellen), das Fundament kennt sie nicht.
+const TABELLE_TEXT = {
+  contacts: "Kontakt",
+  notes: "Notiz",
+  tasks: "Aufgabe",
+  users: "Mitarbeiter",
+  rechte: "Recht",
+  firma_module: "Baustein-Freischaltung",
+};
+
+function tabelleText(tabelle) {
+  return TABELLE_TEXT[tabelle] || protokollTabellenText(tabelle) || "Eintrag";
+}
 const AKTION_TEXT = { angelegt: "angelegt", geaendert: "geändert", geloescht: "gelöscht" };
 
 export default function LetzteAktivitaeten({ daten }) {
@@ -12,7 +26,7 @@ export default function LetzteAktivitaeten({ daten }) {
     <div>
       {eintraege.map((e) => (
         <p key={e.id} style={{ margin: "0 0 8px" }}>
-          {TABELLE_TEXT[e.tabelle] || e.tabelle} {AKTION_TEXT[e.aktion] || e.aktion} am{" "}
+          {tabelleText(e.tabelle)} {AKTION_TEXT[e.aktion] || e.aktion} am{" "}
           {new Date(e.zeitpunkt).toLocaleString("de-DE")}
           {e.benutzerName ? ` von ${e.benutzerName}` : ""}
         </p>

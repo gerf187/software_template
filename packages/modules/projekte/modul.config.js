@@ -24,6 +24,10 @@ export default {
   // Erweiterungspunkt des Fundaments (frontend/Erweiterungen.jsx).
   kontaktTabs: [{ key: "projekte", label: "Projekte" }],
 
+  // Bezeichnung der eigenen Tabellen im Änderungsprotokoll (z. B. Kachel
+  // "Letzte Aktivitäten") -- das Fundament kennt "projects" nicht selbst.
+  protokollTabellen: { projects: "Projekt" },
+
   // Eigene Tab-Mechanik der Projekt-Akte (Teil 1, Punkt 6): spätere
   // Fach-Bausteine (z. B. Energieberater: "Anträge", "Maßnahmen") melden
   // hier künftig ihre eigenen Tabs an -- genauso wie "kontaktTabs" oben.
