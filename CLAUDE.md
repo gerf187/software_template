@@ -372,8 +372,10 @@ Dockerfile, docker-compose.prod.yml, Backup/Wiederherstellung, Update-Skript,
 Sicherheit (CSP, Anfragen-Begrenzung, CSRF, sichere Cookies) und Klicktest sind
 fertig und laufen live auf dem VPS. Details zu den einzelnen Schritten stehen
 in den Commits, nicht hier.
-Offen: E-Mail-System, externes Backup-Ziel, Ausfall-Wächter einrichten,
-Impressum/Datenschutzerklärung, Löschkonzept, AV-Vertrag Hostinger.
+✅ Ausfall-Wächter eingerichtet (seit 20.10.2026): Better Stack prüft
+`/api/health` alle 3 Minuten, dazu Heartbeat „Backup EB".
+Offen: E-Mail-System, externes Backup-Ziel, Impressum/Datenschutzerklärung,
+Löschkonzept, AV-Vertrag Hostinger.
 
 **Offen (Entscheidung Björn)**
 - DSGVO-Löschkonzept: Das Änderungsprotokoll speichert alte Werte dauerhaft. Ein
