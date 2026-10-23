@@ -1,8 +1,6 @@
 import Begruessung from "./kacheln/Begruessung.jsx";
 import MeineAufgaben from "./kacheln/MeineAufgaben.jsx";
 import ZuletztBearbeiteteKontakte from "./kacheln/ZuletztBearbeiteteKontakte.jsx";
-import NeueKontakte from "./kacheln/NeueKontakte.jsx";
-import KontakteGesamt from "./kacheln/KontakteGesamt.jsx";
 import LetzteAktivitaeten from "./kacheln/LetzteAktivitaeten.jsx";
 import { modulNameAusPfad, gehoertDazu } from "../module/registry.js";
 
@@ -10,8 +8,6 @@ const FUNDAMENT_KACHELN = {
   begruessung: Begruessung,
   meineAufgaben: MeineAufgaben,
   zuletztBearbeiteteKontakte: ZuletztBearbeiteteKontakte,
-  neueKontakte: NeueKontakte,
-  kontakteGesamt: KontakteGesamt,
   letzteAktivitaeten: LetzteAktivitaeten,
 };
 

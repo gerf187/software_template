@@ -36,6 +36,10 @@ export async function loescheTestfirma(firmaId) {
   await ownerPool.query("DELETE FROM benutzer_dashboard WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM notes WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM tasks WHERE firma_id = $1", [firmaId]);
+  // Baustein "Projekte" (packages/modules/projekte): erst hier, nicht fest
+  // auf "existiert immer" verlassen -- ohne Baustein gibt es die Tabelle,
+  // aber keine Zeilen für diese Firma, DELETE läuft trotzdem gefahrlos leer.
+  await ownerPool.query("DELETE FROM projects WHERE firma_id = $1", [firmaId]);
   await ownerPool.query("DELETE FROM contacts WHERE firma_id = $1", [firmaId]);
   // Erst nach den Fachtabellen: deren Löschen trägt selbst noch ins
   // Änderungsprotokoll ein (Trigger). Auch vor "users", weil das Protokoll

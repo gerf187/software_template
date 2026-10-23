@@ -5,6 +5,7 @@ import { erfordertRecht, darf } from "../rechte/darf.js";
 import { withFirma } from "../db/withFirma.js";
 import { holeVerfuegbareKacheln } from "./kacheln.js";
 import { gerenderteKacheln, layoutZumSpeichern } from "./layout.js";
+import { geladeneModule } from "../module/geladen.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -107,15 +108,16 @@ router.post(
 );
 
 // Rohdaten für die Fundament-Kacheln, die Daten brauchen (Begrüßung braucht
-// keine -- Name kommt aus /api/auth/me, Datum vom Browser). Jeder Schlüssel
-// erscheint nur, wenn der Benutzer das nötige Recht hat.
+// nur die beiden Aufgaben-Zähler -- Name kommt aus /api/auth/me, Datum vom
+// Browser). Jeder Schlüssel erscheint nur, wenn der Benutzer das nötige
+// Recht hat.
 router.get("/daten", async (req, res) => {
   const daten = {};
 
   if (await darf(req.user, "kontakte", "sehen")) {
     const ergebnisse = await withFirma(req.user.firmaId, async (client) => {
       const faellig = await client.query(
-        `SELECT t.id, t.text, t.faellig_am, t.contact_id, c.vorname, c.nachname
+        `SELECT t.id, t.text, t.faellig_am, t.contact_id, t.project_id, c.vorname, c.nachname
          FROM tasks t
          JOIN contacts c ON c.id = t.contact_id
          WHERE t.status = 'offen' AND t.deleted_at IS NULL AND c.deleted_at IS NULL
@@ -125,50 +127,73 @@ router.get("/daten", async (req, res) => {
          LIMIT 10`,
         [req.user.id]
       );
+      // Begrüßung (C1): dieselbe Menge wie oben, nur gezählt statt
+      // begrenzt auf 10 -- "heute fällig" und "überfällig" getrennt.
+      const zaehler = await client.query(
+        `SELECT
+           count(*) FILTER (WHERE t.faellig_am = CURRENT_DATE)::int AS heute,
+           count(*) FILTER (WHERE t.faellig_am < CURRENT_DATE)::int AS ueberfaellig
+         FROM tasks t
+         JOIN contacts c ON c.id = t.contact_id
+         WHERE t.status = 'offen' AND t.deleted_at IS NULL AND c.deleted_at IS NULL
+           AND t.faellig_am IS NOT NULL AND t.faellig_am <= CURRENT_DATE
+           AND (t.zustaendig_id IS NULL OR t.zustaendig_id = $1)`,
+        [req.user.id]
+      );
       const zuletzt = await client.query(
-        `SELECT c.id, c.vorname, c.nachname, max(ap.zeitpunkt) AS zeitpunkt
+        `SELECT c.id, c.vorname, c.nachname, c.organisation, c.email, c.telefon, max(ap.zeitpunkt) AS zeitpunkt
          FROM aenderungsprotokoll ap
          JOIN contacts c ON c.id = ap.datensatz_id
          WHERE ap.tabelle = 'contacts'
-         GROUP BY c.id, c.vorname, c.nachname
+         GROUP BY c.id, c.vorname, c.nachname, c.organisation, c.email, c.telefon
          ORDER BY max(ap.zeitpunkt) DESC
          LIMIT 5`
       );
-      const neue = await client.query(
-        "SELECT count(*)::int AS anzahl FROM contacts WHERE deleted_at IS NULL AND erstellt_am >= date_trunc('week', now())"
-      );
-      const gesamt = await client.query(
-        "SELECT count(*)::int AS anzahl FROM contacts WHERE deleted_at IS NULL"
-      );
-      return {
-        faellig: faellig.rows,
-        zuletzt: zuletzt.rows,
-        neue: neue.rows[0].anzahl,
-        gesamt: gesamt.rows[0].anzahl,
-      };
+      return { faellig: faellig.rows, zaehler: zaehler.rows[0], zuletzt: zuletzt.rows };
     });
 
+    // C2: Spalte "Projekt" bei "Meine Aufgaben" -- das Fundament kennt
+    // "Projekt" nicht (Abschnitt 8, Regel 5). Aktive Bausteine mit
+    // project_id-Aufgaben lösen die IDs optional selbst auf
+    // (module/lade.js, Datei "backend/dashboardAufgaben.js", wie "suche.js").
+    const projektIds = [...new Set(ergebnisse.faellig.map((a) => a.project_id).filter(Boolean))];
+    const projektInfo = {};
+    for (const { name, dashboardAufgaben } of geladeneModule) {
+      if (!dashboardAufgaben) continue;
+      if (projektIds.length === 0) break;
+      if (!req.user.module?.includes(name)) continue;
+      Object.assign(
+        projektInfo,
+        await dashboardAufgaben({ firmaId: req.user.firmaId, projectIds: projektIds, withFirma })
+      );
+    }
+
+    daten.aufgabenHeute = ergebnisse.zaehler.heute;
+    daten.aufgabenUeberfaellig = ergebnisse.zaehler.ueberfaellig;
     daten.meineAufgaben = ergebnisse.faellig.map((a) => ({
       id: a.id,
       text: a.text,
       faelligAm: a.faellig_am,
       kontaktId: a.contact_id,
       kontaktName: kontaktName(a),
+      projekt: a.project_id ? projektInfo[a.project_id] || null : null,
     }));
     daten.zuletztBearbeiteteKontakte = ergebnisse.zuletzt.map((k) => ({
       id: k.id,
       name: kontaktName(k),
+      firma: k.organisation || null,
+      email: k.email || null,
+      telefon: k.telefon || null,
       zeitpunkt: k.zeitpunkt,
     }));
-    daten.neueKontakte = ergebnisse.neue;
-    daten.kontakteGesamt = ergebnisse.gesamt;
   }
 
   if (await darf(req.user, "protokoll", "sehen")) {
     const rows = await withFirma(req.user.firmaId, (client) =>
       client
         .query(
-          `SELECT ap.id, ap.zeitpunkt, ap.aktion, ap.tabelle, u.name AS benutzer_name
+          `SELECT ap.id, ap.zeitpunkt, ap.aktion, ap.tabelle, ap.alte_werte, ap.neue_werte,
+                  u.name AS benutzer_name
            FROM aenderungsprotokoll ap
            LEFT JOIN users u ON u.id = ap.user_id
            ORDER BY ap.zeitpunkt DESC
@@ -182,6 +207,8 @@ router.get("/daten", async (req, res) => {
       aktion: r.aktion,
       tabelle: r.tabelle,
       benutzerName: r.benutzer_name,
+      alteWerte: r.alte_werte,
+      neueWerte: r.neue_werte,
     }));
   }
 

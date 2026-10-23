@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import EmptyState from "../../components/EmptyState.jsx";
 
+// Kachel "Kontakte" (Teil C, Punkt C4): 5 zuletzt bearbeitete, neueste oben.
+// Name (Firma klein darunter) · E-Mail · Telefon ("–" bei leer). Zeile öffnet
+// den Kontakt, Link unten führt zur vollen Liste.
 export default function ZuletztBearbeiteteKontakte({ daten }) {
   const navigate = useNavigate();
   const kontakte = daten?.zuletztBearbeiteteKontakte || [];
@@ -12,23 +15,27 @@ export default function ZuletztBearbeiteteKontakte({ daten }) {
       {kontakte.map((k) => (
         <div
           key={k.id}
-          className="table-row-clickable"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-            padding: "8px 0",
-            borderBottom: "1px solid var(--line-soft)",
-          }}
+          className="table-row-clickable zuletzt-kontakte-zeile"
           onClick={() => navigate(`/kontakte/${k.id}`)}
         >
-          <span>{k.name}</span>
-          <small style={{ color: "var(--ink-mute)" }}>
-            {new Date(k.zeitpunkt).toLocaleDateString("de-DE")}
-          </small>
+          <span>
+            {k.name}
+            {k.firma && (
+              <>
+                <br />
+                <small style={{ color: "var(--ink-mute)" }}>{k.firma}</small>
+              </>
+            )}
+          </span>
+          <span className="zuletzt-kontakte-email">{k.email || "–"}</span>
+          <span>{k.telefon || "–"}</span>
         </div>
       ))}
+      <div style={{ marginTop: 8, textAlign: "right" }}>
+        <a href="/kontakte" onClick={(e) => { e.preventDefault(); navigate("/kontakte"); }}>
+          Alle Kontakte →
+        </a>
+      </div>
     </div>
   );
 }

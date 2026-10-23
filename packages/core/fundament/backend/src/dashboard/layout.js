@@ -24,13 +24,23 @@ export function gerenderteKacheln(gespeichertesLayout, verfuegbareKacheln) {
       key: kachel.key,
       titel: kachel.titel,
       sichtbar: eintrag.sichtbar !== false,
-      groesse: groesseOder(eintrag, kachel.groesse),
+      // groesseFest: die gespeicherte Größe wird ignoriert, nicht einzeln
+      // umschaltbar (Teil C, C1) -- wie die Rechte-Prüfung gilt das auch
+      // hier im Backend, nicht nur als ausgeblendeter Knopf im Frontend.
+      groesse: kachel.groesseFest ? kachel.groesse : groesseOder(eintrag, kachel.groesse),
+      groesseFest: !!kachel.groesseFest,
     });
   }
 
   for (const kachel of verfuegbareKacheln) {
     if (bekannteKeys.has(kachel.key)) continue;
-    gerendert.push({ key: kachel.key, titel: kachel.titel, sichtbar: true, groesse: kachel.groesse });
+    gerendert.push({
+      key: kachel.key,
+      titel: kachel.titel,
+      sichtbar: kachel.standardSichtbar !== false,
+      groesse: kachel.groesse,
+      groesseFest: !!kachel.groesseFest,
+    });
   }
 
   return gerendert;
@@ -40,14 +50,17 @@ export function gerenderteKacheln(gespeichertesLayout, verfuegbareKacheln) {
 // Kacheln) wird mit den Einträgen zusammengeführt, die gerade nicht verfügbar
 // sind -- die bleiben unverändert erhalten, statt beim Speichern zu verschwinden.
 export function layoutZumSpeichern(neuesLayout, gespeichertesLayout, verfuegbareKacheln) {
-  const verfuegbarKeys = new Set(verfuegbareKacheln.map((k) => k.key));
-  const nichtVerfuegbar = (gespeichertesLayout || []).filter((e) => !verfuegbarKeys.has(e.key));
+  const verfuegbarMap = new Map(verfuegbareKacheln.map((k) => [k.key, k]));
+  const nichtVerfuegbar = (gespeichertesLayout || []).filter((e) => !verfuegbarMap.has(e.key));
   const neu = (neuesLayout || [])
-    .filter((e) => verfuegbarKeys.has(e.key))
-    .map((e) => ({
-      key: e.key,
-      sichtbar: e.sichtbar !== false,
-      groesse: groesseOder(e, "klein"),
-    }));
+    .filter((e) => verfuegbarMap.has(e.key))
+    .map((e) => {
+      const kachel = verfuegbarMap.get(e.key);
+      return {
+        key: e.key,
+        sichtbar: e.sichtbar !== false,
+        groesse: kachel.groesseFest ? kachel.groesse : groesseOder(e, "klein"),
+      };
+    });
   return [...neu, ...nichtVerfuegbar];
 }

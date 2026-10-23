@@ -86,7 +86,9 @@ export default function Start() {
 
   function groesseUmschalten(key) {
     setEntwurf((liste) =>
-      liste.map((k) => (k.key === key ? { ...k, groesse: k.groesse === "gross" ? "klein" : "gross" } : k))
+      liste.map((k) =>
+        k.key === key && !k.groesseFest ? { ...k, groesse: k.groesse === "gross" ? "klein" : "gross" } : k
+      )
     );
   }
 
@@ -167,6 +169,7 @@ export default function Start() {
                 key={eintrag.key}
                 titel={eintrag.titel}
                 groesse={eintrag.groesse}
+                groesseFest={eintrag.groesseFest}
                 sichtbar={eintrag.sichtbar}
                 bearbeitenModus={bearbeitenModus}
                 onSichtbarkeitUmschalten={() => sichtbarkeitUmschalten(eintrag.key)}

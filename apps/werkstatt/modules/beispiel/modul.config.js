@@ -12,5 +12,10 @@ export default {
   },
   // Meldet eine Dashboard-Kachel an (Abschnitt 8/10). Nutzt dasselbe Recht
   // wie die Seite -- kein eigener Rechte-Bereich nur für die Kachel nötig.
-  kacheln: [{ key: "beispiel", titel: "Beispiel", groesse: "klein", rechtBereich: "beispiel" }],
+  // standardSichtbar: false (Teil C) -- steht nicht automatisch auf dem
+  // Dashboard, lässt sich aber im Anpassen-Modus jederzeit einschalten.
+  // Tests brauchen weiterhin, dass es sie überhaupt gibt.
+  kacheln: [
+    { key: "beispiel", titel: "Beispiel", groesse: "klein", rechtBereich: "beispiel", standardSichtbar: false },
+  ],
 };

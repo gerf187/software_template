@@ -17,18 +17,19 @@ export default {
     projekte: { sehen: true, bearbeiten: true, loeschen: false },
   },
 
-  kacheln: [
-    { key: "nachPhase", titel: "Aktive Projekte nach Phase", groesse: "klein", rechtBereich: "projekte" },
-    { key: "zuletzt", titel: "Zuletzt bearbeitete Projekte", groesse: "klein", rechtBereich: "projekte" },
-  ],
+  // Teil C (Dashboard neu): "Aktive Projekte nach Phase" ist weggefallen,
+  // "Zuletzt bearbeitete Projekte" ist zur Kachel "Projekte" geworden (C3).
+  kacheln: [{ key: "zuletzt", titel: "Projekte", groesse: "klein", rechtBereich: "projekte" }],
 
   // Tab "Projekte" auf der Kontakt-Akte (Abschnitt 11/Teil 1, Punkt 7) --
   // Erweiterungspunkt des Fundaments (frontend/Erweiterungen.jsx).
   kontaktTabs: [{ key: "projekte", label: "Projekte" }],
 
-  // Bezeichnung der eigenen Tabellen im Änderungsprotokoll (z. B. Kachel
-  // "Letzte Aktivitäten") -- das Fundament kennt "projects" nicht selbst.
-  protokollTabellen: { projects: "Projekt" },
+  // Bezeichnung der eigenen Tabellen im Änderungsprotokoll (Kachel "Letzte
+  // Aktivitäten", Teil C, Punkt C5) -- das Fundament kennt "projects" nicht
+  // selbst. "namensfeld" ist die Spalte mit dem Anzeigenamen des Datensatzes
+  // (z. B. 'Projekt „Schulz – Typ B" geändert').
+  protokollTabellen: { projects: { titel: "Projekt", namensfeld: "name" } },
 
   // Eigene Tab-Mechanik der Projekt-Akte (Teil 1, Punkt 6): spätere
   // Fach-Bausteine (z. B. Energieberater: "Anträge", "Maßnahmen") melden

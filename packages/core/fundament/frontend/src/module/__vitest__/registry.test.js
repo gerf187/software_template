@@ -29,8 +29,8 @@ describe("Baustein aus packages/modules (\"projekte\")", () => {
     expect(erweiterungsKomponente("kontaktTabs", "projekte", "projekte")).toBeTruthy();
   });
 
-  it("kachelKomponente liefert die Kachel \"nachPhase\"", () => {
-    expect(kachelKomponente("projekte:nachPhase")).toBeTruthy();
+  it("kachelKomponente liefert die Kachel \"zuletzt\"", () => {
+    expect(kachelKomponente("projekte:zuletzt")).toBeTruthy();
   });
 });
 

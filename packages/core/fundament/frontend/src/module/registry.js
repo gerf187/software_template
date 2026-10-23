@@ -103,13 +103,26 @@ export function modulAkteLader(name) {
 }
 
 // Bezeichnung einer Baustein-Tabelle im Änderungsprotokoll (modul.config.js,
-// Feld "protokollTabellen", z. B. { projects: "Projekt" }). Über alle
-// Bausteine der App, nicht nur die aktiven: alte Einträge eines inzwischen
-// ausgeschalteten Bausteins bleiben im Protokoll und sollen lesbar bleiben.
+// Feld "protokollTabellen", z. B. { projects: { titel: "Projekt", namensfeld:
+// "name" } }). Über alle Bausteine der App, nicht nur die aktiven: alte
+// Einträge eines inzwischen ausgeschalteten Bausteins bleiben im Protokoll
+// und sollen lesbar bleiben.
 export function protokollTabellenText(tabelle) {
   for (const pfad of passendeConfigs) {
-    const text = alleConfigs[pfad].default?.protokollTabellen?.[tabelle];
-    if (text) return text;
+    const eintrag = alleConfigs[pfad].default?.protokollTabellen?.[tabelle];
+    if (eintrag?.titel) return eintrag.titel;
+  }
+  return null;
+}
+
+// Welche Spalte des Datensatzes als Anzeigename gilt (Dashboard-Kachel
+// "Letzte Aktivitäten", Teil C, Punkt C5), z. B. 'Projekt „Schulz – Typ B"
+// geändert'. Ohne Angabe im Baustein (oder bei Fundament-eigenen Tabellen,
+// die hier nicht gemeldet sind) gibt es keinen Namen in der Zeile.
+export function protokollNamensfeld(tabelle) {
+  for (const pfad of passendeConfigs) {
+    const eintrag = alleConfigs[pfad].default?.protokollTabellen?.[tabelle];
+    if (eintrag?.namensfeld) return eintrag.namensfeld;
   }
   return null;
 }

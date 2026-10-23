@@ -15,6 +15,10 @@ function FaelligkeitsBadge({ faelligAm }) {
   return <Badge status="warn">Heute</Badge>;
 }
 
+// C2: Spalten Aufgabe · Kontakt · Projekt · Fällig. "Projekt" kommt vom
+// Baustein "Projekte" über einen Erweiterungspunkt (siehe
+// dashboard/routes.js) -- ohne aktiven Baustein oder ohne Projektbezug der
+// Aufgabe bleibt die Spalte leer ("–").
 export default function MeineAufgaben({ daten }) {
   const navigate = useNavigate();
   const aufgaben = daten?.meineAufgaben || [];
@@ -22,27 +26,40 @@ export default function MeineAufgaben({ daten }) {
   if (aufgaben.length === 0) return <EmptyState>Keine fälligen Aufgaben.</EmptyState>;
 
   return (
-    <div>
+    <div className="meine-aufgaben">
+      <div className="meine-aufgaben-zeile meine-aufgaben-kopf">
+        <span>Aufgabe</span>
+        <span>Kontakt</span>
+        <span className="meine-aufgaben-projekt">Projekt</span>
+        <span>Fällig</span>
+      </div>
       {aufgaben.map((a) => (
         <div
           key={a.id}
-          className="table-row-clickable"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-            padding: "8px 0",
-            borderBottom: "1px solid var(--line-soft)",
-          }}
+          className="meine-aufgaben-zeile table-row-clickable"
           onClick={() => navigate(`/kontakte/${a.kontaktId}`)}
         >
-          <span>
-            {a.text}
-            <br />
-            <small style={{ color: "var(--ink-mute)" }}>{a.kontaktName}</small>
+          <span>{a.text}</span>
+          <span>{a.kontaktName}</span>
+          <span className="meine-aufgaben-projekt">
+            {a.projekt ? (
+              <a
+                href={a.projekt.to}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(a.projekt.to);
+                }}
+              >
+                {a.projekt.name}
+              </a>
+            ) : (
+              "–"
+            )}
           </span>
-          <FaelligkeitsBadge faelligAm={a.faelligAm} />
+          <span>
+            <FaelligkeitsBadge faelligAm={a.faelligAm} />
+          </span>
         </div>
       ))}
     </div>

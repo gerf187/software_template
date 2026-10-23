@@ -613,6 +613,58 @@
   }
 }
 
+/* Kachel "Meine Aufgaben" (Teil C, C2/C7): Aufgabe · Kontakt · Projekt ·
+   Fällig. Kopfzeile wie die Tabellen-Spaltenköpfe, aber ohne <table> (freie
+   Breiten passen besser in die Kachel). */
+.meine-aufgaben-zeile {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1.4fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.meine-aufgaben-zeile:last-child {
+  border-bottom: none;
+}
+.meine-aufgaben-kopf {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-mute);
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 640px) {
+  .meine-aufgaben-zeile {
+    grid-template-columns: 1fr auto;
+  }
+  .meine-aufgaben-projekt {
+    display: none;
+  }
+}
+
+/* Kachel "Kontakte" (Teil C, C4/C7): Name (Firma klein darunter) · E-Mail ·
+   Telefon. E-Mail ist am Handy weniger wichtig als Telefon (Rückruf). */
+.zuletzt-kontakte-zeile {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.zuletzt-kontakte-zeile:last-child {
+  border-bottom: none;
+}
+@media (max-width: 640px) {
+  .zuletzt-kontakte-zeile {
+    grid-template-columns: 1fr auto;
+  }
+  .zuletzt-kontakte-email {
+    display: none;
+  }
+}
+
 /* Akzentfarbe: Vorschlag aus dem Logo, Lesbarkeitshinweis */
 .farb-vorschlag {
   display: flex;

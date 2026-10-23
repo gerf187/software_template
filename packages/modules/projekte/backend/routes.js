@@ -344,22 +344,34 @@ router.get("/:id/verlauf", erfordertRecht("protokoll", "sehen"), async (req, res
   res.json(eintraege);
 });
 
-// Kachel "Zuletzt bearbeitete Projekte" (Teil 1, Punkt 9).
+// Kachel "Projekte" (Teil C, Punkt C3): 5 zuletzt bearbeitete, mit Kontakt,
+// Phase und Status für die Anzeige.
 router.get("/kacheln/zuletzt-bearbeitet", erfordertRecht("projekte", "sehen"), async (req, res) => {
   const rows = await withFirma(req.user.firmaId, (client) =>
     client
       .query(
-        `SELECT p.id, p.name, max(ap.zeitpunkt) AS zeitpunkt
+        `SELECT p.id, p.name, p.phase, p.status, max(ap.zeitpunkt) AS zeitpunkt,
+                c.vorname, c.nachname, c.organisation
          FROM aenderungsprotokoll ap
          JOIN projects p ON p.id = ap.datensatz_id
+         JOIN contacts c ON c.id = p.contact_id
          WHERE ap.tabelle = 'projects'
-         GROUP BY p.id, p.name
+         GROUP BY p.id, p.name, p.phase, p.status, c.vorname, c.nachname, c.organisation
          ORDER BY max(ap.zeitpunkt) DESC
          LIMIT 5`
       )
       .then((r) => r.rows)
   );
-  res.json(rows);
+  res.json(
+    rows.map((p) => ({
+      id: p.id,
+      name: p.name,
+      phase: p.phase,
+      status: p.status,
+      zeitpunkt: p.zeitpunkt,
+      kontaktName: kontaktName(p),
+    }))
+  );
 });
 
 function projektAntwort(p) {

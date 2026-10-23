@@ -8,6 +8,7 @@ import { IconEye, IconEyeOff, IconGripVertical, IconArrowsMaximize, IconArrowsMi
 export default function Kachel({
   titel,
   groesse = "klein",
+  groesseFest = false,
   sichtbar = true,
   bearbeitenModus = false,
   onSichtbarkeitUmschalten,
@@ -31,14 +32,16 @@ export default function Kachel({
               <span className="kachel-ziehgriff" aria-hidden="true">
                 <IconGripVertical />
               </span>
-              <button
-                type="button"
-                className="kachel-werkzeug"
-                onClick={onGroesseUmschalten}
-                aria-label={groesse === "gross" ? "Verkleinern" : "Vergrößern"}
-              >
-                {groesse === "gross" ? <IconArrowsMinimize /> : <IconArrowsMaximize />}
-              </button>
+              {!groesseFest && (
+                <button
+                  type="button"
+                  className="kachel-werkzeug"
+                  onClick={onGroesseUmschalten}
+                  aria-label={groesse === "gross" ? "Verkleinern" : "Vergrößern"}
+                >
+                  {groesse === "gross" ? <IconArrowsMinimize /> : <IconArrowsMaximize />}
+                </button>
+              )}
               <button
                 type="button"
                 className="kachel-werkzeug"

@@ -92,30 +92,30 @@ test("Rechte: Admin sieht 'Letzte Aktivitäten', User nicht", async () => {
   assert.equal(datenUser.letzteAktivitaeten, undefined);
 });
 
-test("Mandanten-Trennung: Kontaktzahlen einer Firma wirken nicht auf eine andere", async () => {
+test("Mandanten-Trennung: 'Zuletzt bearbeitete Kontakte' einer Firma wirkt nicht auf eine andere", async () => {
   await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "Dashboard-Test-Kontakt" });
 
   const datenA = await (await api(cookieAdminA, "GET", "/api/dashboard/daten")).json();
   const datenB = await (await api(cookieAdminB, "GET", "/api/dashboard/daten")).json();
-  assert.ok(datenA.kontakteGesamt >= 1);
-  assert.equal(datenB.kontakteGesamt, 0);
+  assert.ok(datenA.zuletztBearbeiteteKontakte.some((k) => k.name === "Dashboard-Test-Kontakt"));
+  assert.ok(!datenB.zuletztBearbeiteteKontakte.some((k) => k.name === "Dashboard-Test-Kontakt"));
 });
 
 test("Anpassung bleibt nach erneutem Login erhalten", async () => {
   const vorher = await (await api(cookieUserA, "GET", "/api/dashboard/layout")).json();
-  const neu = vorher.map((k) => ({ ...k, sichtbar: k.key !== "neueKontakte" }));
+  const neu = vorher.map((k) => ({ ...k, sichtbar: k.key !== "zuletztBearbeiteteKontakte" }));
   // Reihenfolge umdrehen, damit die Sortierung sicher mitgespeichert wird.
   neu.reverse();
 
   const gespeichert = await (await api(cookieUserA, "PUT", "/api/dashboard/layout", { layout: neu })).json();
   assert.deepEqual(gespeichert.map((k) => k.key), neu.map((k) => k.key));
-  assert.equal(gespeichert.find((k) => k.key === "neueKontakte").sichtbar, false);
+  assert.equal(gespeichert.find((k) => k.key === "zuletztBearbeiteteKontakte").sichtbar, false);
 
   // Neu einloggen (neue Sitzung) -- Layout muss trotzdem noch da sein.
   const { cookie: cookieErneut } = await login(emailUserA);
   const nachLogin = await (await api(cookieErneut, "GET", "/api/dashboard/layout")).json();
   assert.deepEqual(nachLogin.map((k) => k.key), neu.map((k) => k.key));
-  assert.equal(nachLogin.find((k) => k.key === "neueKontakte").sichtbar, false);
+  assert.equal(nachLogin.find((k) => k.key === "zuletztBearbeiteteKontakte").sichtbar, false);
 });
 
 test("Firmen-Standard greift bei einem neuen Benutzer", async () => {
@@ -139,6 +139,65 @@ test("Firmen-Standard greift bei einem neuen Benutzer", async () => {
   assert.deepEqual(layoutNeu.map((k) => k.key), erwarteteReihenfolge);
 });
 
+test("C6: ein gespeichertes Layout mit einer inzwischen entfallenen Kachel (z. B. frühere 'neueKontakte') stürzt nicht ab, die Kachel fehlt einfach", async () => {
+  const emailAltesLayout = `altes-layout-${crypto.randomUUID()}@example.test`;
+  const userId = await erstelleBenutzer(firmaA, emailAltesLayout, "User");
+  await withFirma(firmaA, (client) =>
+    client.query(
+      `INSERT INTO benutzer_dashboard (user_id, firma_id, layout)
+       VALUES ($1, $2, $3::jsonb)`,
+      [
+        userId,
+        firmaA,
+        JSON.stringify([
+          { key: "neueKontakte", sichtbar: true, groesse: "klein" },
+          { key: "zuletztBearbeiteteKontakte", sichtbar: true, groesse: "klein" },
+        ]),
+      ]
+    )
+  );
+
+  const { cookie } = await login(emailAltesLayout);
+  const res = await api(cookie, "GET", "/api/dashboard/layout");
+  assert.equal(res.status, 200);
+  const layout = await res.json();
+  assert.ok(!layout.some((k) => k.key === "neueKontakte"));
+  assert.ok(layout.some((k) => k.key === "zuletztBearbeiteteKontakte"));
+});
+
+test("C2: 'Meine Aufgaben' löst project_id über den Baustein 'Projekte' zu Name und Link auf", async () => {
+  await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${firmaA}/module/projekte`, { aktiv: true });
+
+  const kontakt = await (
+    await api(cookieAdminA, "POST", "/api/kontakte", { nachname: "Projekt-Dashboard-Test" })
+  ).json();
+  const projekt = await (
+    await api(cookieAdminA, "POST", "/api/module/projekte/", {
+      contactId: kontakt.id,
+      name: "Dashboard-Testprojekt",
+      arten: ["Typ A"],
+      status: "Aktiv",
+      phase: "Start",
+    })
+  ).json();
+  await api(cookieAdminA, "POST", `/api/module/projekte/${projekt.id}/aufgaben`, {
+    text: "Projekt-Aufgabe für Dashboard",
+    faelligAm: new Date().toISOString().slice(0, 10),
+  });
+
+  const daten = await (await api(cookieAdminA, "GET", "/api/dashboard/daten")).json();
+  const aufgabe = daten.meineAufgaben.find((a) => a.text === "Projekt-Aufgabe für Dashboard");
+  assert.ok(aufgabe, "Die neue Aufgabe muss in 'Meine Aufgaben' auftauchen");
+  assert.deepEqual(aufgabe.projekt, { name: "Dashboard-Testprojekt", to: `/projekte/${projekt.id}` });
+
+  // C5: "Letzte Aktivitäten" liefert die Rohdaten (alte/neue Werte) mit,
+  // damit das Frontend den Anzeigenamen auflösen kann (Baustein-Namensfeld).
+  const protokollEintrag = daten.letzteAktivitaeten.find(
+    (e) => e.tabelle === "projects" && e.neueWerte?.name === "Dashboard-Testprojekt"
+  );
+  assert.ok(protokollEintrag, "Die Projekt-Protokollzeile muss die neuen Werte mitliefern");
+});
+
 test("User darf das Layout nicht als Firmen-Standard festlegen", async () => {
   const res = await api(cookieUserA, "POST", "/api/dashboard/layout/standard");
   assert.equal(res.status, 403);
@@ -151,6 +210,9 @@ test("Ausgeschalteter Baustein: seine Kachel verschwindet, Position bleibt beim 
 
   const mitBaustein = await (await api(cookieAdminA, "GET", "/api/dashboard/layout")).json();
   assert.ok(mitBaustein.some((k) => k.key === "beispiel:beispiel"));
+  // Teil C: steht nicht automatisch auf dem Dashboard (standardSichtbar: false
+  // in modul.config.js), lässt sich im Anpassen-Modus aber jederzeit einschalten.
+  assert.equal(mitBaustein.find((k) => k.key === "beispiel:beispiel").sichtbar, false);
 
   // Kachel ganz nach vorne schieben und speichern, damit die Position
   // nachher wirklich geprüft werden kann (nicht einfach "am Ende").

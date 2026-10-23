@@ -81,7 +81,19 @@ export async function ladeModule({
       if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
     }
 
-    ergebnis.push({ name, config, router, suche });
+    // Dashboard-Kachel "Meine Aufgaben" (Teil C, Punkt C2): das Fundament
+    // kennt "Projekt" nicht (Abschnitt 8, Regel 5) -- ein Baustein mit einer
+    // eigenen Unterebene für Aufgaben (project_id in "tasks") liefert hier
+    // optional eine Auflösung dieser IDs zu Anzeigename + Link.
+    let dashboardAufgaben = null;
+    try {
+      const modul = await import(pathToFileURL(path.join(basis, "backend/dashboardAufgaben.js")).href);
+      dashboardAufgaben = modul.default;
+    } catch (err) {
+      if (err.code !== "ERR_MODULE_NOT_FOUND") throw err;
+    }
+
+    ergebnis.push({ name, config, router, suche, dashboardAufgaben });
   }
 
   return ergebnis;
