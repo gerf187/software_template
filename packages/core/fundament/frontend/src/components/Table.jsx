@@ -47,7 +47,9 @@ export default function Table({
             <th
               key={col.key}
               onClick={() => toggleSort(col)}
-              className={col.sortable ? "table-sortable" : ""}
+              className={[col.sortable ? "table-sortable" : "", col.align === "right" ? "table-cell-right" : ""]
+                .filter(Boolean)
+                .join(" ")}
             >
               {col.label}
               {sortKey === col.key && (sortDir === "asc" ? " ▲" : " ▼")}
@@ -70,7 +72,11 @@ export default function Table({
             onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             {columns.map((col) => (
-              <td key={col.key} data-label={col.label}>
+              <td
+                key={col.key}
+                data-label={col.label}
+                className={col.align === "right" ? "table-cell-right" : undefined}
+              >
                 {col.render ? col.render(row) : row[col.key]}
               </td>
             ))}

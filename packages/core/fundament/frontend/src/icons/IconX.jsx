@@ -1,3 +1,4 @@
+// Tabler Icons (https://tabler.io/icons), MIT-Lizenz -- siehe LICENSE-tabler-icons.txt
 export default function IconX(props) {
   return (
     <svg

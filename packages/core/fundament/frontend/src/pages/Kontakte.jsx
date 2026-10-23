@@ -8,6 +8,7 @@ import Button from "../components/Button.jsx";
 import Dialog from "../components/Dialog.jsx";
 import Message from "../components/Message.jsx";
 import Spinner from "../components/Spinner.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { listeKontakte, legeKontaktAn } from "../kontakte/api.js";
 import KontaktFormular from "../kontakte/KontaktFormular.jsx";
@@ -70,7 +71,20 @@ export default function Kontakte() {
 
         {fehler && <Message type="fehler">{fehler}</Message>}
         {!fehler && kontakte === undefined && <Spinner label="Kontakte werden geladen …" />}
-        {!fehler && kontakte !== undefined && (
+        {!fehler && kontakte?.length === 0 && !sucheVerzoegert.trim() && (
+          <EmptyState
+            action={
+              darfBearbeiten && (
+                <Button variant="primary" onClick={() => setNeuOffen(true)}>
+                  Kontakt anlegen
+                </Button>
+              )
+            }
+          >
+            Noch keine Kontakte.
+          </EmptyState>
+        )}
+        {!fehler && kontakte !== undefined && (kontakte.length > 0 || sucheVerzoegert.trim()) && (
           <Table
             columns={[
               {
@@ -85,7 +99,7 @@ export default function Kontakte() {
             ]}
             rows={kontakte}
             rowKey={(k) => k.id}
-            emptyText="Keine Kontakte gefunden."
+            emptyText="Keine Treffer für diese Suche."
             onRowClick={(k) => navigate(`/kontakte/${k.id}`)}
           />
         )}

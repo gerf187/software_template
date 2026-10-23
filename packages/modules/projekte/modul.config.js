@@ -7,6 +7,8 @@ export default {
   beschreibung: "Projekt-Akten mit Phasen-Leiste, Notizen, Aufgaben und Verlauf.",
   braucht: [],
   menuepunkte: [{ key: "projekte", label: "Projekte", to: "/projekte" }],
+  // Menü-Symbol aus dem Symbol-Satz des Fundaments (icons/index.js).
+  icon: "IconFolder",
   akteRoute: "/projekte/:id",
 
   // Abschnitt 7: was die Rolle User in diesem Baustein darf. Admin bekommt

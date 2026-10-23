@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { modulConfig, modulSeitenLader, modulAkteLader, erweiterungsKomponente } from "../registry.js";
+import { modulConfig, modulSeitenLader, modulAkteLader, erweiterungsKomponente, modulSymbol } from "../registry.js";
+import { IconFolder, IconPuzzle, IconSettings } from "../../icons/index.js";
 import { kachelKomponente } from "../../dashboard/kachelRegistry.js";
 
 // Läuft über Vitest (nicht node --test), weil import.meta.glob nur unter
@@ -46,5 +47,16 @@ describe("Baustein aus apps/<app>/modules (\"beispiel\") bleibt funktionsfähig"
 
   it("kachelKomponente liefert die Kachel \"beispiel\"", () => {
     expect(kachelKomponente("beispiel:beispiel")).toBeTruthy();
+  });
+});
+
+describe("Menü-Symbol aus modul.config.js (B6)", () => {
+  it("Projekte bringt sein Ordner-Symbol mit", () => {
+    expect(modulSymbol("projekte")).toBe(IconFolder);
+  });
+
+  it("Baustein ohne Angabe bekommt das neutrale Baustein-Symbol, nie das Zahnrad", () => {
+    expect(modulSymbol("beispiel")).toBe(IconPuzzle);
+    expect(modulSymbol("beispiel")).not.toBe(IconSettings);
   });
 });

@@ -93,7 +93,9 @@ export default function ProjektFormular({ kontakt, projekt, onSpeichern, onAbbre
       setFehler(plzFehler);
       return;
     }
-    if (!werte.name.trim()) {
+    // Leerer Name wird aus dem Vorschlag erzeugt (Platzhalter sagt das an).
+    const name = werte.name.trim() || vorschlagProjektname({ kontakt, arten: werte.arten, objektadresseOrt: werte.ort });
+    if (!name) {
       setFehler("Bitte einen Projektnamen angeben.");
       return;
     }
@@ -101,7 +103,7 @@ export default function ProjektFormular({ kontakt, projekt, onSpeichern, onAbbre
     setFehler(null);
     try {
       await onSpeichern({
-        name: werte.name,
+        name,
         arten: werte.arten,
         status: werte.status,
         phase: werte.phase,
@@ -133,11 +135,12 @@ export default function ProjektFormular({ kontakt, projekt, onSpeichern, onAbbre
         <Input
           id="pf-name"
           value={werte.name}
+          placeholder="wird automatisch erzeugt"
           onChange={(e) => {
-            setNameEigenstaendig(true);
+            // Feld geleert -> wieder automatischer Vorschlag.
+            setNameEigenstaendig(e.target.value.trim() !== "");
             setWerte((w) => ({ ...w, name: e.target.value }));
           }}
-          required
         />
       </FormField>
 

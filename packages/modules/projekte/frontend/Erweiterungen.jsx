@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "@fundament/frontend/src/components/Card.jsx";
 import Table from "@fundament/frontend/src/components/Table.jsx";
-import Badge from "@fundament/frontend/src/components/Badge.jsx";
 import Button from "@fundament/frontend/src/components/Button.jsx";
 import Dialog from "@fundament/frontend/src/components/Dialog.jsx";
 import Spinner from "@fundament/frontend/src/components/Spinner.jsx";
@@ -10,6 +9,7 @@ import Message from "@fundament/frontend/src/components/Message.jsx";
 import { useAuth } from "@fundament/frontend/src/auth/AuthContext.jsx";
 import { listeProjekteVonKontakt, legeProjektAn } from "./api.js";
 import ProjektFormular from "./ProjektFormular.jsx";
+import ProjektStatusBadge from "./ProjektStatusBadge.jsx";
 
 // Tab "Projekte" auf der Kontakt-Akte (Teil 1, Punkt 7). Baustein aus -> der
 // Tab existiert gar nicht mehr (KontaktAkte.jsx fragt nur aktive Bausteine ab),
@@ -57,7 +57,7 @@ function ProjekteTab({ kontaktId, kontakt }) {
             {
               key: "status",
               label: "Status",
-              render: (p) => <Badge>{p.status}</Badge>,
+              render: (p) => <ProjektStatusBadge status={p.status} />,
             },
             {
               key: "auftragsdatum",

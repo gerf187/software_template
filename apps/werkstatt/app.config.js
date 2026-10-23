@@ -13,11 +13,11 @@ export default {
   projekte: {
     projektarten: ["Typ A", "Typ B"],
     status: [
-      { label: "Aktiv" },
-      { label: "Pausiert (manuell)", grundPflicht: true },
-      { label: "Pausiert (Eskalation)", nurAutomatisch: true },
-      { label: "Abgeschlossen", terminal: true },
-      { label: "Storniert", terminal: true },
+      { label: "Aktiv", farbe: "success" },
+      { label: "Pausiert (manuell)", grundPflicht: true, farbe: "warn" },
+      { label: "Pausiert (Eskalation)", nurAutomatisch: true, farbe: "warn" },
+      { label: "Abgeschlossen", terminal: true, farbe: "neutral" },
+      { label: "Storniert", terminal: true, farbe: "neutral" },
     ],
     phasen: ["Start", "In Arbeit", "Abschluss"],
     auftragsdatumLabel: "Auftragsdatum",

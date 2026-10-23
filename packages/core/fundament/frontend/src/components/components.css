@@ -74,6 +74,9 @@
   padding: 9px var(--space-3);
   font-size: 13.5px;
 }
+.input::placeholder {
+  color: var(--ink-mute);
+}
 .input:focus {
   border-color: var(--accent);
   outline: none;
@@ -175,6 +178,11 @@
 .table td {
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--line-soft);
+}
+/* Zahlen rechtsbündig (Abschnitt 9): Spalte mit align: "right" */
+.table th.table-cell-right,
+.table td.table-cell-right {
+  text-align: right;
 }
 .table tr:last-child td {
   border-bottom: none;
@@ -376,6 +384,9 @@
   font-style: italic;
   color: var(--ink-mute);
   padding: var(--space-6) 0;
+}
+.empty-state p {
+  margin: 0 0 var(--space-3);
 }
 
 /* Seitenkopf */

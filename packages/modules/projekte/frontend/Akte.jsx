@@ -28,6 +28,7 @@ import {
   holeProjektVerlauf,
 } from "./api.js";
 import ProjektFormular from "./ProjektFormular.jsx";
+import ProjektStatusBadge from "./ProjektStatusBadge.jsx";
 
 const PROJEKTE_CONFIG = appConfig.projekte || { phasen: [], status: [] };
 const AKTION_TEXT = { angelegt: "Angelegt", geaendert: "Geändert", geloescht: "Gelöscht" };
@@ -39,14 +40,15 @@ function adresseText(p) {
 }
 
 function Kopfkarte({ projekt, kontakt }) {
-  const statusEintrag = PROJEKTE_CONFIG.status.find((s) => s.label === projekt.status);
   const adresse = adresseText(projekt);
   return (
     <Card>
       <div className="kontakt-kopfkarte">
-        <Badge status={statusEintrag?.terminal ? "neutral" : "success"}>{projekt.status}</Badge>
+        <ProjektStatusBadge status={projekt.status} />
         {projekt.arten.map((a) => (
-          <Badge key={a}>{a}</Badge>
+          <Badge key={a} status="neutral">
+            {a}
+          </Badge>
         ))}
         {kontakt && (
           <span className="kontakt-kopfkarte-zeile">

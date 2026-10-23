@@ -4,6 +4,8 @@
 // Angezeigt wird trotzdem nur, was der Benutzer laut Backend aktiv hat
 // (user.module aus /api/auth/me), das hier ist nur das Nachschlagen dazu.
 // Gleiche Suchreihenfolge und Namenskonflikt-Regel wie im Backend (module/lade.js).
+import * as Symbole from "../icons/index.js";
+
 const AKTUELLE_APP = import.meta.env.VITE_APP || "werkstatt";
 
 const alleConfigs = import.meta.glob(
@@ -74,6 +76,14 @@ export function modulConfig(name) {
     if (modulNameAusPfad(pfad) === name) return alleConfigs[pfad].default;
   }
   return null;
+}
+
+// Menü-Symbol eines Bausteins: modul.config.js nennt es per Name aus dem
+// Symbol-Satz des Fundaments (icons/index.js, z. B. "IconFolder"). Ohne oder
+// mit unbekannter Angabe: neutrales Baustein-Symbol (das Zahnrad bleibt
+// Einstellungen vorbehalten).
+export function modulSymbol(name) {
+  return Symbole[modulConfig(name)?.icon] || Symbole.IconPuzzle;
 }
 
 export function modulSeitenLader(name) {

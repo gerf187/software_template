@@ -9,11 +9,11 @@ export default {
   projekte: {
     projektarten: ["iSFP", "BEG EM"],
     status: [
-      { label: "Aktiv" },
-      { label: "Pausiert (manuell)", grundPflicht: true },
-      { label: "Pausiert (Eskalation)", nurAutomatisch: true },
-      { label: "Abgeschlossen", terminal: true },
-      { label: "Storniert", terminal: true },
+      { label: "Aktiv", farbe: "success" },
+      { label: "Pausiert (manuell)", grundPflicht: true, farbe: "warn" },
+      { label: "Pausiert (Eskalation)", nurAutomatisch: true, farbe: "warn" },
+      { label: "Abgeschlossen", terminal: true, farbe: "neutral" },
+      { label: "Storniert", terminal: true, farbe: "neutral" },
     ],
     phasen: ["Beauftragt", "Datenaufnahme", "Bearbeitung", "Abrechnung", "Abgeschlossen"],
     auftragsdatumLabel: "Datum Auftragsbestätigung",

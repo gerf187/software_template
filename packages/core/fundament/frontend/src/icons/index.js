@@ -11,3 +11,6 @@ export { default as IconArrowsMinimize } from "./IconArrowsMinimize.jsx";
 export { default as IconDots } from "./IconDots.jsx";
 export { default as IconMenu2 } from "./IconMenu2.jsx";
 export { default as IconX } from "./IconX.jsx";
+export { default as IconFolder } from "./IconFolder.jsx";
+export { default as IconPuzzle } from "./IconPuzzle.jsx";
+export { default as IconBuilding } from "./IconBuilding.jsx";

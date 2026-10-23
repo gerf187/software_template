@@ -4,19 +4,24 @@ import PageHeader from "@fundament/frontend/src/components/PageHeader.jsx";
 import Card from "@fundament/frontend/src/components/Card.jsx";
 import Table from "@fundament/frontend/src/components/Table.jsx";
 import Badge from "@fundament/frontend/src/components/Badge.jsx";
+import Button from "@fundament/frontend/src/components/Button.jsx";
+import EmptyState from "@fundament/frontend/src/components/EmptyState.jsx";
 import Input from "@fundament/frontend/src/components/Input.jsx";
 import Select from "@fundament/frontend/src/components/Select.jsx";
 import Message from "@fundament/frontend/src/components/Message.jsx";
 import Spinner from "@fundament/frontend/src/components/Spinner.jsx";
+import { useAuth } from "@fundament/frontend/src/auth/AuthContext.jsx";
 import useDebouncedValue from "@fundament/frontend/src/hooks/useDebouncedValue.js";
 import appConfig from "~app-config";
 import { listeProjekte } from "./api.js";
+import ProjektStatusBadge from "./ProjektStatusBadge.jsx";
 
 const PROJEKTE_CONFIG = appConfig.projekte || { projektarten: [], status: [], phasen: [] };
 const NUR_AKTIVE = "__nur_aktive__";
 
 export default function ProjekteSeite() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [suchParams] = useSearchParams();
   const [suche, setSuche] = useState("");
   const sucheVerzoegert = useDebouncedValue(suche);
@@ -25,6 +30,7 @@ export default function ProjekteSeite() {
   const [phase, setPhase] = useState(suchParams.get("phase") || "");
   const [projekte, setProjekte] = useState(undefined);
   const [fehler, setFehler] = useState(null);
+  const darfBearbeiten = !!user?.rechte?.projekte?.bearbeiten;
 
   useEffect(() => {
     listeProjekte({ q: sucheVerzoegert })
@@ -89,7 +95,22 @@ export default function ProjekteSeite() {
 
         {fehler && <Message type="fehler">{fehler}</Message>}
         {!fehler && projekte === undefined && <Spinner label="Projekte werden geladen …" />}
-        {!fehler && gefiltert !== undefined && (
+        {/* Leerzustand (Abschnitt 9): "noch gar nichts da" getrennt von "Suche/Filter findet nichts".
+            Ein Projekt braucht immer einen Kontakt -- deshalb führt der Button zur Kontaktliste. */}
+        {!fehler && projekte?.length === 0 && !sucheVerzoegert.trim() && (
+          <EmptyState
+            action={
+              darfBearbeiten && (
+                <Button variant="primary" onClick={() => navigate("/kontakte")}>
+                  Projekt über einen Kontakt anlegen
+                </Button>
+              )
+            }
+          >
+            Noch keine Projekte.
+          </EmptyState>
+        )}
+        {!fehler && gefiltert !== undefined && (projekte.length > 0 || sucheVerzoegert.trim()) && (
           <Table
             columns={[
               { key: "name", label: "Projektname", sortable: true },
@@ -97,16 +118,19 @@ export default function ProjekteSeite() {
               {
                 key: "arten",
                 label: "Projektart(en)",
-                render: (p) => p.arten.map((a) => <Badge key={a}>{a}</Badge>),
+                render: (p) =>
+                  p.arten.map((a) => (
+                    <Badge key={a} status="neutral">
+                      {a}
+                    </Badge>
+                  )),
               },
               { key: "phase", label: "Phase", sortable: true },
               {
                 key: "status",
                 label: "Status",
                 sortable: true,
-                render: (p) => (
-                  <Badge status={terminaleStatus.has(p.status) ? "neutral" : "success"}>{p.status}</Badge>
-                ),
+                render: (p) => <ProjektStatusBadge status={p.status} />,
               },
               {
                 key: "auftragsdatum",
@@ -117,7 +141,7 @@ export default function ProjekteSeite() {
             ]}
             rows={gefiltert}
             rowKey={(p) => p.id}
-            emptyText="Keine Projekte gefunden."
+            emptyText="Keine Treffer für diese Suche."
             onRowClick={(p) => navigate(`/projekte/${p.id}`)}
           />
         )}

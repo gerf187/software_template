@@ -10,10 +10,10 @@ import SuperadminFirmen from "./pages/SuperadminFirmen.jsx";
 import Login from "./pages/Login.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import { useAuth } from "./auth/AuthContext.jsx";
-import { IconHome, IconSettings, IconUsers } from "./icons/index.js";
+import { IconBuilding, IconHome, IconSettings, IconUsers } from "./icons/index.js";
 import TestBanner from "./layout/TestBanner.jsx";
 import ModulSeite from "./module/ModulSeite.jsx";
-import { modulConfig, modulSeitenLader, modulAkteLader } from "./module/registry.js";
+import { modulConfig, modulSeitenLader, modulAkteLader, modulSymbol } from "./module/registry.js";
 import { wendeAkzentfarbeAn } from "./theme/akzentfarbe.js";
 import appConfig from "~app-config";
 
@@ -24,7 +24,7 @@ function modulMenuepunkte(user) {
   for (const name of user?.module || []) {
     const config = modulConfig(name);
     for (const mp of config?.menuepunkte || []) {
-      punkte.push({ key: `modul-${name}-${mp.key}`, label: mp.label, to: mp.to, icon: IconSettings });
+      punkte.push({ key: `modul-${name}-${mp.key}`, label: mp.label, to: mp.to, icon: modulSymbol(name) });
     }
   }
   return punkte;
@@ -84,7 +84,7 @@ function AppLayout({ children }) {
   if (user?.rolle === "Superadmin") {
     groups.push({
       label: "Superadmin",
-      items: [{ key: "superadmin-firmen", label: "Firmen", to: "/superadmin/firmen", icon: IconSettings }],
+      items: [{ key: "superadmin-firmen", label: "Firmen", to: "/superadmin/firmen", icon: IconBuilding }],
     });
   }
 
