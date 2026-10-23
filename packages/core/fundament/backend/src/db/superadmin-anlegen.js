@@ -1,8 +1,8 @@
 import { erzeugeStartpasswort } from "../auth/startpasswort.js";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
 import { hashPassword } from "../auth/password.js";
+import { eigentuemerVerbindung } from "./eigentuemerVerbindung.js";
 
 // Kommandozeilen-Befehl, um den ersten (und weitere) Superadmin anzulegen.
 // Bewusst KEINE Web-Route: Im Produktivbetrieb gibt es sonst keinen Weg, eine
@@ -45,14 +45,6 @@ export async function legeSuperadminAn(verbindung, { email, name }) {
   }
 
   return { passwort };
-}
-
-function eigentuemerVerbindung() {
-  const { POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD } =
-    process.env;
-  return new pg.Pool({
-    connectionString: `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`,
-  });
 }
 
 async function kommandozeile() {

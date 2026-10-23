@@ -250,6 +250,33 @@ Startpasswort:  xxxx-xxxx-xxxx-xxxx
 Passwort-Manager. Ein zweiter Aufruf mit derselben E-Mail bricht mit einer
 Meldung ab und ändert nichts.
 
+### Superadmin-Zugang verloren
+
+Passwort vergessen oder Konto verloren? Es gibt **immer** einen Weg zurück --
+nur über den Server, nie über die Website (genau wie beim Anlegen).
+
+**Alle Superadmin-Konten anzeigen** (E-Mail, Name, aktiv, letzter Login):
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm -it --entrypoint npm -w /app/packages/core/fundament/backend migrate run superadmin:liste
+```
+
+**Passwort zurücksetzen** (fragt nach der E-Mail-Adresse, nur für Superadmin-Konten):
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm -it --entrypoint npm -w /app/packages/core/fundament/backend migrate run superadmin:passwort-zuruecksetzen
+```
+
+Danach erscheint einmalig ein neues Startpasswort. Alle laufenden Sitzungen
+dieses Kontos werden sofort beendet, offene Login-Fehlversuche zurückgesetzt.
+
+**Ein nicht mehr gebrauchtes Superadmin-Konto deaktivieren** (z. B. ein altes
+Ersatzkonto; das letzte aktive Konto lässt sich nie deaktivieren):
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm -it --entrypoint npm -w /app/packages/core/fundament/backend migrate run superadmin:deaktivieren
+```
+
 ### Schritt 7: Anmelden und Firma anlegen
 
 1. Im Browser die Domain öffnen, mit E-Mail und Startpasswort anmelden.
