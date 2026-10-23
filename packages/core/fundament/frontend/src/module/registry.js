@@ -36,7 +36,7 @@ const alleErweiterungen = import.meta.glob([
   "../../../../../../packages/modules/*/frontend/Erweiterungen.jsx",
 ], { eager: true });
 
-function modulNameAusPfad(pfad) {
+export function modulNameAusPfad(pfad) {
   const teile = pfad.split("/");
   const index = teile.indexOf("modules");
   return index >= 0 ? teile[index + 1] : null;
@@ -48,27 +48,29 @@ function modulNameAusPfad(pfad) {
 // Vorfahr mit diesem Ordner selbst), "/packages/modules/" steht also nicht
 // zuverlässig im Schlüssel. Alles, was nicht aus "apps/" kommt, kommt aber
 // zwangsläufig aus dem zweiten Glob-Muster, also aus packages/modules.
-function gehoertDazu(pfad) {
-  if (pfad.includes("/apps/")) return pfad.includes(`/apps/${AKTUELLE_APP}/modules/`);
+// "app" nur für Tests, im Betrieb immer die laufende App.
+export function gehoertDazu(pfad, app = AKTUELLE_APP) {
+  if (pfad.includes("/apps/")) return pfad.includes(`/apps/${app}/modules/`);
   return true;
 }
 
 // Namenskonflikt zwischen App und gemeinsamen Bausteinen: harter Abbruch, damit
 // nie still der falsche Baustein geladen wird (wie im Backend).
-function pruefeKonflikte(pfade) {
+// "app" nur für Tests, im Betrieb immer die laufende App.
+export function pruefeKonflikte(pfade, app = AKTUELLE_APP) {
   const appNamen = new Set(
-    pfade.filter((p) => p.includes(`/apps/${AKTUELLE_APP}/modules/`)).map(modulNameAusPfad)
+    pfade.filter((p) => p.includes(`/apps/${app}/modules/`)).map(modulNameAusPfad)
   );
   for (const pfad of pfade) {
     if (!pfad.includes("/apps/") && appNamen.has(modulNameAusPfad(pfad))) {
       throw new Error(
-        `Namenskonflikt: Baustein "${modulNameAusPfad(pfad)}" gibt es in apps/${AKTUELLE_APP}/modules und in packages/modules.`
+        `Namenskonflikt: Baustein "${modulNameAusPfad(pfad)}" gibt es in apps/${app}/modules und in packages/modules.`
       );
     }
   }
 }
 
-const passendeConfigs = Object.keys(alleConfigs).filter(gehoertDazu);
+const passendeConfigs = Object.keys(alleConfigs).filter((pfad) => gehoertDazu(pfad));
 pruefeKonflikte(passendeConfigs);
 
 export function modulConfig(name) {
