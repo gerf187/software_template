@@ -238,3 +238,46 @@ test("Gesperrte Firma mit exaktem Namen wird komplett gelöscht, andere Firma bl
   );
   assert.equal(andererKontaktNochDa, 1);
 });
+
+test("Firma mit echter Mitarbeiter-Änderung im Protokoll kann trotzdem endgültig gelöscht werden (Bugfix Teil A)", async () => {
+  const eindeutig = crypto.randomUUID();
+  const firma = await legeFirmaAn(`Protokoll-Löschen-Firma ${eindeutig}`);
+  uebrigeFirmen.push(firma.id);
+
+  // Echten Mitarbeiter anlegen und ECHT einloggen -- nur dann setzt die
+  // Datenbank-Sitzung "app.current_user_id" (siehe withFirma), und der
+  // Änderungsprotokoll-Trigger schreibt eine echte user_id statt NULL. Direkte
+  // SQL-Einfügungen (wie im Test oben) decken genau diesen Fehler nicht auf.
+  const einladen = await api(cookieSuperadmin, "POST", `/api/superadmin/firmen/${firma.id}/einladen`, {
+    email: `mitarbeiter-protokoll-${eindeutig}@example.test`,
+    name: "Mitarbeiter mit Protokoll-Eintrag",
+  });
+  assert.equal(einladen.status, 201);
+  const { email: mitarbeiterEmail, startpasswort } = await einladen.json();
+
+  const { cookie: cookieMitarbeiter } = await login(mitarbeiterEmail, startpasswort);
+
+  // Startpasswort muss vor der ersten Aktion geändert werden (Abschnitt 8) --
+  // sonst sperrt requireAuth jede geschützte Route.
+  const passwortGeaendert = await api(cookieMitarbeiter, "POST", "/api/auth/passwort-aendern", {
+    neuesPasswort: "Mitarbeiter-Geheim-2026",
+  });
+  assert.equal(passwortGeaendert.status, 200);
+
+  const angelegt = await api(cookieMitarbeiter, "POST", "/api/kontakte", { nachname: "Vom Mitarbeiter angelegt" });
+  assert.equal(angelegt.status, 201);
+
+  // Die Protokollzeile von eben verweist per user_id auf genau den Mitarbeiter,
+  // der gleich mitgelöscht wird -- das ist der Fall, an dem die Löschfunktion
+  // bisher mit "violates foreign key constraint aenderungsprotokoll_user_firma_fkey"
+  // abbrach (Migration 0020 löschte "aenderungsprotokoll" immer erst nach "users").
+  await api(cookieSuperadmin, "PATCH", `/api/superadmin/firmen/${firma.id}`, { aktiv: false });
+
+  const res = await api(cookieSuperadmin, "DELETE", `/api/superadmin/firmen/${firma.id}`, {
+    nameBestaetigung: firma.name,
+  });
+  assert.equal(res.status, 200, JSON.stringify(await res.json().catch(() => null)));
+
+  const firmaWeg = await pool.query("SELECT 1 FROM firmen WHERE id = $1", [firma.id]);
+  assert.equal(firmaWeg.rowCount, 0);
+});
