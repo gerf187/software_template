@@ -30,6 +30,22 @@ if (!POSTGRES_USER || !POSTGRES_PASSWORD || !APP_DB_PASSWORD) {
   process.exit(1);
 }
 
+// Schutz (Punkt 5): dieses Skript legt eine Datenbank neu an und löscht sie
+// wieder -- das darf niemals gegen einen echten Server laufen, egal was
+// jemand aus Versehen in der Umgebung stehen hat.
+const LOKALE_HOSTS = ["localhost", "127.0.0.1", "::1"];
+if (process.env.NODE_ENV === "production") {
+  console.error("Abbruch: Klicktest darf nicht mit NODE_ENV=production laufen.");
+  process.exit(1);
+}
+if (!LOKALE_HOSTS.includes(POSTGRES_HOST)) {
+  console.error(
+    `Abbruch: POSTGRES_HOST ("${POSTGRES_HOST}") sieht nicht nach lokaler Entwicklung aus ` +
+      `(erwartet: ${LOKALE_HOSTS.join(", ")}). Klicktest legt eine Datenbank neu an -- das nur lokal.`
+  );
+  process.exit(1);
+}
+
 // Eigene Umgebung für jeden Schritt: eigene Datenbank, feste App (Werkstatt),
 // nie mit NODE_ENV=production (die Werkstatt lehnt das sonst ab).
 const umgebung = {
@@ -115,6 +131,16 @@ async function abmelden(page) {
   await page.waitForURL(`${BASIS}/login`);
 }
 
+// Nach einer Einladung muss vor dem ersten echten Login ein eigenes Passwort
+// vergeben werden (Abschnitt 7) -- die Seite dafür kommt automatisch.
+async function neuesPasswortVergeben(page, neuesPasswort) {
+  await page.waitForURL(`${BASIS}/passwort-aendern`);
+  await page.locator("#pw-neu").fill(neuesPasswort);
+  await page.locator("#pw-wiederholung").fill(neuesPasswort);
+  await page.getByRole("button", { name: "Passwort ändern" }).click();
+  await page.waitForURL(`${BASIS}/`);
+}
+
 async function ablaufDurchfuehren() {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -172,7 +198,39 @@ async function ablaufDurchfuehren() {
     await page.getByText(NEUE_FIRMA_NAME).first().waitFor();
     await screenshot(page, "firma_angelegt");
 
-    // 6) sperren → löschen (Aufräumen der Testfirma)
+    // 6) Bestehende Firma öffnen → Admin einladen → Startpasswort sichtbar →
+    // mit diesem Admin einloggen. Zugleich Regressionstest für den Bugfix
+    // "verschachteltes Formular": "Einladen" darf das Firma-bearbeiten-Fenster
+    // nicht schließen (vorher hat es versehentlich das äußere "Speichern"
+    // mitausgelöst).
+    log("Firma erneut öffnen, Admin einladen");
+    await page.getByText(NEUE_FIRMA_NAME).first().click();
+    const adminEmail = `admin-${Date.now()}@klicktest.test`;
+    await page.getByLabel("Name", { exact: true }).fill("Klicktest Admin");
+    await page.getByLabel("E-Mail", { exact: true }).fill(adminEmail);
+    await page.getByRole("button", { name: "Einladen" }).click();
+    await page.locator("pre").waitFor();
+    const zugangsdatenText = await page.locator("pre").textContent();
+    const startpasswort = zugangsdatenText.match(/Startpasswort: (.+)/)?.[1]?.trim();
+    if (!startpasswort) throw new Error("Startpasswort nach Einladen nicht gefunden.");
+    await screenshot(page, "admin_eingeladen");
+    await page.getByRole("dialog", { name: "Firma bearbeiten" }).waitFor();
+    await page.getByRole("button", { name: "Abbrechen" }).click();
+    await abmelden(page);
+
+    log("Login mit frisch eingeladenem Admin, eigenes Passwort vergeben");
+    await anmelden(page, adminEmail, startpasswort);
+    await neuesPasswortVergeben(page, "Klicktest-Zugang-Sicher-99");
+    await page.getByText(/Guten (Morgen|Tag|Abend)/).waitFor();
+    await screenshot(page, "login_neuer_admin");
+    await abmelden(page);
+
+    log("Login Superadmin (zum Aufräumen der Testfirma)");
+    await anmelden(page, "superadmin@werkstatt.test", "Werkstatt-Test-2026");
+    await page.getByRole("link", { name: "Firmen" }).click();
+    await page.waitForURL(`${BASIS}/superadmin/firmen`);
+
+    // 7) sperren → löschen (Aufräumen der Testfirma)
     log("Firma sperren");
     await page.getByText(NEUE_FIRMA_NAME).first().click();
     await page.getByRole("button", { name: "Sperren" }).click();
@@ -200,14 +258,14 @@ async function ablaufDurchfuehren() {
 
     await abmelden(page);
 
-    // 7) Login admin-a → Dashboard
+    // 8) Login admin-a → Dashboard
     log("Login admin-a");
     await anmelden(page, "admin-a@werkstatt.test", "Werkstatt-Test-2026");
     await page.getByText(/Guten (Morgen|Tag|Abend)/).waitFor();
     await screenshot(page, "dashboard_admin_a");
     await abmelden(page);
 
-    // 8) Login user-a → Dashboard
+    // 9) Login user-a → Dashboard
     log("Login user-a");
     await anmelden(page, "user-a@werkstatt.test", "Werkstatt-Test-2026");
     await page.getByText(/Guten (Morgen|Tag|Abend)/).waitFor();

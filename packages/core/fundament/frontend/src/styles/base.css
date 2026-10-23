@@ -41,3 +41,11 @@ em {
   font-weight: 400;
   color: var(--accent);
 }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}

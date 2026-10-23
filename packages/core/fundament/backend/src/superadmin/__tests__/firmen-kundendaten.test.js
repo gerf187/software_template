@@ -133,6 +133,11 @@ test("Anlegen mit Bausteinen und erstem Admin funktioniert in einem Schritt", as
   const { daten: loginDaten } = await login(adminEmail, firma.admin.startpasswort);
   assert.equal(loginDaten.mussPasswortAendern, true);
   assert.equal(loginDaten.rolle, "Admin");
+  // Bugfix (Paket 1b): die Login-Antwort selbst muss erstwechselMoeglich schon
+  // melden -- die Oberfläche entscheidet direkt danach (ohne auf /api/auth/me
+  // zu warten), ob "Aktuelles Passwort" nötig ist oder die Wiederholung des
+  // neuen Passworts.
+  assert.equal(loginDaten.erstwechselMoeglich, true);
 
   // Teil A, Punkt 1 (Bugfix): die Firmenliste zeigt die Namen der aktiven
   // Bausteine -- vorher immer leer, weil die Zählung ohne Mandanten-Bezug

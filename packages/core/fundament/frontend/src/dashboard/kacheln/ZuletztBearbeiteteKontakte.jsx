@@ -28,7 +28,7 @@ export default function ZuletztBearbeiteteKontakte({ daten }) {
             )}
           </span>
           <span className="zuletzt-kontakte-email">{k.email || "–"}</span>
-          <span>{k.telefon || "–"}</span>
+          <span className="zuletzt-kontakte-telefon">{k.telefon || "–"}</span>
         </div>
       ))}
       <div style={{ marginTop: 8, textAlign: "right" }}>

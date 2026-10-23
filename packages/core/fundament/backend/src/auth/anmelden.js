@@ -27,5 +27,14 @@ export async function sitzungErstellen(benutzer, req, res) {
     rechte,
     module,
     mussPasswortAendern: !!benutzer.muss_passwort_aendern,
+    // Die Sitzung ist gerade erst entstanden ("now()" oben) -- das Erst-
+    // Wechsel-Fenster (siehe middleware.js) ist also immer erfüllt. Ohne
+    // dieses Feld zeigte die Seite "Passwort ändern" direkt nach der
+    // Anmeldung mit dem Startpasswort fälschlich das Feld "Aktuelles
+    // Passwort" (das die eingeladene Person ja gar nicht hat) statt der
+    // Wiederholung des neuen Passworts -- PasswortAendern.jsx entscheidet
+    // das anhand von user.erstwechselMoeglich, das bisher nur /api/auth/me
+    // lieferte, nicht die Login-Antwort selbst.
+    erstwechselMoeglich: !!benutzer.muss_passwort_aendern,
   };
 }

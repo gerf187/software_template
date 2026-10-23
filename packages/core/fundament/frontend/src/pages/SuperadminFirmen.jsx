@@ -166,8 +166,7 @@ function AdminEinladenKarte({ firmaId }) {
   const [fehler, setFehler] = useState(null);
   const [speichert, setSpeichert] = useState(false);
 
-  async function absenden(e) {
-    e.preventDefault();
+  async function absenden() {
     setSpeichert(true);
     setFehler(null);
     try {
@@ -181,6 +180,19 @@ function AdminEinladenKarte({ firmaId }) {
     }
   }
 
+  // Diese Karte steckt beim Bearbeiten einer Firma im Formular "Firma
+  // speichern" (Bugfix: verschachtelte <form>-Elemente sind ungültiges HTML --
+  // "Einladen" hat bisher das äußere Speichern ausgelöst, das Fenster
+  // geschlossen und nie einen Admin angelegt). Deshalb kein eigenes <form>
+  // mehr hier, sondern ein normaler Button -- und Enter in einem Feld darf
+  // nicht ins äußere Formular durchschlagen.
+  function aufEnterTaste(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      absenden();
+    }
+  }
+
   return (
     <>
       {fehler && <Message type="fehler">{fehler}</Message>}
@@ -191,12 +203,12 @@ function AdminEinladenKarte({ firmaId }) {
           onAusblenden={() => setErgebnis(null)}
         />
       )}
-      <form onSubmit={absenden}>
+      <div onKeyDown={aufEnterTaste}>
         <AdminEinladenFelder werte={werte} onAendern={setWerte} />
-        <Button type="submit" variant="primary" loading={speichert}>
+        <Button type="button" variant="primary" loading={speichert} onClick={absenden}>
           Einladen
         </Button>
-      </form>
+      </div>
     </>
   );
 }
